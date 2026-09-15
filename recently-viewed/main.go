@@ -10,11 +10,7 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 )
 
-const (
-	favoritesFeature  = "me.kumbuka.favorites"
-	showPinnedFeature = "kumbuka.preference.show-pinned-pages"
-	showRecentFeature = "kumbuka.preference.show-recently-viewed"
-)
+const favoritesFeature = "me.kumbuka.favorites"
 
 type iconRenderer func(string, int) string
 
@@ -34,14 +30,11 @@ func renderHomeWidget(sdk.WidgetContext) (sdk.Result, error) {
 }
 
 func renderSidebarWidget(context sdk.WidgetContext) (sdk.Result, error) {
-	if !context.Features[showRecentFeature] {
-		return sdk.Result{}, nil
-	}
 	pages, err := sdk.Pages().RecentViewed(8)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	if context.Features[showPinnedFeature] && context.Features[favoritesFeature] {
+	if context.Features[favoritesFeature] {
 		favorites, favoriteErr := sdk.Pages().Favorites(100)
 		if favoriteErr != nil {
 			return sdk.Result{}, favoriteErr
