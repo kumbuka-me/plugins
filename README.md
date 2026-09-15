@@ -13,6 +13,7 @@ Bundled plugins already appear on the same page and only need to be enabled when
 
 ## Build a plugin
 
-See the [Kumbuka plugin development guide](TODO).
+See the [Kumbuka plugin development guide](https://kumbuka.me/plugins/).
 
-<!-- TODO: replace the placeholder above with the published plugin-development documentation URL. -->
+
+
