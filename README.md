@@ -15,6 +15,4 @@ Bundled plugins already appear on the same page and only need to be enabled when
 
 See the [Kumbuka plugin development guide](TODO).
 
-## License
-
-Licensed under the [Apache License 2.0](./LICENSE).
+<!-- TODO: replace the placeholder above with the published plugin-development documentation URL. -->

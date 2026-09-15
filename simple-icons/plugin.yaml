@@ -6,7 +6,8 @@ version: 1.0.0
 description: Add brand icons from Simple Icons to the Kumbuka icon catalog.
 default_enabled: true
 modules:
-  - type: content-style
-    id: icon-resource
-    css: icons.css
+  - type: icon-resource
+    id: simple-icons
+    name: Simple Icons
+    asset: icons.json
 permissions: []

@@ -13,7 +13,6 @@ import (
 
 type resource struct {
 	Format int    `json:"format"`
-	Source string `json:"source"`
 	Icons  []icon `json:"icons"`
 }
 
@@ -44,13 +43,16 @@ func main() {
 		icons = append(icons, parsed)
 	}
 
-	data, err := json.MarshalIndent(resource{Format: 1, Source: "Simple Icons", Icons: icons}, "", "  ")
+	data, err := json.MarshalIndent(resource{Format: 1, Icons: icons}, "", "  ")
 	if err != nil {
 		panic(err)
 	}
 	data = append(data, '\n')
 
 	filename := filepath.Join("simple-icons", "assets", "icons.json")
+	if err := os.MkdirAll(filepath.Dir(filename), 0o755); err != nil {
+		panic(err)
+	}
 	if err := os.WriteFile(filename, data, 0o644); err != nil {
 		panic(err)
 	}
