@@ -1,9 +1,9 @@
 api_version: 1
 provider: Kumbuka
-id: me.kumbuka.wiki-links
-name: Wiki Links
-version: 1.1.0
-description: Show incoming and outgoing wiki-link relationships in page details.
+id: me.kumbuka.related-pages
+name: Related Pages
+version: 1.0.0
+description: Show pages related by shared tags in page details.
 default_enabled: true
 modules:
   - type: widget
