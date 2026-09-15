@@ -17,6 +17,10 @@ fi
 name=$(basename "$plugin")
 version=$(./scripts/plugin-version.sh "$plugin")
 
+if [ -x "$plugin/generate.sh" ]; then
+  "$plugin/generate.sh"
+fi
+
 ./scripts/build-browser.sh "$plugin"
 rm -rf "$plugin/dist"
 (

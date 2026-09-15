@@ -12,3 +12,5 @@ coverage.out
 /.dev-ports.json
 /.dev-ports.json.lock
 
+# Generated icon resources
+/simple-icons/assets/icons.json

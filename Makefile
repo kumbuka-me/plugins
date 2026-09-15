@@ -93,6 +93,7 @@ clean: ## Remove generated plugin packages and local binaries.
 	rm -rf "$(DIST)"
 	rm -rf */dist
 	rm -f tables/assets/plugin.js
+	rm -f simple-icons/assets/icons.json
 	rm -f coverage.out coverage.html
 
 

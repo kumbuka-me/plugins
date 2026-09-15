@@ -1,0 +1,12 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.simple-icons
+name: Simple Icons
+version: 1.0.0
+description: Add brand icons from Simple Icons to the Kumbuka icon catalog.
+default_enabled: true
+modules:
+  - type: content-style
+    id: icon-resource
+    css: icons.css
+permissions: []
