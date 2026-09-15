@@ -1,0 +1,13 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.wiki-links
+name: Wiki Links
+version: 1.0.0
+description: Show incoming and outgoing wiki-link relationships in page details.
+default_enabled: true
+modules:
+  - type: settings
+    id: widget
+    name: Page details widget
+    description: Show backlinks and outgoing wiki links in page details.
+permissions: []
