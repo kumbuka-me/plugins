@@ -1,0 +1,13 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.subpages
+name: Subpages
+version: 1.0.1
+default_enabled: true
+modules:
+  - type: macro
+    id: subpages
+    name: subpages
+    usage:
+      - macro: subpages
+permissions: [pages:read]

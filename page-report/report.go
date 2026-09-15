@@ -1,0 +1,422 @@
+// Package main implements the Page Report plugin.
+package main
+
+import (
+	"cmp"
+	"context"
+	_ "embed"
+	"fmt"
+	"html/template"
+	"slices"
+	"strconv"
+	"strings"
+
+	sdk "github.com/kumbuka-me/sdk"
+)
+
+const (
+	defaultLimit = 20
+	maxLimit     = 100
+)
+
+// macroOptions controls one {{pages}} report invocation.
+type macroOptions struct {
+	// Query is the required Kumbuka search expression.
+	Query string
+	// Columns contains prepared report columns in display order.
+	Columns []string
+	// View selects table, list, or cards presentation.
+	View string
+	// Sort selects the page ordering strategy.
+	Sort string
+	// Limit bounds the number of report rows.
+	Limit int
+}
+
+// pageSource supplies page discovery and full page metadata for a report.
+type pageSource interface {
+	// Search searches the value.
+	Search(context.Context, string, int) ([]sdk.Page, error)
+	// GetPage returns page.
+	GetPage(context.Context, string) (sdk.Page, error)
+}
+
+// parse recognizes one standalone {{pages ...}} invocation.
+func parse(line string) (macroOptions, bool) {
+	body, ok := pageReportBody(line)
+	if !ok {
+		return macroOptions{}, false
+	}
+
+	arguments, ok := parseArguments(body)
+	if !ok {
+		return macroOptions{}, false
+	}
+
+	return optionsFromArguments(arguments)
+}
+
+// pageReportBody extracts the option text from a standalone {{pages ...}} invocation.
+func pageReportBody(line string) (string, bool) {
+	value := strings.TrimSpace(line)
+	body, ok := strings.CutPrefix(value, "{{pages")
+	if !ok {
+		return "", false
+	}
+
+	body, ok = strings.CutSuffix(body, "}}")
+	if !ok || (body != "" && body[0] != ' ' && body[0] != '\t') {
+		return "", false
+	}
+
+	return strings.TrimSpace(body), true
+}
+
+// optionsFromArguments normalizes parsed arguments and validates report options.
+func optionsFromArguments(arguments map[string]string) (macroOptions, bool) {
+	options := macroOptions{
+		Query:   strings.TrimSpace(arguments["query"]),
+		Columns: []string{"title", "status", "owner", "updated"},
+		View:    cmp.Or(strings.TrimSpace(arguments["view"]), "table"),
+		Sort:    cmp.Or(strings.TrimSpace(arguments["sort"]), "relevance"),
+		Limit:   defaultLimit,
+	}
+
+	if options.Query == "" {
+		return macroOptions{}, false
+	}
+
+	if value := strings.TrimSpace(arguments["columns"]); value != "" {
+		options.Columns = splitColumns(value)
+	}
+	if len(options.Columns) == 0 {
+		return macroOptions{}, false
+	}
+
+	limit, ok := reportLimit(arguments["limit"])
+	if !ok {
+		return macroOptions{}, false
+	}
+	options.Limit = limit
+
+	if !validOptions(options) {
+		return macroOptions{}, false
+	}
+
+	return options, true
+}
+
+// reportLimit parses an optional bounded report limit.
+func reportLimit(value string) (int, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return defaultLimit, true
+	}
+
+	limit, err := strconv.Atoi(value)
+	if err != nil || limit < 1 || limit > maxLimit {
+		return 0, false
+	}
+
+	return limit, true
+}
+
+// validOptions reports whether the report presentation and columns are supported.
+func validOptions(options macroOptions) bool {
+	if !validView(options.View) || !validSort(options.Sort) {
+		return false
+	}
+
+	for _, column := range options.Columns {
+		if !validColumn(column) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// validView reports whether view selects a supported page-report presentation.
+func validView(view string) bool {
+	switch view {
+	case "table", "list", "cards":
+		return true
+	default:
+		return false
+	}
+}
+
+// validSort reports whether sort selects a supported page-report ordering.
+func validSort(sort string) bool {
+	switch sort {
+	case "relevance", "updated", "title", "path":
+		return true
+	default:
+		return false
+	}
+}
+
+// newRenderer returns a request-bound renderer backed by the page catalog.
+func newRenderer(ctx context.Context, source pageSource) func(macroOptions) (string, error) {
+	return func(options macroOptions) (string, error) {
+		pages, err := source.Search(ctx, options.Query, options.Limit)
+		if err != nil {
+			return "", err
+		}
+
+		for index := range pages {
+			page, err := source.GetPage(ctx, pages[index].Slug)
+			if err != nil {
+				return "", err
+			}
+			pages[index] = page
+		}
+
+		sortPages(pages, options.Sort)
+		return render(options, pages)
+	}
+}
+
+// argumentParser incrementally parses a page-report macro argument list.
+type argumentParser struct {
+	// value is the complete argument string being parsed.
+	value string
+	// index is the next unread byte in value.
+	index int
+}
+
+// parseArguments parses key=value options without using regular expressions.
+func parseArguments(value string) (map[string]string, bool) {
+	result := map[string]string{}
+	parser := argumentParser{value: value}
+
+	for {
+		parser.skipSpace()
+		if parser.index == len(parser.value) {
+			return result, true
+		}
+
+		name := parser.readName()
+		if name == "" {
+			return nil, false
+		}
+		parser.skipSpace()
+		if parser.index >= len(parser.value) || parser.value[parser.index] != '=' {
+			return nil, false
+		}
+		parser.index++
+		parser.skipSpace()
+
+		value, ok := parser.readValue()
+		if !ok {
+			return nil, false
+		}
+		if _, exists := result[name]; exists {
+			return nil, false
+		}
+		result[name] = value
+	}
+}
+
+// skipSpace advances past spaces and horizontal tabs.
+func (p *argumentParser) skipSpace() {
+	for p.index < len(p.value) && (p.value[p.index] == ' ' || p.value[p.index] == '\t') {
+		p.index++
+	}
+}
+
+// readName consumes one lowercase option name.
+func (p *argumentParser) readName() string {
+	start := p.index
+	for p.index < len(p.value) {
+		character := p.value[p.index]
+		if (character >= 'a' && character <= 'z') || character == '_' {
+			p.index++
+			continue
+		}
+		break
+	}
+	return p.value[start:p.index]
+}
+
+// readValue consumes one quoted or unquoted option value.
+func (p *argumentParser) readValue() (string, bool) {
+	if p.index >= len(p.value) {
+		return "", false
+	}
+	if p.value[p.index] != '"' {
+		return p.readBareValue()
+	}
+
+	return p.readQuotedValue()
+}
+
+// readBareValue consumes a value up to the next horizontal whitespace.
+func (p *argumentParser) readBareValue() (string, bool) {
+	start := p.index
+
+	for p.index < len(p.value) && p.value[p.index] != ' ' && p.value[p.index] != '\t' {
+		p.index++
+	}
+
+	return p.value[start:p.index], p.index > start
+}
+
+// readQuotedValue consumes and unquotes a double-quoted option value.
+func (p *argumentParser) readQuotedValue() (string, bool) {
+	start := p.index
+	p.index++
+	escaped := false
+
+	for p.index < len(p.value) {
+		character := p.value[p.index]
+		p.index++
+
+		if escaped {
+			escaped = false
+			continue
+		}
+		if character == '\\' {
+			escaped = true
+			continue
+		}
+		if character != '"' {
+			continue
+		}
+
+		decoded, err := strconv.Unquote(p.value[start:p.index])
+		return decoded, err == nil
+	}
+
+	return "", false
+}
+
+// splitColumns normalizes a comma-separated report column list.
+func splitColumns(value string) []string {
+	columns := make([]string, 0)
+	for column := range strings.SplitSeq(value, ",") {
+		column = strings.TrimSpace(column)
+		if column != "" {
+			columns = append(columns, column)
+		}
+	}
+	return columns
+}
+
+// validColumn reports whether a report column is supported.
+func validColumn(column string) bool {
+	switch column {
+	case "title", "path", "status", "owner", "updated", "author", "tags", "views":
+		return true
+	}
+	key, ok := strings.CutPrefix(column, "property:")
+	return ok && strings.TrimSpace(key) != ""
+}
+
+// sortPages applies the configured deterministic report ordering.
+func sortPages(pages []sdk.Page, sort string) {
+	switch sort {
+	case "title":
+		slices.SortFunc(pages, func(left, right sdk.Page) int {
+			return strings.Compare(strings.ToLower(left.Title), strings.ToLower(right.Title))
+		})
+	case "path":
+		slices.SortFunc(pages, func(left, right sdk.Page) int {
+			return strings.Compare(strings.ToLower(left.Slug), strings.ToLower(right.Slug))
+		})
+	case "updated":
+		slices.SortFunc(pages, func(left, right sdk.Page) int {
+			return right.UpdatedAt.Compare(left.UpdatedAt)
+		})
+	}
+}
+
+// tableData contains the template data for a rendered page-report table.
+type tableData struct {
+	// Columns contains prepared report columns in display order.
+	Columns []columnData
+	// Rows contains prepared report rows in result order.
+	Rows []rowData
+}
+
+// columnData describes one page-report table column.
+type columnData struct {
+	// Key identifies the report field represented by this column.
+	Key string
+	// Label is the human-readable report column heading.
+	Label string
+}
+
+// rowData contains one page-report table row.
+type rowData struct {
+	// Slug is the canonical page path for this report row.
+	Slug string
+	// Cells contains rendered cell values in column order.
+	Cells []string
+}
+
+//go:embed template.gohtml
+var templateSource string
+
+var reportTemplate = template.Must(
+	template.New("page-report").Parse(templateSource),
+)
+
+// render executes the selected report presentation for the resolved pages.
+func render(options macroOptions, pages []sdk.Page) (string, error) {
+	data := tableData{Columns: make([]columnData, 0, len(options.Columns)), Rows: make([]rowData, 0, len(pages))}
+	for _, column := range options.Columns {
+		data.Columns = append(data.Columns, columnData{Key: column, Label: columnLabel(column)})
+	}
+	for _, page := range pages {
+		cells := make([]string, 0, len(options.Columns))
+		for _, column := range options.Columns {
+			cells = append(cells, pageValue(page, column))
+		}
+		data.Rows = append(data.Rows, rowData{Slug: page.Slug, Cells: cells})
+	}
+
+	var output strings.Builder
+	if err := reportTemplate.ExecuteTemplate(&output, options.View, data); err != nil {
+		return "", fmt.Errorf("render page report: %w", err)
+	}
+	return output.String(), nil
+}
+
+// columnLabel returns the human-readable heading for a report column.
+func columnLabel(column string) string {
+	if key, ok := strings.CutPrefix(column, "property:"); ok {
+		return key
+	}
+	return strings.ToUpper(column[:1]) + column[1:]
+}
+
+// pageValue resolves one report cell from page metadata.
+func pageValue(page sdk.Page, column string) string {
+	switch column {
+	case "title":
+		return page.Title
+	case "path":
+		return page.Slug
+	case "status":
+		return page.Status
+	case "owner":
+		return page.OwnerGroup
+	case "updated":
+		return page.UpdatedAt.Format("2006-01-02")
+	case "author":
+		return page.Author
+	case "tags":
+		return strings.Join(page.Tags, ", ")
+	case "views":
+		return strconv.FormatInt(page.ViewCount, 10)
+	}
+	if key, ok := strings.CutPrefix(column, "property:"); ok {
+		for _, property := range page.Properties {
+			if strings.EqualFold(property.Key, key) {
+				return property.Value
+			}
+		}
+	}
+	return ""
+}

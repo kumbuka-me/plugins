@@ -1,0 +1,79 @@
+name: Release plugin
+
+on:
+  push:
+    tags:
+      - "*/v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Resolve plugin release
+        id: plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="$GITHUB_REF_NAME"
+          plugin="${tag%%/v*}"
+          version="${tag#*/v}"
+
+          if [[ "$plugin" == "$tag" || -z "$plugin" || -z "$version" ]]; then
+            echo "Invalid plugin tag: $tag" >&2
+            exit 1
+          fi
+
+          if [[ ! -f "$plugin/plugin.yaml" ]]; then
+            echo "Unknown plugin: $plugin" >&2
+            exit 1
+          fi
+
+          manifest_version="$(./scripts/plugin-version.sh "$plugin")"
+          if [[ "$version" != "$manifest_version" ]]; then
+            echo "Tag version $version does not match $plugin/plugin.yaml ($manifest_version)" >&2
+            exit 1
+          fi
+
+          echo "name=$plugin" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - run: make test
+      - run: make lint
+
+      - name: Build plugin
+        run: make build-plugin PLUGIN="${{ steps.plugin.outputs.name }}"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          plugin="${{ steps.plugin.outputs.name }}"
+          version="${{ steps.plugin.outputs.version }}"
+          artifact="dist/$plugin-$version.kumbukaplugin"
+
+          gh release create \
+            "$GITHUB_REF_NAME" \
+            "$artifact" \
+            "$artifact.sha256" \
+            --title "$plugin v$version" \
+            --notes "Kumbuka $plugin plugin v$version."

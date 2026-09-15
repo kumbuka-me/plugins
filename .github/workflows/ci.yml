@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: make test
+      - run: make lint
+      - run: make build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: kumbuka-plugins
+          path: |
+            dist/*.kumbukaplugin
+            dist/*.sha256
+          if-no-files-found: error

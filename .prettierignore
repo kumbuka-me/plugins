@@ -1,0 +1,5 @@
+node_modules/
+dist/
+*/dist/
+*/assets/*.min.js
+*/assets/LICENSE

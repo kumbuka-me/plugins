@@ -1,0 +1,14 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.syntax-highlighting
+name: Syntax Highlighting
+version: 1.4.1
+description: Highlight fenced code blocks with Chroma's full lexer registry.
+default_enabled: true
+modules:
+  - type: code-highlighter
+    id: chroma
+    css: plugin.css
+    usage:
+      - fence: "*"
+permissions: []

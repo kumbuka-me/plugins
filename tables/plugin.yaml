@@ -1,0 +1,45 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.tables
+name: Tables
+version: 1.0.0
+description: Markdown tables with colors, sorting, and filtering.
+default_enabled: true
+modules:
+  - type: markdown-syntax
+    id: tables
+    syntax: tables
+    usage:
+      - contains: "|"
+  - type: renderer-extension
+    id: directives
+    stage: preprocess
+    usage:
+      - contains: "{table"
+  - type: renderer-extension
+    id: presentation
+    stage: postprocess
+    usage:
+      - contains: "|"
+      - contains: "{table"
+      - contains: "<table"
+  - type: browser-module
+    id: interactive
+    javascript: plugin.js
+    css: plugin.css
+  - type: settings
+    id: styles
+    name: Table colors
+    description: Allow theme-aware header, row, column, and cell colors.
+    requires: [tables]
+  - type: settings
+    id: sorting
+    name: Table sorting
+    description: Allow sortable tables to sort rows from their column headers.
+    requires: [tables]
+  - type: settings
+    id: filtering
+    name: Table filtering
+    description: Allow filterable tables to filter rows from each column header.
+    requires: [tables]
+permissions: [browser:render]
