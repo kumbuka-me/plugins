@@ -9,8 +9,6 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 )
 
-const showPinnedFeature = "kumbuka.preference.show-pinned-pages"
-
 type iconRenderer func(string, int) string
 
 func main() {}
@@ -28,10 +26,7 @@ func renderHomeWidget(sdk.WidgetContext) (sdk.Result, error) {
 	return sdk.Text(renderHome(pages, hostIcon)), nil
 }
 
-func renderSidebarWidget(context sdk.WidgetContext) (sdk.Result, error) {
-	if !context.Features[showPinnedFeature] {
-		return sdk.Result{}, nil
-	}
+func renderSidebarWidget(sdk.WidgetContext) (sdk.Result, error) {
 	pages, err := sdk.Pages().Favorites(100)
 	if err != nil {
 		return sdk.Result{}, err
