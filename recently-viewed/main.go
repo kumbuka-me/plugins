@@ -74,9 +74,15 @@ func renderSidebar(pages []sdk.Page, icon iconRenderer) string {
 	output.WriteString(`<p class="nav-label">Recently viewed</p>`)
 	history := icon("history-lucide", 14)
 	for _, page := range pages {
-		output.WriteString(`<a class="sidebar-shortcut-link" href="/pages/` + pagePath(page.Slug) + `" title="` + html.EscapeString(page.Title) + `">`)
+		output.WriteString(`<a class="sidebar-shortcut-link" href="/pages/`)
+		output.WriteString(pagePath(page.Slug))
+		output.WriteString(`" title="`)
+		output.WriteString(html.EscapeString(page.Title))
+		output.WriteString(`">`)
 		output.WriteString(history)
-		output.WriteString(`<span>` + html.EscapeString(page.Title) + `</span></a>`)
+		output.WriteString(`<span>`)
+		output.WriteString(html.EscapeString(page.Title))
+		output.WriteString(`</span></a>`)
 	}
 	return output.String()
 }
@@ -100,13 +106,21 @@ func withoutFavorites(pages, favorites []sdk.Page, limit int) []sdk.Page {
 }
 
 func writePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon iconRenderer) {
-	output.WriteString(`<a class="page-row" href="/pages/` + pagePath(page.Slug) + `"><span class="doc-icon">`)
+	output.WriteString(`<a class="page-row" href="/pages/`)
+	output.WriteString(pagePath(page.Slug))
+	output.WriteString(`"><span class="doc-icon">`)
 	output.WriteString(pageIcon(page, 17, icon))
-	output.WriteString(`</span><span><strong>` + html.EscapeString(page.Title) + `</strong><small>` + html.EscapeString(page.Slug))
+	output.WriteString(`</span><span><strong>`)
+	output.WriteString(html.EscapeString(page.Title))
+	output.WriteString(`</strong><small>`)
+	output.WriteString(html.EscapeString(page.Slug))
 	if len(page.Tags) != 0 {
-		output.WriteString(` · ` + html.EscapeString(strings.Join(page.Tags, ", ")))
+		output.WriteString(` · `)
+		output.WriteString(html.EscapeString(strings.Join(page.Tags, ", ")))
 	}
-	output.WriteString(`</small></span><time>` + relativeTime(page.UpdatedAt, now) + `</time></a>`)
+	output.WriteString(`</small></span><time>`)
+	output.WriteString(relativeTime(page.UpdatedAt, now))
+	output.WriteString(`</time></a>`)
 }
 
 func pageIcon(page sdk.Page, size int, icon iconRenderer) string {

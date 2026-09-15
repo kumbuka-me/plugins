@@ -49,10 +49,20 @@ func renderLinks(links sdk.PageLinks) string {
 				if title == "" {
 					title = link.TargetSlug
 				}
-				output.WriteString(`<a class="widget-row" href="/pages/` + pagePath(link.TargetSlug) + `"><strong>` + html.EscapeString(title) + `</strong><span class="widget-meta">` + html.EscapeString(link.TargetSlug) + `</span></a>`)
+				output.WriteString(`<a class="widget-row" href="/pages/`)
+				output.WriteString(pagePath(link.TargetSlug))
+				output.WriteString(`"><strong>`)
+				output.WriteString(html.EscapeString(title))
+				output.WriteString(`</strong><span class="widget-meta">`)
+				output.WriteString(html.EscapeString(link.TargetSlug))
+				output.WriteString(`</span></a>`)
 				continue
 			}
-			output.WriteString(`<a class="widget-row broken" href="/pages/new?slug=` + url.QueryEscape(link.TargetSlug) + `"><strong>` + html.EscapeString(link.TargetSlug) + `</strong><span class="widget-meta">Missing page</span></a>`)
+			output.WriteString(`<a class="widget-row broken" href="/pages/new?slug=`)
+			output.WriteString(url.QueryEscape(link.TargetSlug))
+			output.WriteString(`"><strong>`)
+			output.WriteString(html.EscapeString(link.TargetSlug))
+			output.WriteString(`</strong><span class="widget-meta">Missing page</span></a>`)
 		}
 	}
 	output.WriteString("</div>")
@@ -60,7 +70,13 @@ func renderLinks(links sdk.PageLinks) string {
 }
 
 func writePageRow(output *strings.Builder, page sdk.Page) {
-	output.WriteString(`<a class="widget-row" href="/pages/` + pagePath(page.Slug) + `"><strong>` + html.EscapeString(page.Title) + `</strong><span class="widget-meta">` + html.EscapeString(page.Slug) + `</span></a>`)
+	output.WriteString(`<a class="widget-row" href="/pages/`)
+	output.WriteString(pagePath(page.Slug))
+	output.WriteString(`"><strong>`)
+	output.WriteString(html.EscapeString(page.Title))
+	output.WriteString(`</strong><span class="widget-meta">`)
+	output.WriteString(html.EscapeString(page.Slug))
+	output.WriteString(`</span></a>`)
 }
 
 func pagePath(slug string) string {

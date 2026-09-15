@@ -31,9 +31,15 @@ func renderPopular(pages []sdk.Page, icon iconRenderer) string {
 		return output.String()
 	}
 	for _, page := range pages {
-		output.WriteString(`<a class="compact-row" href="/pages/` + pagePath(page.Slug) + `"><span>`)
+		output.WriteString(`<a class="compact-row" href="/pages/`)
+		output.WriteString(pagePath(page.Slug))
+		output.WriteString(`"><span>`)
 		output.WriteString(pageIcon(page, 15, icon))
-		output.WriteString(`</span><strong>` + html.EscapeString(page.Title) + `</strong><small>` + fmt.Sprintf("%d views", page.ViewCount) + `</small></a>`)
+		output.WriteString(`</span><strong>`)
+		output.WriteString(html.EscapeString(page.Title))
+		output.WriteString(`</strong><small>`)
+		fmt.Fprintf(&output, "%d views", page.ViewCount)
+		output.WriteString(`</small></a>`)
 	}
 	return output.String()
 }

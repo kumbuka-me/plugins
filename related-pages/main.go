@@ -49,7 +49,13 @@ func renderRelated(pages []sdk.Page) string {
 	}
 	output.WriteString(`<div class="widget-list">`)
 	for _, page := range pages {
-		output.WriteString(`<a class="widget-row" href="/pages/` + pagePath(page.Slug) + `"><strong>` + html.EscapeString(page.Title) + `</strong><span class="widget-meta">` + html.EscapeString(page.Slug) + `</span></a>`)
+		output.WriteString(`<a class="widget-row" href="/pages/`)
+		output.WriteString(pagePath(page.Slug))
+		output.WriteString(`"><strong>`)
+		output.WriteString(html.EscapeString(page.Title))
+		output.WriteString(`</strong><span class="widget-meta">`)
+		output.WriteString(html.EscapeString(page.Slug))
+		output.WriteString(`</span></a>`)
 	}
 	output.WriteString("</div>")
 	return output.String()

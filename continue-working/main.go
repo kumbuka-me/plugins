@@ -61,9 +61,14 @@ func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, ico
 	if draft.PageID > 0 && draft.PageSlug != "" {
 		editURL = "/edit/" + pagePath(draft.PageSlug)
 	}
-	output.WriteString(`<a class="widget-item" href="` + editURL + `"><span class="widget-item-icon">`)
+	output.WriteString(`<a class="widget-item" href="`)
+	output.WriteString(editURL)
+	output.WriteString(`"><span class="widget-item-icon">`)
 	output.WriteString(icon("pencil-line-lucide", 16))
-	output.WriteString(`</span><span><strong>` + html.EscapeString(title) + `</strong><small>Private draft · ` + relativeTime(draft.UpdatedAt, now))
+	output.WriteString(`</span><span><strong>`)
+	output.WriteString(html.EscapeString(title))
+	output.WriteString(`</strong><small>Private draft · `)
+	output.WriteString(relativeTime(draft.UpdatedAt, now))
 	if draft.Stale {
 		output.WriteString(` · Page changed since draft started`)
 	}
@@ -71,13 +76,19 @@ func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, ico
 }
 
 func writeEdit(output *strings.Builder, edit sdk.RecentEdit, now time.Time, icon iconRenderer) {
-	output.WriteString(`<a class="widget-item" href="/edit/` + pagePath(edit.Slug) + `"><span class="widget-item-icon">`)
+	output.WriteString(`<a class="widget-item" href="/edit/`)
+	output.WriteString(pagePath(edit.Slug))
+	output.WriteString(`"><span class="widget-item-icon">`)
 	output.WriteString(pageIcon(edit.Page, 16, icon))
-	output.WriteString(`</span><span><strong>` + html.EscapeString(edit.Title) + `</strong><small>`)
+	output.WriteString(`</span><span><strong>`)
+	output.WriteString(html.EscapeString(edit.Title))
+	output.WriteString(`</strong><small>`)
 	if edit.RevisionMessage != "" {
-		output.WriteString(html.EscapeString(edit.RevisionMessage) + ` · `)
+		output.WriteString(html.EscapeString(edit.RevisionMessage))
+		output.WriteString(` · `)
 	}
-	output.WriteString(relativeTime(edit.UpdatedAt, now) + `</small></span></a>`)
+	output.WriteString(relativeTime(edit.UpdatedAt, now))
+	output.WriteString(`</small></span></a>`)
 }
 
 func pageIcon(page sdk.Page, size int, icon iconRenderer) string {

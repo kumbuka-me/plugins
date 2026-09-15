@@ -45,13 +45,28 @@ func renderRevision(history sdk.RevisionHistory) string {
 	}
 
 	revision := history.Revisions[0]
-	output.WriteString(`<div class="widget-entry"><div class="widget-entry-heading"><strong>` + html.EscapeString(revision.Author) + `</strong><span class="widget-badge">r` + fmt.Sprint(revision.Number) + `</span></div>`)
+	output.WriteString(`<div class="widget-entry"><div class="widget-entry-heading"><strong>`)
+	output.WriteString(html.EscapeString(revision.Author))
+	output.WriteString(`</strong><span class="widget-badge">r`)
+	fmt.Fprint(&output, revision.Number)
+	output.WriteString(`</span></div>`)
+
 	if revision.Message != "" {
-		output.WriteString(`<span class="widget-message">` + html.EscapeString(revision.Message) + `</span>`)
+		output.WriteString(`<span class="widget-message">`)
+		output.WriteString(html.EscapeString(revision.Message))
+		output.WriteString(`</span>`)
 	}
-	output.WriteString(`<span class="widget-meta"><span>` + revision.CreatedAt.Format("2006-01-02 15:04") + `</span>`)
+
+	output.WriteString(`<span class="widget-meta"><span>`)
+	output.WriteString(revision.CreatedAt.Format("2006-01-02 15:04"))
+	output.WriteString(`</span>`)
+
 	if revision.AddedLines != 0 || revision.RemovedLines != 0 {
-		output.WriteString(`<span class="widget-diff"><span class="widget-added">+` + fmt.Sprint(revision.AddedLines) + `</span><span class="widget-removed">−` + fmt.Sprint(revision.RemovedLines) + `</span> lines</span>`)
+		output.WriteString(`<span class="widget-diff"><span class="widget-added">+`)
+		fmt.Fprint(&output, revision.AddedLines)
+		output.WriteString(`</span><span class="widget-removed">−`)
+		fmt.Fprint(&output, revision.RemovedLines)
+		output.WriteString(`</span> lines</span>`)
 	} else if revision.Number == 1 {
 		output.WriteString(`<span>created page</span>`)
 	} else {

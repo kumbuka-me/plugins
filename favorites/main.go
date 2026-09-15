@@ -62,17 +62,29 @@ func renderSidebar(pages []sdk.Page, icon iconRenderer) string {
 	output.WriteString(`<p class="nav-label">Pinned</p>`)
 	star := icon("star-lucide", 14)
 	for _, page := range pages {
-		output.WriteString(`<a class="sidebar-shortcut-link" href="/pages/` + pagePath(page.Slug) + `" title="` + html.EscapeString(page.Title) + `">`)
+		output.WriteString(`<a class="sidebar-shortcut-link" href="/pages/`)
+		output.WriteString(pagePath(page.Slug))
+		output.WriteString(`" title="`)
+		output.WriteString(html.EscapeString(page.Title))
+		output.WriteString(`">`)
 		output.WriteString(star)
-		output.WriteString(`<span>` + html.EscapeString(page.Title) + `</span></a>`)
+		output.WriteString(`<span>`)
+		output.WriteString(html.EscapeString(page.Title))
+		output.WriteString(`</span></a>`)
 	}
 	return output.String()
 }
 
 func writeCompactRow(output *strings.Builder, page sdk.Page, icon iconRenderer) {
-	output.WriteString(`<a class="compact-row" href="/pages/` + pagePath(page.Slug) + `"><span>`)
+	output.WriteString(`<a class="compact-row" href="/pages/`)
+	output.WriteString(pagePath(page.Slug))
+	output.WriteString(`"><span>`)
 	output.WriteString(pageIcon(page, 15, icon))
-	output.WriteString(`</span><strong>` + html.EscapeString(page.Title) + `</strong><small>` + fmt.Sprintf("%d views", page.ViewCount) + `</small></a>`)
+	output.WriteString(`</span><strong>`)
+	output.WriteString(html.EscapeString(page.Title))
+	output.WriteString(`</strong><small>`)
+	fmt.Fprintf(output, "%d views", page.ViewCount)
+	output.WriteString(`</small></a>`)
 }
 
 func pageIcon(page sdk.Page, size int, icon iconRenderer) string {
