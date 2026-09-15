@@ -1,0 +1,18 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.favorites
+name: Favorites
+version: 1.0.0
+description: Show favorite pages on the dashboard and pinned pages in the sidebar.
+default_enabled: true
+modules:
+  - type: widget
+    id: home
+    surface: home
+    order: 30
+  - type: widget
+    id: sidebar
+    surface: sidebar
+    order: 10
+permissions:
+  - activity:read

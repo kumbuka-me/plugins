@@ -1,0 +1,14 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.popular-pages
+name: Popular Pages
+version: 1.0.0
+description: Show the most-viewed visible pages on the Home dashboard.
+default_enabled: true
+modules:
+  - type: widget
+    id: home
+    surface: home
+    order: 40
+permissions:
+  - pages:read

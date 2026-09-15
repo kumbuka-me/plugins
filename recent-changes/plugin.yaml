@@ -1,0 +1,15 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.recent-changes
+name: Recent Changes
+version: 1.0.0
+description: Show the newest visible pages on the Home dashboard.
+default_enabled: true
+modules:
+  - type: widget
+    id: home
+    surface: home
+    width: wide
+    order: 20
+permissions:
+  - pages:read
