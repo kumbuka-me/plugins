@@ -80,3 +80,7 @@ go work use ../kumbuka-sdk
 ```
 
 `go.work` and `go.work.sum` are ignored. Release builds use the SDK version pinned in `go.mod`.
+
+## License
+
+Kumuka is licensed under the [Apache License, Version 2.0](LICENSE).
