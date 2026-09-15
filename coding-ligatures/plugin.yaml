@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.coding-ligatures
 name: Coding Ligatures
-version: 1.0.1
+version: 1.0.2
 description: Show programming ligatures in rendered text and code.
 default_enabled: false
 modules:
@@ -11,5 +11,5 @@ modules:
     css: plugin.css
   - type: render-policy
     id: operators
-    policy: coding-ligatures
+    policy: preserve-programming-operators
 permissions: []

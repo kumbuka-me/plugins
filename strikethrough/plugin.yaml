@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.strikethrough
 name: Strikethrough
-version: 1.0.1
+version: 1.0.2
 description: Render GitHub-style strikethrough text.
 default_enabled: true
 modules:
@@ -11,4 +11,14 @@ modules:
     syntax: strikethrough
     usage:
       - contains: "~~"
+  - type: editor-insert
+    id: editor
+    name: Strikethrough
+    description: Wrap selected text in strikethrough markers.
+    markdown: "~~"
+    suffix: "~~"
+    placeholder: strikethrough text
+    mode: wrap
+    group: text
+    icon: strikethrough-lucide
 permissions: []

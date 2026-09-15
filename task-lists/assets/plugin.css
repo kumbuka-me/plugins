@@ -1,0 +1,11 @@
+.prose .task-list-item {
+  list-style: none;
+}
+
+.prose .task-list-checkbox {
+  margin-right: 0.45em;
+}
+
+.prose .task-list-checkbox.checked {
+  color: var(--accent);
+}

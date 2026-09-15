@@ -8,7 +8,7 @@ Strikethrough adds GitHub-style `~~text~~` syntax to Kumbuka Markdown.
 Deploy ~~Friday~~ Monday.
 ```
 
-When the plugin is disabled, the source remains ordinary Markdown text and the tildes are preserved.
+When the plugin is disabled, the source remains ordinary Markdown text and the tildes are preserved. The plugin also contributes the Strikethrough action to the editor's text-formatting toolbar.
 
 ## Permissions
 

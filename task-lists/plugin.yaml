@@ -2,15 +2,38 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.task-lists
 name: Task Lists
-version: 1.0.1
+version: 1.0.2
 description: Render Markdown task list items with visible checkbox state.
 default_enabled: true
 modules:
   - type: markdown-syntax
-    id: task-lists
+    id: grammar
     syntax: task-list
     usage:
       - contains: "[ ]"
       - contains: "[x]"
       - contains: "[X]"
+  - type: renderer-extension
+    id: presentation
+    stage: postprocess
+    usage:
+      - contains: "[ ]"
+      - contains: "[x]"
+      - contains: "[X]"
+  - type: content-style
+    id: presentation-style
+    css: plugin.css
+    usage:
+      - contains: "[ ]"
+      - contains: "[x]"
+      - contains: "[X]"
+  - type: editor-insert
+    id: editor
+    name: Task list
+    description: Prefix selected lines with task-list markers.
+    markdown: "- [ ] "
+    placeholder: task
+    mode: prefix-lines
+    group: blocks
+    icon: list-checks-lucide
 permissions: []

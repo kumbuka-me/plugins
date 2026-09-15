@@ -2,11 +2,11 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.typographer
 name: Typographer
-version: 1.0.1
+version: 1.0.2
 description: Convert common ASCII punctuation into typographic characters.
 default_enabled: false
 modules:
-  - type: render-policy
+  - type: renderer-extension
     id: typographer
-    policy: typographer
+    stage: postprocess
 permissions: []

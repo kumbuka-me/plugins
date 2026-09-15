@@ -6,7 +6,7 @@ Coding Ligatures shows common programming operator sequences as typographic liga
 
 Sequences such as `!=`, `===`, `=>`, `->`, `>=`, `<=`, `:=`, `&&`, and `||` use Fira Code ligatures when the plugin is enabled.
 
-When Kumbuka's **Typographer** Markdown extension is also enabled, Coding Ligatures preserves operator sequences such as `-->`, `<<`, and `>>` so they remain available to the font instead of being converted to punctuation.
+Coding Ligatures also declares the semantic `preserve-programming-operators` render policy. Typographer honors that policy when both plugins are enabled, so programming-oriented punctuation remains available to the ligature font instead of being converted first.
 
 ## Permissions
 

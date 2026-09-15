@@ -14,4 +14,4 @@ When **Coding Ligatures** is enabled as well, Kumbuka preserves programming-orie
 
 ## Permissions
 
-This plugin requests no Kumbuka capabilities. It activates Kumbuka's public `typographer` render policy.
+This plugin requests no Kumbuka capabilities. Its WASM module transforms rendered text before Kumbuka's central sanitizer. It leaves code blocks and inline code unchanged and honors the generic `preserve-programming-operators` render policy when another active plugin declares it.
