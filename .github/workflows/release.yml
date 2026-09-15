@@ -1,3 +1,4 @@
+---
 name: Release plugin
 
 on:
@@ -5,75 +6,150 @@ on:
     tags:
       - "*/v*"
 
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: Plugin name
+        required: true
+        type: string
+      version:
+        description: Plugin version without v prefix
+        required: true
+        type: string
+
 permissions:
   contents: write
 
 jobs:
   release:
+    name: Release plugin
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Resolve release
+        id: release
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_PLUGIN: ${{ inputs.plugin }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
 
-      - uses: actions/setup-go@v7
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            plugin="$INPUT_PLUGIN"
+            version="$INPUT_VERSION"
+            tag="$plugin/v$version"
+          else
+            tag="$REF_NAME"
+            plugin="${tag%%/v*}"
+            version="${tag#*/v}"
+          fi
+
+          if [[ -z "$plugin" || -z "$version" ]]; then
+            echo "Unable to resolve plugin release" >&2
+            exit 1
+          fi
+
+          if [[ "$tag" != "$plugin/v$version" ]]; then
+            echo "Invalid plugin tag: $tag" >&2
+            exit 1
+          fi
+
+          echo "plugin=$plugin" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.release.outputs.tag }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
 
-      - uses: actions/setup-node@v7
+      - name: Set up Node
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
 
-      - run: npm ci
+      - name: Install Node dependencies
+        run: npm ci
 
-      - name: Resolve plugin release
-        id: plugin
+      - name: Validate release
         shell: bash
+        env:
+          PLUGIN: ${{ steps.release.outputs.plugin }}
+          VERSION: ${{ steps.release.outputs.version }}
         run: |
           set -euo pipefail
 
-          tag="$GITHUB_REF_NAME"
-          plugin="${tag%%/v*}"
-          version="${tag#*/v}"
-
-          if [[ "$plugin" == "$tag" || -z "$plugin" || -z "$version" ]]; then
-            echo "Invalid plugin tag: $tag" >&2
+          if [[ ! -f "$PLUGIN/plugin.yaml" ]]; then
+            echo "Unknown plugin: $PLUGIN" >&2
             exit 1
           fi
 
-          if [[ ! -f "$plugin/plugin.yaml" ]]; then
-            echo "Unknown plugin: $plugin" >&2
+          manifest_version="$(./scripts/plugin-version.sh "$PLUGIN")"
+
+          if [[ "$VERSION" != "$manifest_version" ]]; then
+            echo "Tag version $VERSION does not match $PLUGIN/plugin.yaml ($manifest_version)" >&2
             exit 1
           fi
 
-          manifest_version="$(./scripts/plugin-version.sh "$plugin")"
-          if [[ "$version" != "$manifest_version" ]]; then
-            echo "Tag version $version does not match $plugin/plugin.yaml ($manifest_version)" >&2
-            exit 1
-          fi
+      - name: Test
+        run: make test
 
-          echo "name=$plugin" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - run: make test
-      - run: make lint
+      - name: Lint
+        run: make lint
 
       - name: Build plugin
-        run: make build-plugin PLUGIN="${{ steps.plugin.outputs.name }}"
+        env:
+          PLUGIN: ${{ steps.release.outputs.plugin }}
+        run: make build-plugin PLUGIN="$PLUGIN"
 
       - name: Create GitHub release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          PLUGIN: ${{ steps.release.outputs.plugin }}
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
         run: |
-          plugin="${{ steps.plugin.outputs.name }}"
-          version="${{ steps.plugin.outputs.version }}"
-          artifact="dist/$plugin-$version.kumbukaplugin"
+          set -euo pipefail
 
-          gh release create \
-            "$GITHUB_REF_NAME" \
-            "$artifact" \
-            "$artifact.sha256" \
-            --title "$plugin v$version" \
-            --notes "Kumbuka $plugin plugin v$version."
+          artifact="dist/$PLUGIN-$VERSION.kumbukaplugin"
+          checksum="$artifact.sha256"
+
+          if [[ ! -f "$artifact" ]]; then
+            echo "Missing artifact: $artifact" >&2
+            exit 1
+          fi
+
+          if [[ ! -f "$checksum" ]]; then
+            echo "Missing checksum: $checksum" >&2
+            exit 1
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; uploading artifacts"
+
+            gh release upload \
+              "$TAG" \
+              "$artifact" \
+              "$checksum" \
+              --clobber
+          else
+            gh release create \
+              "$TAG" \
+              "$artifact" \
+              "$checksum" \
+              --verify-tag \
+              --title "$PLUGIN v$VERSION" \
+              --notes "Kumbuka $PLUGIN plugin v$VERSION."
+          fi
