@@ -21,7 +21,7 @@ version=$(./scripts/plugin-version.sh "$plugin")
 rm -rf "$plugin/dist"
 (
   cd "$plugin"
-  "$root/bin/kumbuka-plugin" build
+  go tool github.com/kumbuka-me/sdk/cmd/kumbuka-plugin build
 )
 
 source="$plugin/dist/$name.kumbukaplugin"

@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.snippets
 name: Snippets
-version: 1.0.0
+version: 1.0.1
 description: Reusable Markdown blocks with editor completion.
 default_enabled: true
 modules:
