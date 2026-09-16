@@ -14,4 +14,3 @@ modules:
 permissions:
   - activity:read
   - drafts:read
-

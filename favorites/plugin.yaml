@@ -16,4 +16,3 @@ modules:
     order: 10
 permissions:
   - activity:read
-

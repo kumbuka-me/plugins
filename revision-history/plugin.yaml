@@ -11,4 +11,3 @@ modules:
     surface: page.details
 permissions:
   - pages:read
-

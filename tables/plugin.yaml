@@ -43,4 +43,3 @@ modules:
     description: Allow filterable tables to filter rows from each column header.
     requires: [tables]
 permissions: [browser:render]
-
