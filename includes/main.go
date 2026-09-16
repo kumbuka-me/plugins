@@ -15,6 +15,7 @@ const maxIncludeDepth = 5
 // main runs the package entry point.
 func main() {}
 
+// init registers the Includes content preprocessor with the Kumbuka plugin SDK.
 func init() { sdk.RegisterModule("includes", transform) }
 
 // pageLoader returns authorized page Markdown for one canonical path.
@@ -94,9 +95,13 @@ func expandLine(line string, load pageLoader, seen map[string]bool, depth int) (
 	return output.String(), nil
 }
 
+// includeMacro records the byte range and target of one parsed include expression.
 type includeMacro struct {
-	start  int
-	end    int
+	// start is the byte offset where the macro begins.
+	start int
+	// end is the byte offset immediately after the macro.
+	end int
+	// target is the requested page path with an optional heading fragment.
 	target string
 }
 

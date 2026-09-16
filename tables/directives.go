@@ -11,7 +11,17 @@ import (
 	xhtml "golang.org/x/net/html"
 )
 
-type tableOptions struct{ Tables, TableStyles, TableSorting, TableFiltering bool }
+// tableOptions contains the request-scoped table feature switches.
+type tableOptions struct {
+	// Tables enables table processing for the request.
+	Tables bool
+	// TableStyles enables trusted tone directives.
+	TableStyles bool
+	// TableSorting enables client-side sortable table markers.
+	TableSorting bool
+	// TableFiltering enables client-side filterable table markers.
+	TableFiltering bool
+}
 
 // tableStyle describes trusted presentation classes applied to one rendered table.
 type tableStyle struct {
@@ -254,8 +264,11 @@ func tableTone(value string) bool {
 
 // tableDirectiveWalker tracks the nearest table while applying rendered table markers.
 type tableDirectiveWalker struct {
-	options   tableOptions
-	markers   []*xhtml.Node
+	// options contains the request-scoped table feature switches.
+	options tableOptions
+	// markers contains directive marker nodes removed after processing.
+	markers []*xhtml.Node
+	// lastTable is the nearest preceding rendered table in document order.
 	lastTable *xhtml.Node
 }
 

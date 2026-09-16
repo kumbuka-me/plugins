@@ -9,13 +9,16 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 )
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init registers the Favorites home and sidebar widgets.
 func init() {
 	sdk.RegisterWidget("home", renderHomeWidget)
 	sdk.RegisterWidget("sidebar", renderSidebarWidget)
 }
 
+// renderHomeWidget loads favorite pages for the home dashboard surface.
 func renderHomeWidget(sdk.WidgetContext) (sdk.Result, error) {
 	pages, err := sdk.Pages().Favorites(100)
 	if err != nil {
@@ -24,6 +27,7 @@ func renderHomeWidget(sdk.WidgetContext) (sdk.Result, error) {
 	return sdk.Text(renderHome(pages, widgetui.HostIcon)), nil
 }
 
+// renderSidebarWidget loads favorite pages for the sidebar surface.
 func renderSidebarWidget(sdk.WidgetContext) (sdk.Result, error) {
 	pages, err := sdk.Pages().Favorites(100)
 	if err != nil {
@@ -35,6 +39,7 @@ func renderSidebarWidget(sdk.WidgetContext) (sdk.Result, error) {
 	return sdk.Text(renderSidebar(pages, widgetui.HostIcon)), nil
 }
 
+// renderHome renders the Favorites dashboard panel.
 func renderHome(pages []sdk.Page, icon widgetui.IconRenderer) string {
 	var output strings.Builder
 	output.WriteString(`<div class="panel-title"><h2 class="heading-with-icon">`)
@@ -50,6 +55,7 @@ func renderHome(pages []sdk.Page, icon widgetui.IconRenderer) string {
 	return output.String()
 }
 
+// renderSidebar renders pinned favorite links for the sidebar.
 func renderSidebar(pages []sdk.Page, icon widgetui.IconRenderer) string {
 	var output strings.Builder
 	output.WriteString(`<p class="nav-label">Pinned</p>`)
@@ -68,6 +74,7 @@ func renderSidebar(pages []sdk.Page, icon widgetui.IconRenderer) string {
 	return output.String()
 }
 
+// writeCompactRow appends one favorite page row to the home widget.
 func writeCompactRow(output *strings.Builder, page sdk.Page, icon widgetui.IconRenderer) {
 	output.WriteString(`<a class="compact-row" href="/pages/`)
 	output.WriteString(widgetui.PagePath(page.Slug))

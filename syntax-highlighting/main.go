@@ -23,8 +23,10 @@ var (
 	}()
 )
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init validates the configured Chroma style and registers the code highlighter.
 func init() {
 	if highlightStyle == nil {
 		panic("syntax highlighting style is unavailable")

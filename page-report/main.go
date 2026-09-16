@@ -9,6 +9,7 @@ import (
 // main runs the package entry point.
 func main() {}
 
+// init registers the Page Report macro with the Kumbuka plugin SDK.
 func init() { sdk.RegisterMacro("page-report", parse, renderMacro) }
 
 // pages adapts the Kumbuka page capability to the page-report feature interface.

@@ -13,6 +13,7 @@ var fence = regexp.MustCompile(`(?s)<pre><code class="language-mermaid">.*?</cod
 // main runs the package entry point.
 func main() {}
 
+// init registers the Mermaid postprocessor with the Kumbuka plugin SDK.
 func init() { sdk.RegisterModule("fences", transform) }
 
 // transform marks Mermaid code blocks for the browser-side renderer.

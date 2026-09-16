@@ -11,10 +11,13 @@ import (
 
 const relatedLimit = 6
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init registers the Related Pages page-details widget.
 func init() { sdk.RegisterWidget("page-details", renderWidget) }
 
+// renderWidget finds visible pages that share the current page's first tag.
 func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if context.Page == nil {
 		return sdk.Result{}, errors.New("related pages requires a page")
@@ -40,6 +43,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	return sdk.Text(renderRelated(filtered)), nil
 }
 
+// renderRelated renders related-page links or an empty state.
 func renderRelated(pages []sdk.Page) string {
 	var output strings.Builder
 	output.WriteString("<h2>Related pages</h2>")

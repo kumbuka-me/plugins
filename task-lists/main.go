@@ -6,10 +6,13 @@ import (
 	xhtml "golang.org/x/net/html"
 )
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init registers the Task Lists presentation postprocessor.
 func init() { sdk.RegisterModule("presentation", transform) }
 
+// transform converts rendered task-list checkboxes into the plugin's inert presentation markup.
 func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Module != "presentation" || request.Stage != "postprocess" {
 		return sdk.RenderResult{Error: "unsupported task-list render request"}
@@ -47,6 +50,7 @@ func walkTaskList(node *xhtml.Node) {
 	}
 }
 
+// isTaskCheckbox reports whether a node is a disabled checkbox directly inside a list item.
 func isTaskCheckbox(node *xhtml.Node) bool {
 	if node.Type != xhtml.ElementNode || node.DataAtom != atom.Input || node.Parent == nil || node.Parent.DataAtom != atom.Li {
 		return false
@@ -54,6 +58,7 @@ func isTaskCheckbox(node *xhtml.Node) bool {
 	return strings.EqualFold(htmlutil.Attribute(node, "type"), "checkbox") && htmlutil.HasAttribute(node, "disabled")
 }
 
+// replaceTaskCheckbox replaces one disabled input with an accessible inert checkbox marker.
 func replaceTaskCheckbox(node *xhtml.Node) {
 	checked := htmlutil.HasAttribute(node, "checked")
 	className := "task-list-checkbox"

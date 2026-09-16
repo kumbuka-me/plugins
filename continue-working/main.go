@@ -9,10 +9,13 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 )
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init registers the Continue Working home widget.
 func init() { sdk.RegisterWidget("home", renderWidget) }
 
+// renderWidget loads the current viewer's drafts and recent edits for the home widget.
 func renderWidget(sdk.WidgetContext) (sdk.Result, error) {
 	drafts, err := sdk.Drafts().List(6)
 	if err != nil {
@@ -25,6 +28,7 @@ func renderWidget(sdk.WidgetContext) (sdk.Result, error) {
 	return sdk.Text(renderContinueWorking(drafts, edits, time.Now(), widgetui.HostIcon)), nil
 }
 
+// renderContinueWorking renders the two-column drafts and recent-edits widget body.
 func renderContinueWorking(drafts []sdk.PageDraft, edits []sdk.RecentEdit, now time.Time, icon widgetui.IconRenderer) string {
 	var output strings.Builder
 	output.WriteString(`<div class="panel-title"><h2 class="heading-with-icon">`)
@@ -49,6 +53,7 @@ func renderContinueWorking(drafts []sdk.PageDraft, edits []sdk.RecentEdit, now t
 	return output.String()
 }
 
+// writeDraft appends one private draft entry to the widget markup.
 func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, icon widgetui.IconRenderer) {
 	title := draft.Title
 	if title == "" {
@@ -72,6 +77,7 @@ func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, ico
 	output.WriteString(`</small></span></a>`)
 }
 
+// writeEdit appends one recently edited page entry to the widget markup.
 func writeEdit(output *strings.Builder, edit sdk.RecentEdit, now time.Time, icon widgetui.IconRenderer) {
 	output.WriteString(`<a class="widget-item" href="/edit/`)
 	output.WriteString(widgetui.PagePath(edit.Slug))

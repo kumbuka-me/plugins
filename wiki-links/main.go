@@ -10,10 +10,13 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 )
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init registers the Wiki Links page-details widget.
 func init() { sdk.RegisterWidget("page-details", renderWidget) }
 
+// renderWidget loads incoming and outgoing wiki-link relationships for the current page.
 func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if context.Page == nil {
 		return sdk.Result{}, errors.New("wiki links requires a page")
@@ -26,6 +29,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	return sdk.Text(renderLinks(links)), nil
 }
 
+// renderLinks renders backlink and outgoing-link sections, including missing destinations.
 func renderLinks(links sdk.PageLinks) string {
 	var output strings.Builder
 	output.WriteString("<h2>Referenced by</h2>")
@@ -70,6 +74,7 @@ func renderLinks(links sdk.PageLinks) string {
 	return output.String()
 }
 
+// writePageRow appends one resolved backlink row to the widget markup.
 func writePageRow(output *strings.Builder, page sdk.Page) {
 	output.WriteString(`<a class="widget-row" href="/pages/`)
 	output.WriteString(widgetui.PagePath(page.Slug))

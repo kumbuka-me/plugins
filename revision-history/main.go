@@ -10,10 +10,13 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 )
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init registers the Revision History page-details widget.
 func init() { sdk.RegisterWidget("page-details", renderWidget) }
 
+// renderWidget loads the latest revision and exposes the full-history action when available.
 func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if context.Page == nil {
 		return sdk.Result{}, errors.New("revision history requires a page")
@@ -36,6 +39,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	return result, nil
 }
 
+// renderRevision renders the latest revision metadata and diff summary.
 func renderRevision(history sdk.RevisionHistory) string {
 	var output strings.Builder
 	output.WriteString("<h2>Revision history</h2>")

@@ -12,10 +12,13 @@ import (
 
 const preserveOperatorsPolicy = "preserve-programming-operators"
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init registers the Typographer postprocessor with the Kumbuka plugin SDK.
 func init() { sdk.RegisterModule("typographer", transform) }
 
+// transform applies typographic substitutions to rendered HTML while honoring render policies.
 func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Module != "typographer" || request.Stage != "postprocess" {
 		return sdk.RenderResult{Error: "unsupported typographer render request"}
@@ -28,12 +31,17 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	return sdk.RenderResult{Parts: []sdk.RenderPart{{Text: output}}}
 }
 
+// quoteState tracks surrounding output and nesting depth for smart quotation marks.
 type quoteState struct {
+	// previous is the most recently emitted rune.
 	previous rune
-	single   int
-	double   int
+	// single is the current single-quote nesting depth.
+	single int
+	// double is the current double-quote nesting depth.
+	double int
 }
 
+// typographHTML tokenizes rendered HTML and transforms eligible text nodes without touching code-like elements.
 func typographHTML(source string, preserveOperators bool) (string, error) {
 	tokenizer := xhtml.NewTokenizer(strings.NewReader(source))
 	state := &quoteState{}
@@ -95,6 +103,7 @@ func typographHTML(source string, preserveOperators bool) (string, error) {
 	}
 }
 
+// writeHTMLText escapes transformed text before writing it back into rendered HTML.
 func writeHTMLText(output *strings.Builder, text string) {
 	for _, value := range text {
 		switch value {
@@ -110,6 +119,7 @@ func writeHTMLText(output *strings.Builder, text string) {
 	}
 }
 
+// skipTypography reports whether text below an HTML element must remain literal.
 func skipTypography(tag atom.Atom) bool {
 	switch tag {
 	case atom.Code, atom.Pre, atom.Kbd, atom.Samp, atom.Script, atom.Style:
@@ -119,6 +129,7 @@ func skipTypography(tag atom.Atom) bool {
 	}
 }
 
+// blockBoundary reports whether an HTML element resets smart-quote context.
 func blockBoundary(tag atom.Atom) bool {
 	switch tag {
 	case atom.P, atom.Li, atom.Blockquote, atom.H1, atom.H2, atom.H3, atom.H4, atom.H5, atom.H6, atom.Td, atom.Th:
@@ -128,6 +139,7 @@ func blockBoundary(tag atom.Atom) bool {
 	}
 }
 
+// typographText applies punctuation and smart-quote substitutions to one text node.
 func typographText(text string, state *quoteState, preserveOperators bool) string {
 	runes := []rune(text)
 	var output strings.Builder
@@ -176,6 +188,7 @@ func typographText(text string, state *quoteState, preserveOperators bool) strin
 	return output.String()
 }
 
+// smartSingleQuote chooses an opening quote, closing quote, or apostrophe for one single-quote character.
 func smartSingleQuote(previous, next rune, state *quoteState) rune {
 	if isAlphaNumeric(previous) && unicode.IsLetter(next) {
 		return '’'
@@ -193,6 +206,7 @@ func smartSingleQuote(previous, next rune, state *quoteState) rune {
 	return '’'
 }
 
+// smartDoubleQuote chooses an opening or closing double-quote character from the current quote state.
 func smartDoubleQuote(previous, next rune, state *quoteState) rune {
 	if openingQuoteContext(previous, next, state.double) {
 		state.double++
@@ -204,6 +218,7 @@ func smartDoubleQuote(previous, next rune, state *quoteState) rune {
 	return '”'
 }
 
+// openingQuoteContext reports whether surrounding text indicates the start of a quoted span.
 func openingQuoteContext(previous, next rune, depth int) bool {
 	if !openingContext(previous) {
 		return false
@@ -214,18 +229,22 @@ func openingQuoteContext(previous, next rune, depth int) bool {
 	return !closingContext(next)
 }
 
+// openingContext reports whether a rune can precede an opening quotation mark.
 func openingContext(value rune) bool {
 	return value == 0 || unicode.IsSpace(value) || unicode.IsPunct(value)
 }
 
+// closingContext reports whether a rune ends or separates quoted text.
 func closingContext(value rune) bool {
 	return value == 0 || unicode.IsSpace(value)
 }
 
+// isAlphaNumeric reports whether a rune is a Unicode letter or digit.
 func isAlphaNumeric(value rune) bool {
 	return unicode.IsLetter(value) || unicode.IsDigit(value)
 }
 
+// isApostrophePrefix reports whether a rune begins a supported leading-apostrophe contraction.
 func isApostrophePrefix(value rune) bool {
 	switch unicode.ToLower(value) {
 	case 't', 'e', 'n', 'l':
@@ -235,11 +254,13 @@ func isApostrophePrefix(value rune) bool {
 	}
 }
 
+// writeRune appends one rune and records it as the previous output character.
 func writeRune(output *strings.Builder, state *quoteState, value rune) {
 	output.WriteRune(value)
 	state.previous = value
 }
 
+// hasRunes reports whether the source contains the requested rune sequence at an offset.
 func hasRunes(source []rune, offset int, values ...rune) bool {
 	if offset+len(values) > len(source) {
 		return false

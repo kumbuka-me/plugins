@@ -11,28 +11,43 @@ import (
 	simpleicons "github.com/go-icons/simple-icons"
 )
 
+// resource is the generated versioned icon catalog written to assets/icons.json.
 type resource struct {
-	Format int    `json:"format"`
-	Icons  []icon `json:"icons"`
+	// Format identifies the Kumbuka icon-resource JSON format version.
+	Format int `json:"format"`
+	// Icons contains every generated Simple Icons record.
+	Icons []icon `json:"icons"`
 }
 
+// icon is one normalized Simple Icons record emitted for the host icon catalog.
 type icon struct {
-	Name    string   `json:"name"`
-	Label   string   `json:"label"`
-	ViewBox string   `json:"view_box"`
-	Paths   []string `json:"paths"`
+	// Name is the Kumbuka icon identifier with the -simple suffix.
+	Name string `json:"name"`
+	// Label is the human-readable upstream icon title.
+	Label string `json:"label"`
+	// ViewBox is the normalized SVG view box.
+	ViewBox string `json:"view_box"`
+	// Paths contains the SVG path data rendered by the host.
+	Paths []string `json:"paths"`
 }
 
+// svgDocument is the minimal upstream SVG structure required by the generator.
 type svgDocument struct {
-	ViewBox string    `xml:"viewBox,attr"`
-	Title   string    `xml:"title"`
-	Paths   []svgPath `xml:"path"`
+	// ViewBox contains the source SVG coordinate system.
+	ViewBox string `xml:"viewBox,attr"`
+	// Title contains the upstream human-readable icon name.
+	Title string `xml:"title"`
+	// Paths contains every source SVG path element.
+	Paths []svgPath `xml:"path"`
 }
 
+// svgPath contains one SVG path data attribute from the upstream icon.
 type svgPath struct {
+	// Data is the SVG path d attribute.
 	Data string `xml:"d,attr"`
 }
 
+// main generates the bounded Simple Icons resource consumed by the plugin package.
 func main() {
 	icons := make([]icon, 0, len(simpleicons.Names()))
 	for _, name := range simpleicons.Names() {
@@ -58,6 +73,7 @@ func main() {
 	}
 }
 
+// parse converts one upstream Simple Icons SVG document into a Kumbuka icon record.
 func parse(name, source string) (icon, error) {
 	var document svgDocument
 	if err := xml.Unmarshal([]byte(source), &document); err != nil {

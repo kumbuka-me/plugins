@@ -7,6 +7,7 @@ import (
 // main runs the package entry point.
 func main() {}
 
+// init registers the Details renderer with the Kumbuka plugin SDK.
 func init() { sdk.RegisterModule("details", transform) }
 
 // transform converts collapsible detail blocks before the core Markdown parser runs.

@@ -6,8 +6,13 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 )
 
+// main provides the WASI plugin entry point.
 func main() {}
+
+// init registers the Subpages macro with the Kumbuka plugin SDK.
 func init() { sdk.RegisterMacro("subpages", parse, renderMacro) }
+
+// renderMacro loads navigation data and renders one parsed Subpages invocation.
 func renderMacro(options macroOptions) (sdk.Result, error) {
 	nodes, err := sdk.Pages().Navigation()
 	if err != nil {

@@ -8,12 +8,16 @@ import (
 	xhtml "golang.org/x/net/html"
 )
 
+// main provides the WASI plugin entry point.
 func main() {}
 
+// init registers the Tables preprocess and postprocess modules.
 func init() {
 	sdk.RegisterModule("directives", transform)
 	sdk.RegisterModule("presentation", transform)
 }
+
+// transform applies request-scoped table directives and presentation wrapping for the active stage.
 func transform(request sdk.RenderRequest) sdk.RenderResult {
 	options := tableOptionsFromFeatures(request.Features)
 

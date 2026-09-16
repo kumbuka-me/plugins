@@ -12,6 +12,8 @@ import (
 
 // main runs the package entry point.
 func main() {}
+
+// init registers the callout renderer with the Kumbuka plugin SDK.
 func init() { sdk.RegisterModule("callouts", transform) }
 
 // transform converts supported callout blocks into intermediate HTML fragments.

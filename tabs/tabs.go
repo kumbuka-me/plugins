@@ -11,8 +11,10 @@ import (
 
 // tabSection contains one parsed tab label and its de-indented Markdown body.
 type tabSection struct {
+	// title is the human-readable label shown by the tab button.
 	title string
-	body  string
+	// body is the de-indented Markdown rendered inside the tab panel.
+	body string
 }
 
 // transformTabs replaces top-level tab groups while keeping each panel body as

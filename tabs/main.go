@@ -7,6 +7,7 @@ import (
 // main runs the package entry point.
 func main() {}
 
+// init registers the Tabs renderer with the Kumbuka plugin SDK.
 func init() { sdk.RegisterModule("tabs", transform) }
 
 // transform converts Material-style tab groups before the core Markdown parser runs.
