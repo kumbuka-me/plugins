@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.tabs
 name: Tabs
-version: 1.0.1
+version: 1.0.2
 description: Render Material-style tab groups with Markdown content.
 default_enabled: true
 modules:
@@ -12,3 +12,4 @@ modules:
     usage:
       - contains: '=== "'
 permissions: []
+

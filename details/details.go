@@ -2,9 +2,9 @@ package main
 
 import (
 	stdhtml "html"
-	"strconv"
 	"strings"
 
+	"github.com/kumbuka-me/kumbuka-plugins/internal/markdownblock"
 	sdk "github.com/kumbuka-me/sdk"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
@@ -20,7 +20,7 @@ func transformDetails(source string) []sdk.RenderPart {
 		if len(plain) == 0 {
 			return
 		}
-		appendText(&parts, strings.Join(plain, "\n"))
+		markdownblock.AppendText(&parts, strings.Join(plain, "\n"))
 		plain = plain[:0]
 	}
 
@@ -37,17 +37,17 @@ func transformDetails(source string) []sdk.RenderPart {
 			continue
 		}
 
-		bodyLines, next := indentedBody(lines, index+1)
+		bodyLines, next := markdownblock.IndentedBody(lines, index+1)
 		flushPlain()
 
 		openAttribute := ""
 		if open {
 			openAttribute = " open"
 		}
-		appendText(&parts, "\n<details class=\"markdown-details\""+openAttribute+`><summary>`+stdhtml.EscapeString(title)+`</summary><div class="markdown-details-body">`)
+		markdownblock.AppendText(&parts, "\n<details class=\"markdown-details\""+openAttribute+`><summary>`+stdhtml.EscapeString(title)+`</summary><div class="markdown-details-body">`)
 		body := strings.Join(bodyLines, "\n")
 		parts = append(parts, sdk.RenderPart{Markdown: &body})
-		appendText(&parts, "</div></details>\n")
+		markdownblock.AppendText(&parts, "</div></details>\n")
 		index = next
 	}
 
@@ -60,17 +60,6 @@ func transformDetails(source string) []sdk.RenderPart {
 }
 
 // appendText appends literal output and coalesces adjacent text fragments.
-func appendText(parts *[]sdk.RenderPart, text string) {
-	if text == "" {
-		return
-	}
-	if len(*parts) != 0 && (*parts)[len(*parts)-1].Markdown == nil {
-		(*parts)[len(*parts)-1].Text += text
-		return
-	}
-	*parts = append(*parts, sdk.RenderPart{Text: text})
-}
-
 // parseDetailsTitle parses ??? and ???+ declarations.
 func parseDetailsTitle(line string) (title string, open bool, ok bool) {
 	if strings.TrimLeft(line, " \t") != line {
@@ -87,54 +76,10 @@ func parseDetailsTitle(line string) (title string, open bool, ok bool) {
 		}
 	}
 
-	title, ok = parseQuotedTitle(strings.TrimSpace(remaining))
+	title, ok = markdownblock.ParseQuotedTitle(strings.TrimSpace(remaining))
 	return title, open, ok
 }
 
 // parseQuotedTitle parses one non-empty Go-style quoted title.
-func parseQuotedTitle(value string) (string, bool) {
-	if len(value) < 2 || value[0] != '"' || value[len(value)-1] != '"' {
-		return "", false
-	}
-
-	title, err := strconv.Unquote(value)
-	if err != nil || strings.TrimSpace(title) == "" {
-		return "", false
-	}
-
-	return title, true
-}
-
 // indentedBody collects blank and four-space- or tab-indented body lines.
-func indentedBody(lines []string, start int) ([]string, int) {
-	body := make([]string, 0)
-	index := start
-
-	for index < len(lines) {
-		if strings.TrimSpace(lines[index]) == "" {
-			body = append(body, "")
-			index++
-			continue
-		}
-
-		line, ok := stripBlockIndent(lines[index])
-		if !ok {
-			break
-		}
-		body = append(body, line)
-		index++
-	}
-
-	return body, index
-}
-
 // stripBlockIndent removes one supported custom-block indentation level.
-func stripBlockIndent(line string) (string, bool) {
-	if content, ok := strings.CutPrefix(line, "\t"); ok {
-		return content, true
-	}
-	if content, ok := strings.CutPrefix(line, "    "); ok {
-		return content, true
-	}
-	return "", false
-}

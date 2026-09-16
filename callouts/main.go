@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	sdk "github.com/kumbuka-me/sdk"
+	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
 
 // main runs the package entry point.
@@ -21,11 +22,11 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	lines := strings.Split(request.Source, "\n")
 	var output fragments
 	for index := 0; index < len(lines); index++ {
-		if marker := openingFence(lines[index]); marker != "" {
+		if marker := pluginmarkdown.Fence(lines[index]); marker != "" {
 			output.line(lines[index])
 			for index++; index < len(lines); index++ {
 				output.line(lines[index])
-				if closesFence(lines[index], marker) {
+				if pluginmarkdown.Closes(lines[index], marker) {
 					break
 				}
 			}
@@ -107,24 +108,5 @@ func (f *fragments) flush() {
 }
 
 // openingFence recognizes an opening Markdown fence and returns its marker.
-func openingFence(line string) string {
-	line = strings.TrimSpace(line)
-	for _, delimiter := range []string{"`", "~"} {
-		length := len(line) - len(strings.TrimLeft(line, delimiter))
-		if length >= 3 && validFenceInfo(delimiter, line[length:]) {
-			return line[:length]
-		}
-	}
-	return ""
-}
-
 // validFenceInfo validates the optional info string on a fenced code block.
-func validFenceInfo(delimiter, info string) bool {
-	return delimiter != "`" || !strings.ContainsRune(info, '`')
-}
-
 // closesFence reports whether a line closes the active Markdown fence.
-func closesFence(line, marker string) bool {
-	line = strings.TrimSpace(line)
-	return strings.HasPrefix(line, marker) && strings.Trim(line, string(marker[0])) == ""
-}
