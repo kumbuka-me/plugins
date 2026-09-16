@@ -17,4 +17,3 @@ require (
 )
 
 tool github.com/kumbuka-me/sdk/cmd/kumbuka-plugin
-
