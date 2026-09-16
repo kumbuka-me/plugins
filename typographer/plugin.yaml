@@ -10,4 +10,3 @@ modules:
     id: typographer
     stage: postprocess
 permissions: []
-

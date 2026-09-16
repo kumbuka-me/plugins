@@ -11,4 +11,3 @@ modules:
     usage:
       - macro: subpages
 permissions: [pages:read]
-

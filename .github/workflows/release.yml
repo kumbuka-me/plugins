@@ -163,4 +163,3 @@ jobs:
               --title "$PLUGIN v$VERSION" \
               --notes "Kumbuka $PLUGIN plugin v$VERSION."
           fi
-

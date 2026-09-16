@@ -12,4 +12,3 @@ modules:
     usage:
       - macro: pages
 permissions: [pages:read]
-

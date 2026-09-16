@@ -16,4 +16,3 @@ modules:
     javascript: plugin.js
     css: plugin.css
 permissions: [browser:render]
-
