@@ -19,4 +19,3 @@ modules:
     order: 50
 permissions:
   - pages:read
-

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"html"
 	"strings"
 
 	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
@@ -50,7 +48,7 @@ func renderHome(pages []sdk.Page, icon widgetui.IconRenderer) string {
 		return output.String()
 	}
 	for _, page := range pages {
-		writeCompactRow(&output, page, icon)
+		widgetui.WriteCompactPageRow(&output, page, icon)
 	}
 	return output.String()
 }
@@ -61,28 +59,7 @@ func renderSidebar(pages []sdk.Page, icon widgetui.IconRenderer) string {
 	output.WriteString(`<p class="nav-label">Pinned</p>`)
 	star := icon("star-lucide", 14)
 	for _, page := range pages {
-		output.WriteString(`<a class="sidebar-shortcut-link" href="/pages/`)
-		output.WriteString(widgetui.PagePath(page.Slug))
-		output.WriteString(`" title="`)
-		output.WriteString(html.EscapeString(page.Title))
-		output.WriteString(`">`)
-		output.WriteString(star)
-		output.WriteString(`<span>`)
-		output.WriteString(html.EscapeString(page.Title))
-		output.WriteString(`</span></a>`)
+		widgetui.WriteSidebarShortcut(&output, page, star)
 	}
 	return output.String()
-}
-
-// writeCompactRow appends one favorite page row to the home widget.
-func writeCompactRow(output *strings.Builder, page sdk.Page, icon widgetui.IconRenderer) {
-	output.WriteString(`<a class="compact-row" href="/pages/`)
-	output.WriteString(widgetui.PagePath(page.Slug))
-	output.WriteString(`"><span>`)
-	output.WriteString(widgetui.PageIcon(page, 15, icon))
-	output.WriteString(`</span><strong>`)
-	output.WriteString(html.EscapeString(page.Title))
-	output.WriteString(`</strong><small>`)
-	fmt.Fprintf(output, "%d views", page.ViewCount)
-	output.WriteString(`</small></a>`)
 }

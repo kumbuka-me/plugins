@@ -1,7 +1,6 @@
 package main
 
 import (
-	"html"
 	"strings"
 	"time"
 
@@ -59,7 +58,7 @@ func renderHome(pages []sdk.Page, now time.Time, icon widgetui.IconRenderer) str
 		return output.String()
 	}
 	for _, page := range pages {
-		writePageRow(&output, page, now, icon)
+		widgetui.WritePageRow(&output, page, now, icon)
 	}
 	return output.String()
 }
@@ -70,15 +69,7 @@ func renderSidebar(pages []sdk.Page, icon widgetui.IconRenderer) string {
 	output.WriteString(`<p class="nav-label">Recently viewed</p>`)
 	history := icon("history-lucide", 14)
 	for _, page := range pages {
-		output.WriteString(`<a class="sidebar-shortcut-link" href="/pages/`)
-		output.WriteString(widgetui.PagePath(page.Slug))
-		output.WriteString(`" title="`)
-		output.WriteString(html.EscapeString(page.Title))
-		output.WriteString(`">`)
-		output.WriteString(history)
-		output.WriteString(`<span>`)
-		output.WriteString(html.EscapeString(page.Title))
-		output.WriteString(`</span></a>`)
+		widgetui.WriteSidebarShortcut(&output, page, history)
 	}
 	return output.String()
 }
@@ -100,23 +91,4 @@ func withoutFavorites(pages, favorites []sdk.Page, limit int) []sdk.Page {
 		}
 	}
 	return result
-}
-
-// writePageRow appends one recently viewed page row to the home widget.
-func writePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon widgetui.IconRenderer) {
-	output.WriteString(`<a class="page-row" href="/pages/`)
-	output.WriteString(widgetui.PagePath(page.Slug))
-	output.WriteString(`"><span class="doc-icon">`)
-	output.WriteString(widgetui.PageIcon(page, 17, icon))
-	output.WriteString(`</span><span><strong>`)
-	output.WriteString(html.EscapeString(page.Title))
-	output.WriteString(`</strong><small>`)
-	output.WriteString(html.EscapeString(page.Slug))
-	if len(page.Tags) != 0 {
-		output.WriteString(` · `)
-		output.WriteString(html.EscapeString(strings.Join(page.Tags, ", ")))
-	}
-	output.WriteString(`</small></span><time>`)
-	output.WriteString(widgetui.RelativeTime(page.UpdatedAt, now))
-	output.WriteString(`</time></a>`)
 }

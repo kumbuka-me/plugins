@@ -1,7 +1,6 @@
 package main
 
 import (
-	"html"
 	"strings"
 	"time"
 
@@ -33,26 +32,7 @@ func renderRecent(pages []sdk.Page, now time.Time, icon widgetui.IconRenderer) s
 		return output.String()
 	}
 	for _, page := range pages {
-		writePageRow(&output, page, now, icon)
+		widgetui.WritePageRow(&output, page, now, icon)
 	}
 	return output.String()
-}
-
-// writePageRow appends one recent page entry to the widget markup.
-func writePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon widgetui.IconRenderer) {
-	output.WriteString(`<a class="page-row" href="/pages/`)
-	output.WriteString(widgetui.PagePath(page.Slug))
-	output.WriteString(`"><span class="doc-icon">`)
-	output.WriteString(widgetui.PageIcon(page, 17, icon))
-	output.WriteString(`</span><span><strong>`)
-	output.WriteString(html.EscapeString(page.Title))
-	output.WriteString(`</strong><small>`)
-	output.WriteString(html.EscapeString(page.Slug))
-	if len(page.Tags) != 0 {
-		output.WriteString(` · `)
-		output.WriteString(html.EscapeString(strings.Join(page.Tags, ", ")))
-	}
-	output.WriteString(`</small></span><time>`)
-	output.WriteString(widgetui.RelativeTime(page.UpdatedAt, now))
-	output.WriteString(`</time></a>`)
 }

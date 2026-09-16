@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"html"
 	"strings"
 
 	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
@@ -33,15 +31,7 @@ func renderPopular(pages []sdk.Page, icon widgetui.IconRenderer) string {
 		return output.String()
 	}
 	for _, page := range pages {
-		output.WriteString(`<a class="compact-row" href="/pages/`)
-		output.WriteString(widgetui.PagePath(page.Slug))
-		output.WriteString(`"><span>`)
-		output.WriteString(widgetui.PageIcon(page, 15, icon))
-		output.WriteString(`</span><strong>`)
-		output.WriteString(html.EscapeString(page.Title))
-		output.WriteString(`</strong><small>`)
-		fmt.Fprintf(&output, "%d views", page.ViewCount)
-		output.WriteString(`</small></a>`)
+		widgetui.WriteCompactPageRow(&output, page, icon)
 	}
 	return output.String()
 }

@@ -3,6 +3,7 @@ package widgetui
 
 import (
 	"fmt"
+	"html"
 	"net/url"
 	"strings"
 	"time"
@@ -58,4 +59,49 @@ func RelativeTime(value, now time.Time) string {
 	default:
 		return fmt.Sprintf("%dd ago", int(delta/(24*time.Hour)))
 	}
+}
+
+// WritePageRow appends the standard timestamped page row used by dashboard widgets.
+func WritePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon IconRenderer) {
+	output.WriteString(`<a class="page-row" href="/pages/`)
+	output.WriteString(PagePath(page.Slug))
+	output.WriteString(`"><span class="doc-icon">`)
+	output.WriteString(PageIcon(page, 17, icon))
+	output.WriteString(`</span><span><strong>`)
+	output.WriteString(html.EscapeString(page.Title))
+	output.WriteString(`</strong><small>`)
+	output.WriteString(html.EscapeString(page.Slug))
+	if len(page.Tags) != 0 {
+		output.WriteString(` · `)
+		output.WriteString(html.EscapeString(strings.Join(page.Tags, ", ")))
+	}
+	output.WriteString(`</small></span><time>`)
+	output.WriteString(RelativeTime(page.UpdatedAt, now))
+	output.WriteString(`</time></a>`)
+}
+
+// WriteCompactPageRow appends the standard compact page row with its view count.
+func WriteCompactPageRow(output *strings.Builder, page sdk.Page, icon IconRenderer) {
+	output.WriteString(`<a class="compact-row" href="/pages/`)
+	output.WriteString(PagePath(page.Slug))
+	output.WriteString(`"><span>`)
+	output.WriteString(PageIcon(page, 15, icon))
+	output.WriteString(`</span><strong>`)
+	output.WriteString(html.EscapeString(page.Title))
+	output.WriteString(`</strong><small>`)
+	fmt.Fprintf(output, "%d views", page.ViewCount)
+	output.WriteString(`</small></a>`)
+}
+
+// WriteSidebarShortcut appends one escaped sidebar shortcut with a pre-rendered icon.
+func WriteSidebarShortcut(output *strings.Builder, page sdk.Page, icon string) {
+	output.WriteString(`<a class="sidebar-shortcut-link" href="/pages/`)
+	output.WriteString(PagePath(page.Slug))
+	output.WriteString(`" title="`)
+	output.WriteString(html.EscapeString(page.Title))
+	output.WriteString(`">`)
+	output.WriteString(icon)
+	output.WriteString(`<span>`)
+	output.WriteString(html.EscapeString(page.Title))
+	output.WriteString(`</span></a>`)
 }
