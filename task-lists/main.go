@@ -1,9 +1,12 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/kumbuka-me/kumbuka-plugins/internal/htmlutil"
 	sdk "github.com/kumbuka-me/sdk"
 	xhtml "golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 // main provides the WASI plugin entry point.
