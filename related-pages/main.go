@@ -3,9 +3,9 @@ package main
 import (
 	"errors"
 	"html"
-	"net/url"
 	"strings"
 
+	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -50,7 +50,7 @@ func renderRelated(pages []sdk.Page) string {
 	output.WriteString(`<div class="widget-list">`)
 	for _, page := range pages {
 		output.WriteString(`<a class="widget-row" href="/pages/`)
-		output.WriteString(pagePath(page.Slug))
+		output.WriteString(widgetui.PagePath(page.Slug))
 		output.WriteString(`"><strong>`)
 		output.WriteString(html.EscapeString(page.Title))
 		output.WriteString(`</strong><span class="widget-meta">`)
@@ -59,12 +59,4 @@ func renderRelated(pages []sdk.Page) string {
 	}
 	output.WriteString("</div>")
 	return output.String()
-}
-
-func pagePath(slug string) string {
-	parts := strings.Split(slug, "/")
-	for index := range parts {
-		parts[index] = url.PathEscape(parts[index])
-	}
-	return strings.Join(parts, "/")
 }

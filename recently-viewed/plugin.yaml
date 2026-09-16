@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.recently-viewed
 name: Recently Viewed
-version: 1.0.2
+version: 1.0.3
 description: Show pages recently viewed by the current user on Home and in the sidebar.
 default_enabled: true
 modules:
@@ -17,3 +17,4 @@ modules:
     order: 20
 permissions:
   - activity:read
+

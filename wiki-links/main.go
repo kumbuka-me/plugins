@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -50,7 +51,7 @@ func renderLinks(links sdk.PageLinks) string {
 					title = link.TargetSlug
 				}
 				output.WriteString(`<a class="widget-row" href="/pages/`)
-				output.WriteString(pagePath(link.TargetSlug))
+				output.WriteString(widgetui.PagePath(link.TargetSlug))
 				output.WriteString(`"><strong>`)
 				output.WriteString(html.EscapeString(title))
 				output.WriteString(`</strong><span class="widget-meta">`)
@@ -71,18 +72,10 @@ func renderLinks(links sdk.PageLinks) string {
 
 func writePageRow(output *strings.Builder, page sdk.Page) {
 	output.WriteString(`<a class="widget-row" href="/pages/`)
-	output.WriteString(pagePath(page.Slug))
+	output.WriteString(widgetui.PagePath(page.Slug))
 	output.WriteString(`"><strong>`)
 	output.WriteString(html.EscapeString(page.Title))
 	output.WriteString(`</strong><span class="widget-meta">`)
 	output.WriteString(html.EscapeString(page.Slug))
 	output.WriteString(`</span></a>`)
-}
-
-func pagePath(slug string) string {
-	parts := strings.Split(slug, "/")
-	for index := range parts {
-		parts[index] = url.PathEscape(parts[index])
-	}
-	return strings.Join(parts, "/")
 }

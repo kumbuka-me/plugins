@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.favorites
 name: Favorites
-version: 1.0.2
+version: 1.0.3
 description: Show favorite pages on the dashboard and pinned pages in the sidebar.
 default_enabled: true
 modules:
@@ -16,3 +16,4 @@ modules:
     order: 10
 permissions:
   - activity:read
+

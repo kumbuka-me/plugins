@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.revision-history
 name: Revision History
-version: 1.0.0
+version: 1.0.1
 description: Show recent revision metadata and open full history from page details.
 default_enabled: true
 modules:
@@ -11,3 +11,4 @@ modules:
     surface: page.details
 permissions:
   - pages:read
+

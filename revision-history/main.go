@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"html"
-	"net/url"
 	"strings"
 
+	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -29,7 +29,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 			ID:    "all",
 			Kind:  "dialog",
 			Label: fmt.Sprintf("All %d revisions", history.Count),
-			URL:   "/revisions/" + pagePath(context.Page.Slug),
+			URL:   "/revisions/" + widgetui.PagePath(context.Page.Slug),
 			Icon:  "history-lucide",
 		}}
 	}
@@ -74,12 +74,4 @@ func renderRevision(history sdk.RevisionHistory) string {
 	}
 	output.WriteString("</span></div>")
 	return output.String()
-}
-
-func pagePath(slug string) string {
-	parts := strings.Split(slug, "/")
-	for index := range parts {
-		parts[index] = url.PathEscape(parts[index])
-	}
-	return strings.Join(parts, "/")
 }

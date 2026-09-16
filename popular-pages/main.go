@@ -3,13 +3,11 @@ package main
 import (
 	"fmt"
 	"html"
-	"net/url"
 	"strings"
 
+	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
-
-type iconRenderer func(string, int) string
 
 func main() {}
 
@@ -20,10 +18,10 @@ func renderWidget(sdk.WidgetContext) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return sdk.Text(renderPopular(pages, hostIcon)), nil
+	return sdk.Text(renderPopular(pages, widgetui.HostIcon)), nil
 }
 
-func renderPopular(pages []sdk.Page, icon iconRenderer) string {
+func renderPopular(pages []sdk.Page, icon widgetui.IconRenderer) string {
 	var output strings.Builder
 	output.WriteString(`<div class="panel-title"><h2>Popular pages</h2></div>`)
 	if len(pages) == 0 {
@@ -32,9 +30,9 @@ func renderPopular(pages []sdk.Page, icon iconRenderer) string {
 	}
 	for _, page := range pages {
 		output.WriteString(`<a class="compact-row" href="/pages/`)
-		output.WriteString(pagePath(page.Slug))
+		output.WriteString(widgetui.PagePath(page.Slug))
 		output.WriteString(`"><span>`)
-		output.WriteString(pageIcon(page, 15, icon))
+		output.WriteString(widgetui.PageIcon(page, 15, icon))
 		output.WriteString(`</span><strong>`)
 		output.WriteString(html.EscapeString(page.Title))
 		output.WriteString(`</strong><small>`)
@@ -42,29 +40,4 @@ func renderPopular(pages []sdk.Page, icon iconRenderer) string {
 		output.WriteString(`</small></a>`)
 	}
 	return output.String()
-}
-
-func pageIcon(page sdk.Page, size int, icon iconRenderer) string {
-	if page.Icon != "" {
-		if rendered := icon(page.Icon, size); rendered != "" {
-			return rendered
-		}
-	}
-	return icon("file-text-lucide", size)
-}
-
-func hostIcon(name string, size int) string {
-	rendered, err := sdk.Icon(name, size)
-	if err != nil {
-		return ""
-	}
-	return rendered
-}
-
-func pagePath(slug string) string {
-	parts := strings.Split(slug, "/")
-	for index := range parts {
-		parts[index] = url.PathEscape(parts[index])
-	}
-	return strings.Join(parts, "/")
 }

@@ -1,16 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"html"
-	"net/url"
 	"strings"
 	"time"
 
+	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
-
-type iconRenderer func(string, int) string
 
 func main() {}
 
@@ -25,10 +22,10 @@ func renderWidget(sdk.WidgetContext) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return sdk.Text(renderContinueWorking(drafts, edits, time.Now(), hostIcon)), nil
+	return sdk.Text(renderContinueWorking(drafts, edits, time.Now(), widgetui.HostIcon)), nil
 }
 
-func renderContinueWorking(drafts []sdk.PageDraft, edits []sdk.RecentEdit, now time.Time, icon iconRenderer) string {
+func renderContinueWorking(drafts []sdk.PageDraft, edits []sdk.RecentEdit, now time.Time, icon widgetui.IconRenderer) string {
 	var output strings.Builder
 	output.WriteString(`<div class="panel-title"><h2 class="heading-with-icon">`)
 	output.WriteString(icon("pencil-line-lucide", 15))
@@ -52,14 +49,14 @@ func renderContinueWorking(drafts []sdk.PageDraft, edits []sdk.RecentEdit, now t
 	return output.String()
 }
 
-func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, icon iconRenderer) {
+func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, icon widgetui.IconRenderer) {
 	title := draft.Title
 	if title == "" {
 		title = "Untitled"
 	}
 	editURL := "/pages/new"
 	if draft.PageID > 0 && draft.PageSlug != "" {
-		editURL = "/edit/" + pagePath(draft.PageSlug)
+		editURL = "/edit/" + widgetui.PagePath(draft.PageSlug)
 	}
 	output.WriteString(`<a class="widget-item" href="`)
 	output.WriteString(editURL)
@@ -68,18 +65,18 @@ func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, ico
 	output.WriteString(`</span><span><strong>`)
 	output.WriteString(html.EscapeString(title))
 	output.WriteString(`</strong><small>Private draft · `)
-	output.WriteString(relativeTime(draft.UpdatedAt, now))
+	output.WriteString(widgetui.RelativeTime(draft.UpdatedAt, now))
 	if draft.Stale {
 		output.WriteString(` · Page changed since draft started`)
 	}
 	output.WriteString(`</small></span></a>`)
 }
 
-func writeEdit(output *strings.Builder, edit sdk.RecentEdit, now time.Time, icon iconRenderer) {
+func writeEdit(output *strings.Builder, edit sdk.RecentEdit, now time.Time, icon widgetui.IconRenderer) {
 	output.WriteString(`<a class="widget-item" href="/edit/`)
-	output.WriteString(pagePath(edit.Slug))
+	output.WriteString(widgetui.PagePath(edit.Slug))
 	output.WriteString(`"><span class="widget-item-icon">`)
-	output.WriteString(pageIcon(edit.Page, 16, icon))
+	output.WriteString(widgetui.PageIcon(edit.Page, 16, icon))
 	output.WriteString(`</span><span><strong>`)
 	output.WriteString(html.EscapeString(edit.Title))
 	output.WriteString(`</strong><small>`)
@@ -87,48 +84,6 @@ func writeEdit(output *strings.Builder, edit sdk.RecentEdit, now time.Time, icon
 		output.WriteString(html.EscapeString(edit.RevisionMessage))
 		output.WriteString(` · `)
 	}
-	output.WriteString(relativeTime(edit.UpdatedAt, now))
+	output.WriteString(widgetui.RelativeTime(edit.UpdatedAt, now))
 	output.WriteString(`</small></span></a>`)
-}
-
-func pageIcon(page sdk.Page, size int, icon iconRenderer) string {
-	if page.Icon != "" {
-		if rendered := icon(page.Icon, size); rendered != "" {
-			return rendered
-		}
-	}
-	return icon("file-text-lucide", size)
-}
-
-func relativeTime(value, now time.Time) string {
-	if value.IsZero() {
-		return ""
-	}
-	delta := now.Sub(value)
-	if delta < 0 || delta < time.Minute {
-		return "just now"
-	}
-	if delta < time.Hour {
-		return fmt.Sprintf("%dm ago", int(delta/time.Minute))
-	}
-	if delta < 24*time.Hour {
-		return fmt.Sprintf("%dh ago", int(delta/time.Hour))
-	}
-	return fmt.Sprintf("%dd ago", int(delta/(24*time.Hour)))
-}
-
-func hostIcon(name string, size int) string {
-	rendered, err := sdk.Icon(name, size)
-	if err != nil {
-		return ""
-	}
-	return rendered
-}
-
-func pagePath(slug string) string {
-	parts := strings.Split(slug, "/")
-	for index := range parts {
-		parts[index] = url.PathEscape(parts[index])
-	}
-	return strings.Join(parts, "/")
 }

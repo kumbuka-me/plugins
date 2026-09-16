@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.wiki-links
 name: Wiki Links
-version: 1.1.1
+version: 1.1.2
 description: Show incoming and outgoing wiki-link relationships in page details.
 default_enabled: true
 modules:
