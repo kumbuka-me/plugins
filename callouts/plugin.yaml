@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.callouts
 name: Callouts
-version: 1.0.2
+version: 1.0.3
 description: Note, warning, and other callout blocks
 default_enabled: true
 modules:
@@ -11,4 +11,46 @@ modules:
     stage: preprocess
     usage:
       - contains: "!!! "
+  - type: editor-insert
+    id: note
+    name: Callout note
+    description: Insert a note callout block.
+    markdown: "!!! note\nImportant information."
+    group: insert
+    icon: triangle-alert-lucide
+  - type: editor-insert
+    id: info
+    name: Callout info
+    description: Insert an informational callout block.
+    markdown: "!!! info\nInformation."
+    group: insert
+    icon: info-lucide
+  - type: editor-insert
+    id: tip
+    name: Callout tip
+    description: Insert a tip callout block.
+    markdown: "!!! tip\nHelpful tip."
+    group: insert
+    icon: lightbulb-lucide
+  - type: editor-insert
+    id: success
+    name: Callout success
+    description: Insert a success callout block.
+    markdown: "!!! success\nCompleted successfully."
+    group: insert
+    icon: circle-check-lucide
+  - type: editor-insert
+    id: warning
+    name: Callout warning
+    description: Insert a warning callout block.
+    markdown: "!!! warning\nImportant warning."
+    group: insert
+    icon: triangle-alert-lucide
+  - type: editor-insert
+    id: danger
+    name: Callout danger
+    description: Insert a danger callout block.
+    markdown: "!!! danger\nDangerous operation."
+    group: insert
+    icon: octagon-alert-lucide
 permissions: []

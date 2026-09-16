@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.tabs
 name: Tabs
-version: 1.0.2
+version: 1.0.3
 description: Render Material-style tab groups with Markdown content.
 default_enabled: true
 modules:
@@ -11,4 +11,11 @@ modules:
     stage: preprocess
     usage:
       - contains: '=== "'
+  - type: editor-insert
+    id: editor
+    name: Tabs
+    description: Insert a two-tab content block.
+    markdown: "=== \"Tab 1\"\n\n    First tab content.\n\n=== \"Tab 2\"\n\n    Second tab content."
+    group: insert
+    icon: panels-top-left-lucide
 permissions: []

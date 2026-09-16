@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.subpages
 name: Subpages
-version: 1.0.3
+version: 1.0.4
 default_enabled: true
 modules:
   - type: macro
@@ -10,4 +10,11 @@ modules:
     name: subpages
     usage:
       - macro: subpages
+  - type: editor-insert
+    id: editor
+    name: Subpages
+    description: Insert child-page navigation.
+    markdown: "{{subpages}}"
+    group: insert
+    icon: list-tree-lucide
 permissions: [pages:read]

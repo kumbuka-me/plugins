@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.details
 name: Collapsible Details
-version: 1.0.2
+version: 1.0.3
 description: Render collapsible Markdown detail blocks with optional open state.
 default_enabled: true
 modules:
@@ -11,4 +11,11 @@ modules:
     stage: preprocess
     usage:
       - contains: "???"
+  - type: editor-insert
+    id: editor
+    name: Collapsible details
+    description: Insert a collapsible details block.
+    markdown: "??? \"Details\"\n\n    Hidden details."
+    group: insert
+    icon: list-collapse-lucide
 permissions: []
