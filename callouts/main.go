@@ -16,7 +16,7 @@ func init() { sdk.RegisterModule("callouts", transform) }
 
 // transform converts supported callout blocks into intermediate HTML fragments.
 func transform(request sdk.RenderRequest) sdk.RenderResult {
-	if !supportsRequest(request) {
+	if request.Module != "callouts" || request.Stage != "preprocess" {
 		return sdk.RenderResult{Error: "unsupported render request"}
 	}
 	lines := strings.Split(request.Source, "\n")
@@ -50,11 +50,6 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	}
 	output.flush()
 	return sdk.RenderResult{Parts: output.parts}
-}
-
-// supportsRequest reports whether the callouts plugin supports the render request.
-func supportsRequest(request sdk.RenderRequest) bool {
-	return request.Module == "callouts" && request.Stage == "preprocess"
 }
 
 // calloutKind normalizes and validates a supported callout kind.

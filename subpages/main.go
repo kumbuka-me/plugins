@@ -13,20 +13,14 @@ func renderMacro(options macroOptions) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	var iconError error
-	render := newRenderer(nodes, func(name string, size int) template.HTML {
+
+	render := newRenderer(nodes, func(name string, size int) (template.HTML, error) {
 		value, err := sdk.Icon(name, size)
-		if err != nil {
-			iconError = err
-		}
-		return template.HTML(value)
+		return template.HTML(value), err
 	})
 	html, err := render(options)
 	if err != nil {
 		return sdk.Result{}, err
-	}
-	if iconError != nil {
-		return sdk.Result{}, iconError
 	}
 	return sdk.Text(html), nil
 }

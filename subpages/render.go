@@ -22,7 +22,7 @@ type renderData struct {
 var templateSource string
 
 // newTemplate parses and returns the subpages rendering template.
-func newTemplate(icon func(string, int) template.HTML) *template.Template {
+func newTemplate(icon func(string, int) (template.HTML, error)) *template.Template {
 	return template.Must(
 		template.New("subpages").
 			Funcs(template.FuncMap{
@@ -33,7 +33,7 @@ func newTemplate(icon func(string, int) template.HTML) *template.Template {
 }
 
 // newRenderer returns a renderer for one prepared navigation subtree and URL strategy.
-func newRenderer(nodes []sdk.NavigationNode, icon func(string, int) template.HTML) func(macroOptions) (string, error) {
+func newRenderer(nodes []sdk.NavigationNode, icon func(string, int) (template.HTML, error)) func(macroOptions) (string, error) {
 	htmlTemplate := newTemplate(icon)
 	return func(options macroOptions) (string, error) {
 		if len(nodes) == 0 {

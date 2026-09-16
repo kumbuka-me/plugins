@@ -108,7 +108,7 @@ func TestParse(t *testing.T) {
 
 // TestNewRenderer verifies new renderer behavior.
 func TestNewRenderer(t *testing.T) {
-	icon := func(string, int) template.HTML { return "" }
+	icon := func(string, int) (template.HTML, error) { return "", nil }
 	nodes := []sdk.NavigationNode{{Title: "Guide", URL: "/docs/guide/", Icon: "book-open-lucide", Page: true, Children: []sdk.NavigationNode{{Title: "Install", URL: "/docs/guide/install/", Page: true}}}}
 	render := newRenderer(nodes, icon)
 	html, err := render(macroOptions{Title: "Related pages", ShowTitle: true})
@@ -124,7 +124,7 @@ func TestNewRenderer(t *testing.T) {
 	assert.NotContains(t, html, "<script>")
 	assert.Contains(t, html, "&lt;unsafe&gt;")
 	assert.Contains(t, html, `href="#ZgotmplZ"`)
-	html, err = newRenderer(nil, func(string, int) template.HTML { t.Fatal("unexpected icon call"); return "" })(macroOptions{ShowTitle: true})
+	html, err = newRenderer(nil, func(string, int) (template.HTML, error) { t.Fatal("unexpected icon call"); return "", nil })(macroOptions{ShowTitle: true})
 	require.NoError(t, err)
 	assert.Empty(t, html)
 	html, err = newRenderer([]sdk.NavigationNode{{Title: "Folder", Children: nodes}}, icon)(macroOptions{})

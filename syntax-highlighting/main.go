@@ -36,7 +36,7 @@ func init() {
 // fence language. Chroma's global registry provides the complete maintained
 // lexer set; Kumbuka does not auto-detect a language from the source text.
 func transform(request sdk.RenderRequest) sdk.RenderResult {
-	if !supportsRequest(request) {
+	if request.Module != "chroma" || request.Stage != "highlight" {
 		return sdk.RenderResult{Error: "unsupported syntax-highlighting request"}
 	}
 
@@ -66,8 +66,4 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	}
 
 	return sdk.RenderResult{Matched: true, Parts: []sdk.RenderPart{{Text: output.String()}}}
-}
-
-func supportsRequest(request sdk.RenderRequest) bool {
-	return request.Module == "chroma" && request.Stage == "highlight"
 }
