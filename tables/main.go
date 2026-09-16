@@ -3,9 +3,9 @@ package main
 import (
 	"strings"
 
+	"github.com/kumbuka-me/kumbuka-plugins/internal/htmlutil"
 	sdk "github.com/kumbuka-me/sdk"
 	xhtml "golang.org/x/net/html"
-	"golang.org/x/net/html/atom"
 )
 
 func main() {}
@@ -15,71 +15,103 @@ func init() {
 	sdk.RegisterModule("presentation", transform)
 }
 func transform(request sdk.RenderRequest) sdk.RenderResult {
-	enabled := func(name string) bool { v, ok := request.Features["me.kumbuka.tables."+name]; return !ok || v }
-	options := tableOptions{Tables: enabled("tables"), TableStyles: enabled("styles"), TableSorting: enabled("sorting"), TableFiltering: enabled("filtering")}
-	output := request.Source
+	options := tableOptionsFromFeatures(request.Features)
+
 	switch request.Stage {
 	case "preprocess":
+		output := request.Source
 		if tableDirectivesEnabled(options) {
 			output = preprocessTableDirectives(output, options)
 		}
+		return sdk.Text(output)
 	case "postprocess":
-		var err error
-		if tableDirectivesEnabled(options) {
-			output, err = applyTableDirectiveMarkers(output, options)
-			if err != nil {
-				return sdk.RenderResult{Error: err.Error()}
-			}
-		}
-		output, err = markTables(output)
+		output, err := postprocessTables(request.Source, options)
 		if err != nil {
-			return sdk.RenderResult{Error: err.Error()}
+			return sdk.Failure(err)
 		}
+		return sdk.Text(output)
 	default:
 		return sdk.RenderResult{Error: "unsupported stage"}
 	}
-	return sdk.RenderResult{Parts: []sdk.RenderPart{{Text: output}}}
+}
+
+// tableOptionsFromFeatures resolves the enabled table feature switches for one request.
+func tableOptionsFromFeatures(features map[string]bool) tableOptions {
+	enabled := func(name string) bool {
+		value, exists := features["me.kumbuka.tables."+name]
+		return !exists || value
+	}
+	return tableOptions{
+		Tables:         enabled("tables"),
+		TableStyles:    enabled("styles"),
+		TableSorting:   enabled("sorting"),
+		TableFiltering: enabled("filtering"),
+	}
+}
+
+// postprocessTables applies directives before wrapping rendered tables for browser modules.
+func postprocessTables(source string, options tableOptions) (string, error) {
+	output := source
+	var err error
+	if tableDirectivesEnabled(options) {
+		output, err = applyTableDirectiveMarkers(output, options)
+		if err != nil {
+			return "", err
+		}
+	}
+	return markTables(output)
 }
 
 // markTables leaves semantic HTML as the accessible, script-free fallback.
 func markTables(source string) (string, error) {
-	nodes, err := xhtml.ParseFragment(strings.NewReader(source), &xhtml.Node{Type: xhtml.ElementNode, Data: "div", DataAtom: atom.Div})
+	root, err := htmlutil.ParseFragment(source)
 	if err != nil {
 		return "", err
 	}
-	root := &xhtml.Node{Type: xhtml.ElementNode, Data: "div", DataAtom: atom.Div}
-	for _, n := range nodes {
-		root.AppendChild(n)
+
+	for _, table := range collectTables(root) {
+		wrapTable(table)
 	}
+	return htmlutil.RenderChildren(root)
+}
+
+// collectTables returns rendered tables in document order without descending into a table twice.
+func collectTables(root *xhtml.Node) []*xhtml.Node {
 	var tables []*xhtml.Node
 	var walk func(*xhtml.Node)
-	walk = func(n *xhtml.Node) {
-		if n.Type == xhtml.ElementNode && n.Data == "table" {
-			tables = append(tables, n)
+	walk = func(node *xhtml.Node) {
+		if node.Type == xhtml.ElementNode && node.Data == "table" {
+			tables = append(tables, node)
 			return
 		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			walk(c)
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
 		}
 	}
 	walk(root)
-	for _, table := range tables {
-		block := &xhtml.Node{Type: xhtml.ElementNode, Data: "div", DataAtom: atom.Div, Attr: []xhtml.Attribute{{Key: "class", Val: "kumbuka-plugin-block"}, {Key: "data-kumbuka-plugin", Val: "me.kumbuka.tables"}, {Key: "data-kumbuka-input", Val: "html"}}}
-		classes := " " + htmlAttribute(table, "class") + " "
-		if strings.Contains(classes, " kumbuka-table-sortable ") || strings.Contains(classes, " kumbuka-table-filterable ") {
-			block.Attr = append(block.Attr, xhtml.Attribute{Key: "data-kumbuka-module", Val: "interactive"})
-		}
-		table.Parent.InsertBefore(block, table)
-		table.Parent.RemoveChild(table)
-		fallback := &xhtml.Node{Type: xhtml.ElementNode, Data: "div", DataAtom: atom.Div, Attr: []xhtml.Attribute{{Key: "data-kumbuka-fallback", Val: ""}}}
-		block.AppendChild(fallback)
-		fallback.AppendChild(table)
+	return tables
+}
+
+// wrapTable moves one rendered table into the host plugin-block fallback wrapper.
+func wrapTable(table *xhtml.Node) {
+	block := &xhtml.Node{
+		Type: xhtml.ElementNode,
+		Data: "div",
+		Attr: []xhtml.Attribute{
+			{Key: "class", Val: "kumbuka-plugin-block"},
+			{Key: "data-kumbuka-plugin", Val: "me.kumbuka.tables"},
+			{Key: "data-kumbuka-input", Val: "html"},
+		},
 	}
-	var out strings.Builder
-	for n := root.FirstChild; n != nil; n = n.NextSibling {
-		if err := xhtml.Render(&out, n); err != nil {
-			return "", err
-		}
+	classes := " " + htmlutil.Attribute(table, "class") + " "
+	if strings.Contains(classes, " kumbuka-table-sortable ") || strings.Contains(classes, " kumbuka-table-filterable ") {
+		block.Attr = append(block.Attr, xhtml.Attribute{Key: "data-kumbuka-module", Val: "interactive"})
 	}
-	return out.String(), nil
+
+	parent := table.Parent
+	parent.InsertBefore(block, table)
+	parent.RemoveChild(table)
+	fallback := &xhtml.Node{Type: xhtml.ElementNode, Data: "div", Attr: []xhtml.Attribute{{Key: "data-kumbuka-fallback", Val: ""}}}
+	block.AppendChild(fallback)
+	fallback.AppendChild(table)
 }

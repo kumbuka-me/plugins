@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.tables
 name: Tables
-version: 1.0.1
+version: 1.0.2
 description: Markdown tables with colors, sorting, and filtering.
 default_enabled: true
 modules:
@@ -43,3 +43,4 @@ modules:
     description: Allow filterable tables to filter rows from each column header.
     requires: [tables]
 permissions: [browser:render]
+

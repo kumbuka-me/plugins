@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kumbuka-me/kumbuka-plugins/internal/htmlutil"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 	xhtml "golang.org/x/net/html"
-	"golang.org/x/net/html/atom"
 )
 
 type tableOptions struct{ Tables, TableStyles, TableSorting, TableFiltering bool }
@@ -106,98 +106,104 @@ func previousTableLine(
 }
 
 // parseTableDirective parses trusted table colors and optional browser interactions.
-func parseTableDirective(
-	line string,
-) (style tableStyle, ok bool) {
+func parseTableDirective(line string) (tableStyle, bool) {
+	body, ok := tableDirectiveBody(line)
+	if !ok {
+		return tableStyle{}, false
+	}
+
+	style := newTableStyle()
+	for token := range strings.FieldsSeq(body) {
+		if !style.applyToken(token) {
+			return tableStyle{}, false
+		}
+	}
+	return style, true
+}
+
+// tableDirectiveBody extracts a non-empty table directive body.
+func tableDirectiveBody(line string) (string, bool) {
 	body, ok := strings.CutPrefix(line, "{table ")
 	if !ok {
-		return tableStyle{}, false
+		return "", false
 	}
-
 	body, ok = strings.CutSuffix(body, "}")
-	if !ok {
-		return tableStyle{}, false
-	}
+	body = strings.TrimSpace(body)
+	return body, ok && body != ""
+}
 
-	directive := tableStyle{
+// newTableStyle initializes the indexed tone maps used by one table directive.
+func newTableStyle() tableStyle {
+	return tableStyle{
 		rows:    map[int]string{},
 		columns: map[int]string{},
 		cells:   map[[2]int]string{},
 	}
+}
 
-	body = strings.TrimSpace(body)
-
-	if body == "" {
-		return tableStyle{}, false
+// applyToken adds one directive token to the parsed style.
+func (s *tableStyle) applyToken(token string) bool {
+	switch token {
+	case "sortable":
+		s.sortable = true
+		return true
+	case "filterable":
+		s.filterable = true
+		return true
 	}
 
-	for token := range strings.FieldsSeq(body) {
-		switch token {
-		case "sortable":
-			directive.sortable = true
-			continue
-		case "filterable":
-			directive.filterable = true
-			continue
-		}
+	key, tone, ok := strings.Cut(token, "=")
+	if !ok || !tableTone(tone) {
+		return false
+	}
+	return s.setTone(key, tone)
+}
 
-		key, tone, ok := strings.Cut(token, "=")
-		if !ok || !tableTone(tone) {
-			return tableStyle{}, false
-		}
-
-		if key == "header" {
-			directive.header = tone
-			continue
-		}
-
-		kind, target, ok := strings.Cut(key, ":")
-		if !ok {
-			return tableStyle{}, false
-		}
-
-		switch kind {
-		case "row":
-			row, ok := parsePositiveInt(target)
-			if !ok {
-				return tableStyle{}, false
-			}
-
-			directive.rows[row] = tone
-
-		case "col", "column":
-			column, ok := parsePositiveInt(target)
-			if !ok {
-				return tableStyle{}, false
-			}
-
-			directive.columns[column] = tone
-
-		case "cell":
-			rowValue, columnValue, ok := strings.Cut(target, ",")
-
-			if !ok {
-				return tableStyle{}, false
-			}
-
-			row, ok := parsePositiveInt(rowValue)
-			if !ok {
-				return tableStyle{}, false
-			}
-
-			column, ok := parsePositiveInt(columnValue)
-			if !ok {
-				return tableStyle{}, false
-			}
-
-			directive.cells[[2]int{row, column}] = tone
-
-		default:
-			return tableStyle{}, false
-		}
+// setTone assigns one trusted tone to a header, row, column, or cell target.
+func (s *tableStyle) setTone(key, tone string) bool {
+	if key == "header" {
+		s.header = tone
+		return true
 	}
 
-	return directive, true
+	kind, target, ok := strings.Cut(key, ":")
+	if !ok {
+		return false
+	}
+
+	switch kind {
+	case "row":
+		row, ok := parsePositiveInt(target)
+		if ok {
+			s.rows[row] = tone
+		}
+		return ok
+	case "col", "column":
+		column, ok := parsePositiveInt(target)
+		if ok {
+			s.columns[column] = tone
+		}
+		return ok
+	case "cell":
+		position, ok := parseCellPosition(target)
+		if ok {
+			s.cells[position] = tone
+		}
+		return ok
+	default:
+		return false
+	}
+}
+
+// parseCellPosition parses a one-based row,column table coordinate.
+func parseCellPosition(raw string) ([2]int, bool) {
+	rowValue, columnValue, ok := strings.Cut(raw, ",")
+	if !ok {
+		return [2]int{}, false
+	}
+	row, rowOK := parsePositiveInt(rowValue)
+	column, columnOK := parsePositiveInt(columnValue)
+	return [2]int{row, column}, rowOK && columnOK
 }
 
 // parsePositiveInt parses a one-based table row or column index.
@@ -218,13 +224,7 @@ func tableDirectiveActive(
 	directive tableStyle,
 	options tableOptions,
 ) bool {
-	colors :=
-		directive.header != "" ||
-			len(directive.rows) > 0 ||
-			len(directive.columns) > 0 ||
-			len(directive.cells) > 0
-
-	return (colors && options.TableStyles) ||
+	return (directive.hasColors() && options.TableStyles) ||
 		(directive.sortable && options.TableSorting) ||
 		(directive.filterable && options.TableFiltering)
 }
@@ -264,27 +264,13 @@ func applyTableDirectiveMarkers(
 	rendered string,
 	options tableOptions,
 ) (string, error) {
-	contextNode := &xhtml.Node{
-		Type:     xhtml.ElementNode,
-		DataAtom: atom.Div,
-		Data:     "div",
-	}
-
-	nodes, err := xhtml.ParseFragment(
-		strings.NewReader(rendered),
-		contextNode,
-	)
+	root, err := htmlutil.ParseFragment(rendered)
 	if err != nil {
 		return "", err
 	}
 
-	walker := tableDirectiveWalker{
-		options: options,
-	}
-
-	for _, node := range nodes {
-		walker.walk(node)
-	}
+	walker := tableDirectiveWalker{options: options}
+	walker.walk(root)
 
 	for _, marker := range walker.markers {
 		if marker.Parent != nil {
@@ -292,15 +278,7 @@ func applyTableDirectiveMarkers(
 		}
 	}
 
-	var output strings.Builder
-
-	for _, node := range nodes {
-		if err := xhtml.Render(&output, node); err != nil {
-			return "", err
-		}
-	}
-
-	return output.String(), nil
+	return htmlutil.RenderChildren(root)
 }
 
 // walk applies one table marker in document order and records it for removal.
@@ -314,11 +292,11 @@ func (w *tableDirectiveWalker) walk(
 
 		if node.Data == "div" &&
 			strings.Contains(
-				" "+htmlAttribute(node, "class")+" ",
+				" "+htmlutil.Attribute(node, "class")+" ",
 				" kumbuka-table-style-marker ",
 			) {
 			directive, ok := parseTableDirective(
-				htmlAttribute(node, "data-table-style"),
+				htmlutil.Attribute(node, "data-table-style"),
 			)
 
 			if ok && w.lastTable != nil {
@@ -341,20 +319,14 @@ func (w *tableDirectiveWalker) walk(
 }
 
 // applyTableDirective applies enabled colors and interaction classes to one rendered table.
-func applyTableDirective(
-	table *xhtml.Node,
-	directive tableStyle,
-	options tableOptions,
-) {
+func applyTableDirective(table *xhtml.Node, directive tableStyle, options tableOptions) {
 	if options.TableSorting && directive.sortable {
-		addHTMLClass(table, "kumbuka-table-sortable")
+		htmlutil.AddClass(table, "kumbuka-table-sortable")
 	}
-
 	if options.TableFiltering && directive.filterable {
-		addHTMLClass(table, "kumbuka-table-filterable")
+		htmlutil.AddClass(table, "kumbuka-table-filterable")
 	}
-
-	if !options.TableStyles {
+	if !options.TableStyles || !directive.hasColors() {
 		return
 	}
 
@@ -363,59 +335,69 @@ func applyTableDirective(
 		return
 	}
 
-	colors :=
-		directive.header != "" ||
-			len(directive.rows) > 0 ||
-			len(directive.columns) > 0 ||
-			len(directive.cells) > 0
+	htmlutil.AddClass(table, "kumbuka-table-styled")
+	applyHeaderTone(rows, directive.header)
+	applyColumnTones(rows, directive.columns)
+	bodyRows := tableBodyRows(rows)
+	applyRowTones(bodyRows, directive.rows)
+	applyCellTones(bodyRows, directive.cells)
+}
 
-	if !colors {
+// hasColors reports whether a directive contains any style tone assignments.
+func (s tableStyle) hasColors() bool {
+	return s.header != "" || len(s.rows) != 0 || len(s.columns) != 0 || len(s.cells) != 0
+}
+
+// applyHeaderTone colors every cell in the rendered header row when configured.
+func applyHeaderTone(rows []*xhtml.Node, tone string) {
+	if tone == "" {
 		return
 	}
-
-	addHTMLClass(table, "kumbuka-table-styled")
-
-	if directive.header != "" {
-		for _, cell := range rowCells(rows[0]) {
-			setTableTone(cell, directive.header)
-		}
+	for _, cell := range rowCells(rows[0]) {
+		setTableTone(cell, tone)
 	}
+}
 
-	for column, tone := range directive.columns {
+// applyColumnTones colors configured one-based columns across all rendered rows.
+func applyColumnTones(rows []*xhtml.Node, tones map[int]string) {
+	for column, tone := range tones {
 		for _, row := range rows {
 			cells := rowCells(row)
-
 			if column <= len(cells) {
 				setTableTone(cells[column-1], tone)
 			}
 		}
 	}
+}
 
-	bodyRows := rows
-
-	if hasAncestorSection(rows[0], "thead") {
-		bodyRows = rows[1:]
+// tableBodyRows removes the header row when the first row belongs to a thead section.
+func tableBodyRows(rows []*xhtml.Node) []*xhtml.Node {
+	if len(rows) != 0 && hasAncestorSection(rows[0], "thead") {
+		return rows[1:]
 	}
+	return rows
+}
 
-	for row, tone := range directive.rows {
-		if row > len(bodyRows) {
+// applyRowTones colors configured one-based body rows.
+func applyRowTones(rows []*xhtml.Node, tones map[int]string) {
+	for row, tone := range tones {
+		if row > len(rows) {
 			continue
 		}
-
-		for _, cell := range rowCells(bodyRows[row-1]) {
+		for _, cell := range rowCells(rows[row-1]) {
 			setTableTone(cell, tone)
 		}
 	}
+}
 
-	for position, tone := range directive.cells {
+// applyCellTones colors configured one-based body-row and column coordinates.
+func applyCellTones(rows []*xhtml.Node, tones map[[2]int]string) {
+	for position, tone := range tones {
 		row, column := position[0], position[1]
-
-		if row > len(bodyRows) {
+		if row > len(rows) {
 			continue
 		}
-
-		cells := rowCells(bodyRows[row-1])
-
+		cells := rowCells(rows[row-1])
 		if column <= len(cells) {
 			setTableTone(cells[column-1], tone)
 		}
@@ -486,27 +468,6 @@ func hasAncestorSection(
 }
 
 // addHTMLClass adds a class to one rendered HTML element when it is not already present.
-func addHTMLClass(
-	node *xhtml.Node,
-	className string,
-) {
-	classes := strings.Fields(
-		htmlAttribute(node, "class"),
-	)
-
-	if slices.Contains(classes, className) {
-		return
-	}
-
-	classes = append(classes, className)
-
-	setHTMLAttribute(
-		node,
-		"class",
-		strings.Join(classes, " "),
-	)
-}
-
 // setTableTone replaces a previously applied tone with the requested theme-aware class.
 func setTableTone(
 	node *xhtml.Node,
@@ -515,7 +476,7 @@ func setTableTone(
 	const prefix = "table-tone-"
 
 	classes := strings.Fields(
-		htmlAttribute(node, "class"),
+		htmlutil.Attribute(node, "class"),
 	)
 
 	classes = slices.DeleteFunc(
@@ -530,7 +491,7 @@ func setTableTone(
 
 	classes = append(classes, prefix+tone)
 
-	setHTMLAttribute(
+	htmlutil.SetAttribute(
 		node,
 		"class",
 		strings.Join(classes, " "),
@@ -538,37 +499,4 @@ func setTableTone(
 }
 
 // setHTMLAttribute sets or appends one HTML node attribute.
-func setHTMLAttribute(
-	node *xhtml.Node,
-	key,
-	value string,
-) {
-	for index := range node.Attr {
-		if node.Attr[index].Key == key {
-			node.Attr[index].Val = value
-			return
-		}
-	}
-
-	node.Attr = append(
-		node.Attr,
-		xhtml.Attribute{
-			Key: key,
-			Val: value,
-		},
-	)
-}
-
 // htmlAttribute returns one HTML node attribute by key.
-func htmlAttribute(
-	node *xhtml.Node,
-	key string,
-) string {
-	for _, attribute := range node.Attr {
-		if attribute.Key == key {
-			return attribute.Val
-		}
-	}
-
-	return ""
-}
