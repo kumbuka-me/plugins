@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.page-report
 name: Page Report
-version: 1.0.2
+version: 1.0.3
 default_enabled: true
 modules:
   - type: macro
@@ -12,3 +12,4 @@ modules:
     usage:
       - macro: pages
 permissions: [pages:read]
+
