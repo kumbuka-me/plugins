@@ -27,7 +27,6 @@ func transformTabs(source string) []sdk.RenderPart {
 		if len(plain) == 0 {
 			return
 		}
-
 		markdownblock.AppendText(&parts, strings.Join(plain, "\n"))
 		plain = plain[:0]
 	}
@@ -38,59 +37,85 @@ func transformTabs(source string) []sdk.RenderPart {
 			continue
 		}
 
-		title, ok := parseTabTitle(lines[index])
+		sections, next, ok := parseTabGroup(lines, index)
 		if !ok {
 			plain = append(plain, lines[index])
 			index++
 			continue
 		}
 
-		sections := make([]tabSection, 0, 2)
-		for ok {
-			bodyLines, next := markdownblock.IndentedBody(lines, index+1)
-			sections = append(sections, tabSection{title: title, body: strings.Join(bodyLines, "\n")})
-			index = next
-			if index >= len(lines) {
-				break
-			}
-			title, ok = parseTabTitle(lines[index])
-		}
-
 		flushPlain()
-		markdownblock.AppendText(&parts, "\n<div class=\"markdown-tabs\"><div class=\"markdown-tab-list\" role=\"tablist\">")
-		for sectionIndex, section := range sections {
-			class := "markdown-tab"
-			selected := "false"
-			if sectionIndex == 0 {
-				class += " active"
-				selected = "true"
-			}
-			markdownblock.AppendText(&parts, `<button type="button" class="`+class+`" role="tab" aria-selected="`+selected+`">`+stdhtml.EscapeString(section.title)+`</button>`)
-		}
-		markdownblock.AppendText(&parts, `</div><div class="markdown-tab-panels">`)
-
-		for sectionIndex, section := range sections {
-			class := "markdown-tab-panel"
-			if sectionIndex != 0 {
-				class += " markdown-tab-panel-hidden"
-			}
-			markdownblock.AppendText(&parts, `<div class="`+class+`" role="tabpanel">`)
-			body := section.body
-			parts = append(parts, sdk.RenderPart{Markdown: &body})
-			markdownblock.AppendText(&parts, `</div>`)
-		}
-		markdownblock.AppendText(&parts, "</div></div>\n")
+		appendTabGroup(&parts, sections)
+		index = next
 	}
 
 	flushPlain()
 	if len(parts) == 0 {
 		return []sdk.RenderPart{{Text: source}}
 	}
-
 	return parts
 }
 
-// appendText appends literal output and coalesces adjacent text fragments.
+// parseTabGroup consumes consecutive top-level tab declarations and their bodies.
+func parseTabGroup(lines []string, start int) ([]tabSection, int, bool) {
+	title, ok := parseTabTitle(lines[start])
+	if !ok {
+		return nil, start, false
+	}
+
+	sections := make([]tabSection, 0, 2)
+	index := start
+	for {
+		bodyLines, next := markdownblock.IndentedBody(lines, index+1)
+		sections = append(sections, tabSection{title: title, body: strings.Join(bodyLines, "\n")})
+		index = next
+		if index >= len(lines) {
+			break
+		}
+		title, ok = parseTabTitle(lines[index])
+		if !ok {
+			break
+		}
+	}
+	return sections, index, true
+}
+
+// appendTabGroup appends the host-rendered controls and Markdown panels for one tab group.
+func appendTabGroup(parts *[]sdk.RenderPart, sections []tabSection) {
+	markdownblock.AppendText(parts, "\n<div class=\"markdown-tabs\"><div class=\"markdown-tab-list\" role=\"tablist\">")
+	appendTabButtons(parts, sections)
+	markdownblock.AppendText(parts, `</div><div class="markdown-tab-panels">`)
+	appendTabPanels(parts, sections)
+	markdownblock.AppendText(parts, "</div></div>\n")
+}
+
+// appendTabButtons appends accessible tab buttons with the first tab selected.
+func appendTabButtons(parts *[]sdk.RenderPart, sections []tabSection) {
+	for index, section := range sections {
+		class := "markdown-tab"
+		selected := "false"
+		if index == 0 {
+			class += " active"
+			selected = "true"
+		}
+		markdownblock.AppendText(parts, `<button type="button" class="`+class+`" role="tab" aria-selected="`+selected+`">`+stdhtml.EscapeString(section.title)+`</button>`)
+	}
+}
+
+// appendTabPanels appends each tab body as host-rendered Markdown.
+func appendTabPanels(parts *[]sdk.RenderPart, sections []tabSection) {
+	for index, section := range sections {
+		class := "markdown-tab-panel"
+		if index != 0 {
+			class += " markdown-tab-panel-hidden"
+		}
+		markdownblock.AppendText(parts, `<div class="`+class+`" role="tabpanel">`)
+		body := section.body
+		*parts = append(*parts, sdk.RenderPart{Markdown: &body})
+		markdownblock.AppendText(parts, `</div>`)
+	}
+}
+
 // parseTabTitle parses a top-level declaration such as === "Linux".
 func parseTabTitle(line string) (string, bool) {
 	if strings.TrimLeft(line, " \t") != line {
