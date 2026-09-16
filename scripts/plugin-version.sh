@@ -13,13 +13,14 @@ version=$(
   awk '
     $1 == "version:" { version = $2; count++ }
     END {
-      if (count != 1 || version == "") exit 1
+      if (count != 1 || version !~ /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/) exit 1
       print version
     }
   ' "$manifest"
 ) || {
-  echo "plugin manifest must contain exactly one version: $manifest" >&2
+  echo "plugin manifest must contain exactly one MAJOR.MINOR.PATCH version: $manifest" >&2
   exit 1
 }
 
 printf '%s\n' "$version"
+
