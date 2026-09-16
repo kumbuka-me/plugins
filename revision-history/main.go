@@ -6,7 +6,6 @@ import (
 	"html"
 	"strings"
 
-	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -26,17 +25,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	result := sdk.Text(renderRevision(history))
-	if history.Count > 1 {
-		result.Actions = []sdk.WidgetAction{{
-			ID:    "all",
-			Kind:  "dialog",
-			Label: fmt.Sprintf("All %d revisions", history.Count),
-			URL:   "/revisions/" + widgetui.PagePath(context.Page.Slug),
-			Icon:  "history-lucide",
-		}}
-	}
-	return result, nil
+	return sdk.Text(renderRevision(history)), nil
 }
 
 // renderRevision renders the latest revision metadata and diff summary.

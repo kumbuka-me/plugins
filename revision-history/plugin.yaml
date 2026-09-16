@@ -2,12 +2,21 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.revision-history
 name: Revision History
-version: 1.0.1
-description: Show recent revision metadata and open full history from page details.
+version: 1.0.2
+description: Show recent revision metadata and expose the full history as a page action.
 default_enabled: true
 modules:
   - type: widget
     id: page-details
     surface: page.details
+  - type: page-action
+    id: history
+    name: Revision history
+    description: Open the complete revision history for this page.
+    icon: history-lucide
+    kind: dialog
+    url: /revisions/${slug}
+    order: 50
 permissions:
   - pages:read
+
