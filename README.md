@@ -14,3 +14,18 @@ Bundled plugins already appear on the same page and only need to be enabled when
 ## Build a plugin
 
 See the [Kumbuka plugin development guide](https://kumbuka.me/plugins/).
+
+## Bump all pugins at once
+
+```sh
+make version-all BUMP=patch
+git add '*/plugin.yaml'
+git commit -m "chore: bump plugin versions"
+make test lint build
+make tag-all
+git push origin main --tags
+```
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
