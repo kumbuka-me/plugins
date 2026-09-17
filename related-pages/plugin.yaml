@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.related-pages
 name: Related Pages
-version: 1.0.2
+version: 1.0.3
 description: Show pages related by shared tags in page details.
 default_enabled: true
 modules:
