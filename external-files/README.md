@@ -115,4 +115,3 @@ Build the package with the repository tooling:
 - [GitHub repository contents API](https://docs.github.com/en/rest/repos/contents)
 - [GitLab repository files API](https://docs.gitlab.com/api/repository_files/)
 - [OWASP SSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html)
-

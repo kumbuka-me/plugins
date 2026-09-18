@@ -120,4 +120,3 @@ permissions:
   - network:http
   - network:private
   - network:insecure-tls
-
