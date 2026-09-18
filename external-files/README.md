@@ -2,7 +2,7 @@
 
 Display whole files or selected lines from configured GitHub and GitLab repositories, including self-hosted instances. File content is displayed as text and is never executed or interpreted as Markdown.
 
-This plugin is disabled by default. It uses Kumbuka's generic plugin resources for connection settings and the generic host-mediated HTTP capability for network access.
+This plugin is disabled by default. It uses Kumbuka's generic plugin resources for connection settings, a bounded in-memory plugin cache, and the generic host-mediated HTTP capability for network access.
 
 ## Setup
 
@@ -11,8 +11,9 @@ This plugin is disabled by default. It uses Kumbuka's generic plugin resources f
 3. Open **Administration → Plugin settings → External Files**.
 4. Add a source with a unique name, provider, API endpoint, repository, and explicit branch, tag, or commit.
 5. Under **Appearance**, choose the default reference side and color and whether line numbers, referenced-line highlighting, provider, and revision metadata are shown.
-6. For private repositories, add a dedicated read-only token restricted to that repository.
-7. For an internal server, add the exact RFC1918 or IPv6 ULA addresses the provider hostname is allowed to resolve to.
+6. Under **Cache**, choose the cache TTL. The default is **1 hour**.
+7. For private repositories, add a dedicated read-only token restricted to that repository.
+8. For an internal server, add the exact RFC1918 or IPv6 ULA addresses the provider hostname is allowed to resolve to.
 
 Examples of API endpoints:
 
@@ -63,21 +64,23 @@ Supported `reference-position` values are `right` and `left`. Supported colors a
 
 The rendered header shows provider, repository, file path, and revision metadata according to those settings. Line numbers remain separate from annotation markers so the source stays visually aligned.
 
-## Screenshot
+## Cache behavior
 
-Default presentation with left-side line numbers and right-side annotation references:
+External Files caches the complete validated provider file in a bounded in-memory cache owned by the plugin runtime. The default TTL is **1 hour** and can be changed under **Cache** in the plugin settings.
 
-![External Files showing a GitHub README with a right-side annotation gutter.](assets/screenshots/external-files-annotated-readme.png)
+The cache is lazy: there is no background polling. A file inside its TTL is served directly from the cache. The first page visit after expiry fetches the file again and replaces the cached value. If that refresh fails, the last valid cached copy is served instead. Files that are never viewed create no refresh traffic.
+
+The **Refresh cache** action in the plugin settings marks all cached files stale. It does not fetch every repository immediately; each file is fetched again on its next page visit. Changing a source connection also invalidates cached content for that source automatically. The cache is intentionally ephemeral and starts empty after a Kumbuka restart or plugin reload.
 
 ## Settings ownership
 
-All source and appearance fields belong to this plugin. Kumbuka does not have External Files-specific URL, token, provider, TLS, reference-position, color, or line-number configuration.
+All source, appearance, and cache settings belong to this plugin. Kumbuka does not have External Files-specific URL, token, provider, TLS, presentation, TTL, or refresh configuration.
 
 Kumbuka generically renders and stores the plugin's manifest-declared typed settings and resource fields. `secret` fields are encrypted at rest and masked in administration; the plugin receives the decrypted value through `sdk.Resources()` when it reads its own source record.
 
 External Files then creates an `sdk.HTTPRequest`. Kumbuka performs the actual network I/O and applies generic host security policy. The plugin requests these permissions:
 
-- `settings:read` to read its source records;
+- `settings:read` to read its typed settings and source records;
 - `network:http` for outbound HTTP(S);
 - `network:private` so explicitly configured exact private addresses can be used;
 - `network:insecure-tls` so a source can explicitly disable origin certificate verification.
@@ -92,7 +95,7 @@ External Files then creates an `sdk.HTTPRequest`. Kumbuka performs the actual ne
 - A maximum of 32 annotations is allowed per embed, with 2,048 bytes per description.
 - The plugin permits at most 30 fetch attempts per source per minute. Kumbuka separately applies generic HTTP request/response bounds, timeouts, concurrency limits, and the plugin invocation deadline.
 - Provider errors and credentials are never copied into page error boxes.
-- External content is not stored in rendered-page artifacts or a shared content cache.
+- External content is not stored in rendered-page artifacts, browser storage, or Kumbuka's database by the cache. Cached files live only in the plugin runtime's bounded memory cache.
 
 An administrator-configured source grants this plugin access to the repository at the selected revision. It is not a per-reader repository ACL. Use a dedicated repository when only a subset of content should be disclosed.
 

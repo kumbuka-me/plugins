@@ -5,6 +5,7 @@ import (
 	"html"
 	"strconv"
 	"strings"
+	"time"
 
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -131,10 +132,10 @@ func render(value options, resources resourceReader, settings settingsReader, ht
 	}
 
 	source, err := loadSource(value.Source, resources)
-	if err != nil || !allowSourceFetch(value.Source) {
+	if err != nil {
 		return message("External file unavailable. Ask an administrator to check the configured source and provider access.")
 	}
-	content, err := fetchFile(source, value.Path, httpDo)
+	content, err := cachedFile(value.Source, source, value.Path, loadCacheTTL(settings), time.Now().UTC(), httpDo)
 	if err != nil {
 		return message("External file unavailable. Ask an administrator to check the configured source and provider access.")
 	}

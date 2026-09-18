@@ -11,10 +11,14 @@ import (
 // main is the WASI package entry point.
 func main() {}
 
-// init registers the external-file macro with the Kumbuka SDK.
+// init registers the external-file macro and cache administration action with the Kumbuka SDK.
 func init() {
 	sdk.RegisterMacro("external-files", parse, func(value options) (sdk.Result, error) {
 		return render(value, sdk.Resources().Get, sdk.Settings().Get, sdk.HTTP().Do), nil
+	})
+	sdk.RegisterAdminAction("refresh-cache", func() error {
+		refreshCache()
+		return nil
 	})
 }
 
