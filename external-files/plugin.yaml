@@ -2,10 +2,53 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.external-files
 name: External Files
-version: 1.2.1
+version: 1.3.0
 description: Display configured GitHub and GitLab files with line ranges and annotations.
 default_enabled: false
 modules:
+  - type: settings
+    id: appearance
+    name: Appearance
+    description: Default presentation for external-file embeds. Individual macros can override these values.
+    fields:
+      - id: reference_position
+        name: Reference position
+        type: select
+        required: true
+        default: right
+        options:
+          - right
+          - left
+      - id: reference_color
+        name: Reference color
+        type: select
+        required: true
+        default: accent
+        options:
+          - accent
+          - blue
+          - green
+          - yellow
+          - orange
+          - red
+          - purple
+          - gray
+      - id: highlight_referenced_lines
+        name: Highlight referenced lines
+        type: boolean
+        default: "true"
+      - id: show_line_numbers
+        name: Show line numbers
+        type: boolean
+        default: "true"
+      - id: show_provider
+        name: Show provider
+        type: boolean
+        default: "true"
+      - id: show_branch
+        name: Show branch, tag, or commit
+        type: boolean
+        default: "true"
   - type: admin-resource
     id: sources
     name: Sources
@@ -77,3 +120,4 @@ permissions:
   - network:http
   - network:private
   - network:insecure-tls
+

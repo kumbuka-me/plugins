@@ -10,8 +10,9 @@ This plugin is disabled by default. It uses Kumbuka's generic plugin resources f
 2. Install and enable External Files.
 3. Open **Administration → Plugin settings → External Files**.
 4. Add a source with a unique name, provider, API endpoint, repository, and explicit branch, tag, or commit.
-5. For private repositories, add a dedicated read-only token restricted to that repository.
-6. For an internal server, add the exact RFC1918 or IPv6 ULA addresses the provider hostname is allowed to resolve to.
+5. Under **Appearance**, choose the default reference side and color and whether line numbers, referenced-line highlighting, provider, and revision metadata are shown.
+6. For private repositories, add a dedicated read-only token restricted to that repository.
+7. For an internal server, add the exact RFC1918 or IPv6 ULA addresses the provider hostname is allowed to resolve to.
 
 Examples of API endpoints:
 
@@ -46,13 +47,27 @@ Inclusive line range with numbered annotations:
 {{external-file source="engineering" path="src/main.go" lines="10-25" note="12:Initialize the client." note="19:Handle errors before continuing."}}
 ```
 
-Repeat `note` to annotate more lines, including multiple notes on one line. Descriptions are plain text. Annotation line numbers refer to the original file and must be inside the displayed range.
+Repeat `note` to annotate more lines, including multiple notes on one line. Descriptions are plain text. Annotation line numbers refer to the original file and must be inside the displayed range. References are rendered in a dedicated gutter instead of being inserted into the source text.
+
+### Presentation overrides
+
+Appearance defaults are configured under **Administration → Plugin settings → External Files → Appearance**. The defaults are right-side references, accent color, referenced-line highlighting, line numbers, provider label, and branch/tag/commit metadata enabled.
+
+A single embed can override those defaults:
+
+```markdown
+{{external-file source="engineering" path="src/main.go" lines="10-25" note="12:Initialize the client." reference-position="left" reference-color="yellow" highlight-references="false" line-numbers="true" show-provider="true" show-branch="false"}}
+```
+
+Supported `reference-position` values are `right` and `left`. Supported colors are `accent`, `blue`, `green`, `yellow`, `orange`, `red`, `purple`, and `gray`. Boolean overrides accept `true` or `false`.
+
+The rendered header shows provider, repository, file path, and revision metadata according to those settings. Line numbers remain separate from annotation markers so the source stays visually aligned.
 
 ## Settings ownership
 
-All source fields belong to this plugin. Kumbuka does not have External Files-specific URL, token, provider, or TLS configuration.
+All source and appearance fields belong to this plugin. Kumbuka does not have External Files-specific URL, token, provider, TLS, reference-position, color, or line-number configuration.
 
-Kumbuka generically renders and stores the plugin's manifest-declared resource fields. `secret` fields are encrypted at rest and masked in administration; the plugin receives the decrypted value through `sdk.Resources()` when it reads its own source record.
+Kumbuka generically renders and stores the plugin's manifest-declared typed settings and resource fields. `secret` fields are encrypted at rest and masked in administration; the plugin receives the decrypted value through `sdk.Resources()` when it reads its own source record.
 
 External Files then creates an `sdk.HTTPRequest`. Kumbuka performs the actual network I/O and applies generic host security policy. The plugin requests these permissions:
 
@@ -100,3 +115,4 @@ Build the package with the repository tooling:
 - [GitHub repository contents API](https://docs.github.com/en/rest/repos/contents)
 - [GitLab repository files API](https://docs.gitlab.com/api/repository_files/)
 - [OWASP SSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html)
+

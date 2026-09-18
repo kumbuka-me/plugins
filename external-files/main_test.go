@@ -36,9 +36,9 @@ func TestSelectionAndAnnotations(t *testing.T) {
 		encoded := base64.StdEncoding.EncodeToString([]byte(content))
 		return sdk.HTTPResponse{StatusCode: http.StatusOK, Body: []byte(`{"type":"file","encoding":"base64","size":` + stringInt(len(content)) + `,"content":"` + encoded + `"}`)}, nil
 	}
-	result := render(value, resources, httpDo)
+	result := render(value, resources, nil, httpDo)
 	out := result.Parts[0].Text
-	for _, want := range []string{"&lt;script&gt;", "Line 21:", "[1]", "[2]", "{{include:private}}"} {
+	for _, want := range []string{"&lt;script&gt;", "Line 21:", `class="external-file-marker" title="Annotation 1">1</span>`, `class="external-file-marker" title="Annotation 2">2</span>`, "{{include:private}}", "GitHub", "kumbuka-me/kumbuka", "main"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q", want)
 		}
@@ -73,8 +73,11 @@ func TestInvalidSyntaxNeverFetches(t *testing.T) {
 				t.Fatalf("accepted %+v", value)
 			}
 			result := render(value, func(string, string) (sdk.PluginResourceRecord, error) {
-				t.Fatal("invalid syntax read settings")
+				t.Fatal("invalid syntax read resources")
 				return sdk.PluginResourceRecord{}, nil
+			}, func(string) (sdk.StoredValue, error) {
+				t.Fatal("invalid syntax read settings")
+				return sdk.StoredValue{}, nil
 			}, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
 				t.Fatal("invalid syntax fetched")
 				return sdk.HTTPResponse{}, nil
@@ -131,7 +134,7 @@ func TestErrorsAndOutOfRangeNotes(t *testing.T) {
 	resources := func(string, string) (sdk.PluginResourceRecord, error) {
 		return sdk.PluginResourceRecord{}, errors.New("secret token")
 	}
-	out := render(value, resources, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
+	out := render(value, resources, nil, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
 		return sdk.HTTPResponse{}, errors.New("secret upstream")
 	}).Parts[0].Text
 	if strings.Contains(out, "secret token") || strings.Contains(out, "secret upstream") || !strings.Contains(out, "unavailable") {
@@ -144,5 +147,88 @@ func TestErrorsAndOutOfRangeNotes(t *testing.T) {
 	}
 	if _, err := selectLines("one", 4, 4); err == nil {
 		t.Fatal("out-of-range line accepted")
+	}
+}
+
+// TestPresentationSettingsAndOverrides verifies plugin defaults and per-embed overrides stay inside External Files.
+func TestPresentationSettingsAndOverrides(t *testing.T) {
+	settings := func(key string) (sdk.StoredValue, error) {
+		values := map[string]string{
+			"appearance.reference_position":         "left",
+			"appearance.reference_color":            "purple",
+			"appearance.highlight_referenced_lines": "false",
+			"appearance.show_line_numbers":          "false",
+			"appearance.show_provider":              "false",
+			"appearance.show_branch":                "false",
+		}
+		value, ok := values[key]
+		return sdk.StoredValue{Found: ok, Value: []byte(value)}, nil
+	}
+
+	appearance := loadPresentation(settings)
+	if appearance.ReferencePosition != "left" || appearance.ReferenceColor != "purple" || appearance.HighlightReferences || appearance.ShowLineNumbers || appearance.ShowProvider || appearance.ShowBranch {
+		t.Fatalf("unexpected settings: %+v", appearance)
+	}
+
+	value, ok := parse(`{{external-file source="docs" path="README.md" reference-position="right" reference-color="yellow" highlight-references="true" line-numbers="true" show-provider="true" show-branch="true"}}`)
+	if !ok || value.Invalid {
+		t.Fatalf("parse: %+v", value)
+	}
+	appearance = applyPresentationOverrides(appearance, value)
+	if appearance.ReferencePosition != "right" || appearance.ReferenceColor != "yellow" || !appearance.HighlightReferences || !appearance.ShowLineNumbers || !appearance.ShowProvider || !appearance.ShowBranch {
+		t.Fatalf("unexpected overrides: %+v", appearance)
+	}
+}
+
+// TestPresentationMarkupUsesSeparateReferenceGutter verifies annotations are not inserted before the source text.
+func TestPresentationMarkupUsesSeparateReferenceGutter(t *testing.T) {
+	value := options{Path: "README.md", Notes: []annotation{{Line: 2, Text: "Explain this line."}}}
+	source := source{Provider: "gitlab", Repository: "platform/docs", Ref: "main"}
+	file := selectedFile{Start: 1, Content: "first\nsecond"}
+	appearance := defaultPresentation()
+
+	output := renderExternalFile(value, source, file, appearance)
+	for _, expected := range []string{
+		"external-file-reference-right",
+		"external-file-color-accent",
+		">GitLab<",
+		">platform/docs<",
+		">main<",
+		"external-file-line-annotated",
+		`class="external-file-source">second</span><span class="external-file-gutter">`,
+		`class="external-file-marker" title="Annotation 1">1</span>`,
+	} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("output does not contain %q: %s", expected, output)
+		}
+	}
+
+	left := appearance
+	left.ReferencePosition = "left"
+	left.ShowLineNumbers = false
+	left.ShowProvider = false
+	left.ShowBranch = false
+	output = renderExternalFile(value, source, file, left)
+	if !strings.Contains(output, `class="external-file-gutter"><span class="external-file-marker"`) || !strings.Contains(output, `</span><span class="external-file-source">second</span>`) {
+		t.Fatalf("left gutter not rendered before source: %s", output)
+	}
+	for _, absent := range []string{"external-file-number", ">GitLab<", `class="external-file-ref"`} {
+		if strings.Contains(output, absent) {
+			t.Fatalf("output unexpectedly contains %q: %s", absent, output)
+		}
+	}
+}
+
+// TestPresentationOverrideValidationRejectsUnknownValues verifies unsafe style values never reach generated class names.
+func TestPresentationOverrideValidationRejectsUnknownValues(t *testing.T) {
+	for _, args := range []string{
+		`source="a" path="b" reference-position="center"`,
+		`source="a" path="b" reference-color="url(evil)"`,
+		`source="a" path="b" line-numbers="maybe"`,
+	} {
+		value, matched := parse("{{external-file " + args + "}}")
+		if !matched || !value.Invalid {
+			t.Fatalf("accepted presentation override %q: %+v", args, value)
+		}
 	}
 }

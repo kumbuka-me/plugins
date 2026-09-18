@@ -1,46 +1,279 @@
-.external-file {
-  margin: 1rem 0;
-  border: 1px solid currentColor;
-  border-radius: 0.4rem;
+.prose .external-file {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--border);
+  border-radius: 0.5rem;
   overflow: hidden;
+  background-color: var(--surface);
 }
-.external-file-title,
-.external-file-notes {
-  padding: 0.65rem 1rem;
+
+.prose .external-file .external-file-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.65rem;
+  padding-right: 0.85rem;
+  padding-bottom: 0.65rem;
+  padding-left: 0.85rem;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--border);
+  background-color: var(--surface-elevated);
   overflow-wrap: anywhere;
 }
-.external-file-title {
+
+.prose .external-file .external-file-location {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.prose .external-file .external-file-provider {
+  display: inline-block;
+  padding-top: 0.15rem;
+  padding-right: 0.45rem;
+  padding-bottom: 0.15rem;
+  padding-left: 0.45rem;
+  border-radius: 1rem;
+  background-color: var(--surface-hover);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
   font-weight: 600;
 }
-.external-file .external-file-code {
-  margin: 0;
-  border-radius: 0;
-  padding: 0.75rem;
-  overflow-x: auto;
-  white-space: pre;
+
+.prose .external-file .external-file-repository {
+  font-weight: 600;
 }
-.external-file-number {
-  display: inline-block;
-  min-width: 4.5em;
-  padding-right: 1em;
+
+.prose .external-file .external-file-path {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.prose .external-file .external-file-ref {
+  flex: 0 0 auto;
+  padding-top: 0.15rem;
+  padding-right: 0.45rem;
+  padding-bottom: 0.15rem;
+  padding-left: 0.45rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--border);
+  border-radius: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.prose .external-file .external-file-code {
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+  padding-top: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  border-width: 0;
+  border-style: none;
+  border-radius: 0;
+  overflow-x: auto;
+  white-space: normal;
+}
+
+.prose .external-file .external-file-line {
+  display: flex;
+  align-items: stretch;
+  min-width: 100%;
+  width: 100%;
+}
+
+.prose .external-file .external-file-number {
+  flex: 0 0 auto;
+  min-width: 3.25rem;
+  padding-top: 0.18rem;
+  padding-right: 0.75rem;
+  padding-bottom: 0.18rem;
+  padding-left: 0.5rem;
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-right-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--text-tertiary);
   text-align: right;
-  opacity: 0.65;
   user-select: none;
 }
-.external-file-marker {
-  display: inline-block;
-  margin-right: 0.6em;
+
+.prose .external-file .external-file-source {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: 0.18rem;
+  padding-right: 0.75rem;
+  padding-bottom: 0.18rem;
+  padding-left: 0.75rem;
+  white-space: pre;
+}
+
+.prose .external-file .external-file-gutter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  min-width: 2.75rem;
+  padding-top: 0.12rem;
+  padding-right: 0.45rem;
+  padding-bottom: 0.12rem;
+  padding-left: 0.45rem;
+  background-color: var(--surface-elevated);
+  user-select: none;
+}
+
+.prose .external-file.external-file-reference-right .external-file-gutter {
+  border-left-width: 1px;
+  border-left-style: solid;
+  border-left-color: var(--border);
+}
+
+.prose .external-file.external-file-reference-left .external-file-gutter {
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-right-color: var(--border);
+}
+
+.prose .external-file .external-file-marker,
+.prose .external-file .external-file-note-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  padding-top: 0.08rem;
+  padding-right: 0.3rem;
+  padding-bottom: 0.08rem;
+  padding-left: 0.3rem;
+  border-radius: 1rem;
+  color: #fff;
+  font-size: 0.72rem;
   font-weight: 700;
 }
-.external-file-notes ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+
+.prose .external-file .external-file-notes {
+  padding-top: 0.7rem;
+  padding-right: 0.85rem;
+  padding-bottom: 0.7rem;
+  padding-left: 0.85rem;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--border);
+  background-color: var(--surface-elevated);
 }
-.external-file-notes li + li {
+
+.prose .external-file .external-file-note-list {
+  list-style: none;
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+  padding-top: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+}
+
+.prose .external-file .external-file-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.prose .external-file .external-file-note-following {
   margin-top: 0.5rem;
 }
-.external-file-error {
-  padding: 0.75rem;
-  border: 1px solid currentColor;
+
+.prose .external-file.external-file-color-accent .external-file-marker,
+.prose .external-file.external-file-color-accent .external-file-note-marker {
+  background-color: var(--accent);
+}
+
+.prose .external-file.external-file-color-accent .external-file-line-annotated {
+  background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.prose .external-file.external-file-color-blue .external-file-marker,
+.prose .external-file.external-file-color-blue .external-file-note-marker {
+  background-color: #2563eb;
+}
+
+.prose .external-file.external-file-color-blue .external-file-line-annotated {
+  background-color: color-mix(in srgb, #2563eb 8%, transparent);
+}
+
+.prose .external-file.external-file-color-green .external-file-marker,
+.prose .external-file.external-file-color-green .external-file-note-marker {
+  background-color: #16a34a;
+}
+
+.prose .external-file.external-file-color-green .external-file-line-annotated {
+  background-color: color-mix(in srgb, #16a34a 8%, transparent);
+}
+
+.prose .external-file.external-file-color-yellow .external-file-marker,
+.prose .external-file.external-file-color-yellow .external-file-note-marker {
+  background-color: #ca8a04;
+}
+
+.prose .external-file.external-file-color-yellow .external-file-line-annotated {
+  background-color: color-mix(in srgb, #ca8a04 8%, transparent);
+}
+
+.prose .external-file.external-file-color-orange .external-file-marker,
+.prose .external-file.external-file-color-orange .external-file-note-marker {
+  background-color: #ea580c;
+}
+
+.prose .external-file.external-file-color-orange .external-file-line-annotated {
+  background-color: color-mix(in srgb, #ea580c 8%, transparent);
+}
+
+.prose .external-file.external-file-color-red .external-file-marker,
+.prose .external-file.external-file-color-red .external-file-note-marker {
+  background-color: #dc2626;
+}
+
+.prose .external-file.external-file-color-red .external-file-line-annotated {
+  background-color: color-mix(in srgb, #dc2626 8%, transparent);
+}
+
+.prose .external-file.external-file-color-purple .external-file-marker,
+.prose .external-file.external-file-color-purple .external-file-note-marker {
+  background-color: #9333ea;
+}
+
+.prose .external-file.external-file-color-purple .external-file-line-annotated {
+  background-color: color-mix(in srgb, #9333ea 8%, transparent);
+}
+
+.prose .external-file.external-file-color-gray .external-file-marker,
+.prose .external-file.external-file-color-gray .external-file-note-marker {
+  background-color: #64748b;
+}
+
+.prose .external-file.external-file-color-gray .external-file-line-annotated {
+  background-color: color-mix(in srgb, #64748b 8%, transparent);
+}
+
+.prose .external-file-error {
+  padding-top: 0.75rem;
+  padding-right: 0.75rem;
+  padding-bottom: 0.75rem;
+  padding-left: 0.75rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: currentColor;
+  border-radius: 0.4rem;
 }
