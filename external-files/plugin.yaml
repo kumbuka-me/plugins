@@ -1,0 +1,26 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.external-files
+name: External Files
+version: 0.1.0
+description: Display approved GitHub and GitLab files with line ranges and annotations.
+default_enabled: false
+modules:
+  - type: macro
+    id: external-files
+    name: external-file
+    usage:
+      - macro: external-file
+  - type: content-style
+    id: style
+    css: plugin.css
+    usage:
+      - macro: external-file
+  - type: editor-insert
+    id: editor
+    name: External file
+    description: Display a file from an administrator-approved source.
+    markdown: '{{external-file source="engineering" path="README.md" lines="1-10" note="3:Explain this line here."}}'
+    group: insert
+permissions:
+  - external:read

@@ -1,0 +1,46 @@
+.external-file {
+  margin: 1rem 0;
+  border: 1px solid currentColor;
+  border-radius: 0.4rem;
+  overflow: hidden;
+}
+.external-file-title,
+.external-file-notes {
+  padding: 0.65rem 1rem;
+  overflow-wrap: anywhere;
+}
+.external-file-title {
+  font-weight: 600;
+}
+.external-file .external-file-code {
+  margin: 0;
+  border-radius: 0;
+  padding: 0.75rem;
+  overflow-x: auto;
+  white-space: pre;
+}
+.external-file-number {
+  display: inline-block;
+  min-width: 4.5em;
+  padding-right: 1em;
+  text-align: right;
+  opacity: 0.65;
+  user-select: none;
+}
+.external-file-marker {
+  display: inline-block;
+  margin-right: 0.6em;
+  font-weight: 700;
+}
+.external-file-notes ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.external-file-notes li + li {
+  margin-top: 0.5rem;
+}
+.external-file-error {
+  padding: 0.75rem;
+  border: 1px solid currentColor;
+}
