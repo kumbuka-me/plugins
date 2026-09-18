@@ -35,6 +35,7 @@ PLUGIN_DIRS := $(sort $(patsubst %/plugin.yaml,%,$(wildcard */plugin.yaml)))
 ## Formatting
 PRETTIER_SOURCES := \
 	README.md \
+	catalog.json \
 	"*/README.md" \
 	"*/plugin.yaml" \
 	"*/browser.ts" \
@@ -130,6 +131,10 @@ tag-plugin: check-plugins ## Tag one plugin's current version. Usage: make tag-p
 tag-all: check-plugins ## Tag all current plugin versions that are not already tagged.
 	./scripts/tag-plugins.sh --all
 
+.PHONY: catalog
+catalog: ## Regenerate catalog.json from published plugin releases.
+	GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" ./scripts/generate-catalog.sh catalog.json
+
 .PHONY: check-releases
 check-releases: ## Check whether every plugin's latest tag has a GitHub release.
 	@set -eu; \
@@ -217,3 +222,5 @@ golangci-lint: $(GO_INSTALL_TOOL) ## Download golangci-lint locally if necessary
 		--target "$(GOLANGCI_LINT)" \
 		--package github.com/golangci/golangci-lint/v2/cmd/golangci-lint \
 		--tool-version "$(GOLANGCI_LINT_VERSION)"
+
+

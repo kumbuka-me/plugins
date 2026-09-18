@@ -11,6 +11,18 @@ First-party plugins for Kumbuka.
 
 Bundled plugins already appear on the same page and only need to be enabled when they are disabled.
 
+## Update catalog
+
+Published releases are collected into `catalog.json`. The release workflow regenerates the catalog after a plugin release succeeds, commits the canonical copy to this repository, and synchronizes it to `kumbuka-me/docs` so it is served as `https://kumbuka.me/plugins/catalog.json`.
+
+Configure the `DOCS_REPOSITORY_TOKEN` Actions secret with contents write access to `kumbuka-me/docs`. Catalog entries are published only for non-draft, non-prerelease plugin releases that have both the versioned `.kumbukaplugin` asset and its `.sha256` asset.
+
+Regenerate the catalog locally from existing GitHub releases with:
+
+```sh
+GH_TOKEN=$(gh auth token) make catalog
+```
+
 ## Build a plugin
 
 See the [Kumbuka plugin development guide](https://kumbuka.me/plugins/).

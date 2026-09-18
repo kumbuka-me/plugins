@@ -163,3 +163,66 @@ jobs:
               --title "$PLUGIN v$VERSION" \
               --notes "Kumbuka $PLUGIN plugin v$VERSION."
           fi
+
+  catalog:
+    name: Publish plugin catalog
+    needs: release
+    runs-on: ubuntu-latest
+    concurrency:
+      group: plugin-catalog
+      cancel-in-progress: false
+
+    steps:
+      - name: Check out plugin catalog source
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Generate plugin catalog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/generate-catalog.sh catalog.json
+
+      - name: Commit plugin catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- catalog.json; then
+            echo "Plugin catalog is unchanged."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add catalog.json
+            git commit -m "chore: update plugin catalog"
+            git push origin HEAD:main
+          fi
+
+      - name: Check out documentation
+        uses: actions/checkout@v7
+        with:
+          repository: kumbuka-me/docs
+          token: ${{ secrets.DOCS_REPOSITORY_TOKEN }}
+          path: .catalog-docs
+
+      - name: Publish catalog to kumbuka.me
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          target=.catalog-docs/content/plugins/catalog.json
+          mkdir -p "$(dirname "$target")"
+          cp catalog.json "$target"
+
+          cd .catalog-docs
+          if git diff --quiet -- content/plugins/catalog.json; then
+            echo "Documentation catalog is unchanged."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/plugins/catalog.json
+          git commit -m "chore: update plugin catalog"
+          git push
