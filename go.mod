@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/alecthomas/chroma/v2 v2.27.0
 	github.com/go-icons/simple-icons v0.1.0
-	github.com/kumbuka-me/sdk v0.6.1-0.20260918123411-17650bc0396e
+	github.com/kumbuka-me/sdk v0.6.1-0.20260918123419-e2029e2f8c10
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/net v0.59.0
 )
