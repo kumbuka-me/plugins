@@ -2,10 +2,60 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.external-files
 name: External Files
-version: 1.0.0
-description: Display approved GitHub and GitLab files with line ranges and annotations.
+version: 1.1.0
+description: Display configured GitHub and GitLab files with line ranges and annotations.
 default_enabled: false
 modules:
+  - type: admin-resource
+    id: sources
+    name: Sources
+    description: Repository connections available to external-file macros.
+    fields:
+      - id: name
+        name: Name
+        type: text
+        required: true
+        key: true
+        max_bytes: 128
+      - id: provider
+        name: Provider
+        type: select
+        required: true
+        default: github
+        options:
+          - github
+          - gitlab
+      - id: endpoint
+        name: API endpoint
+        type: url
+        required: true
+        max_bytes: 512
+      - id: repository
+        name: Repository
+        type: text
+        required: true
+        max_bytes: 256
+      - id: ref
+        name: Branch, tag, or commit
+        type: text
+        required: true
+        max_bytes: 256
+      - id: private_ips
+        name: Allowed private IPs
+        type: textarea
+        max_bytes: 2048
+      - id: token
+        name: Access token
+        type: secret
+        max_bytes: 4096
+      - id: insecure_skip_verify
+        name: Skip TLS certificate verification
+        type: boolean
+        default: "false"
+      - id: enabled
+        name: Enabled
+        type: boolean
+        default: "true"
   - type: macro
     id: external-files
     name: external-file
@@ -19,8 +69,11 @@ modules:
   - type: editor-insert
     id: editor
     name: External file
-    description: Display a file from an administrator-approved source.
+    description: Display a file from a configured source.
     markdown: '{{external-file source="engineering" path="README.md" lines="1-10" note="3:Explain this line here."}}'
     group: insert
 permissions:
-  - external:read
+  - settings:read
+  - network:http
+  - network:private
+  - network:insecure-tls
