@@ -1,33 +1,22 @@
 # External Files
 
-Display whole files or selected lines from configured GitHub and GitLab repositories, including self-hosted instances. File content is displayed as text and is never executed or interpreted as Markdown.
+Display whole files or selected lines from administrator-configured GitHub and GitLab repositories. File content is displayed as escaped text and is never interpreted as Markdown.
 
-This plugin is disabled by default. It uses Kumbuka's generic plugin resources for connection settings and the generic host-mediated HTTP capability for network access.
+The plugin is disabled by default.
 
 ## Setup
 
-1. Configure `KUMBUKA__ENCRYPTION_KEY` before storing repository credentials.
-2. Install and enable External Files.
-3. Open **Administration → Plugin settings → External Files**.
-4. Add a source with a unique name, provider, API endpoint, repository, and explicit branch, tag, or commit.
-5. Under **Appearance**, choose the default reference side and color and whether line numbers, referenced-line highlighting, provider, and revision metadata are shown.
-6. For private repositories, add a dedicated read-only token restricted to that repository.
-7. For an internal server, add the exact RFC1918 or IPv6 ULA addresses the provider hostname is allowed to resolve to.
+1. Configure `KUMBUKA__ENCRYPTION_KEY` before saving repository credentials.
+2. Open **Administration → External Files** in the plugin settings section below **Recycle bin**.
+3. Add a source with a unique name, `github` or `gitlab` provider, HTTPS API endpoint, repository, and explicit branch/tag/commit.
+4. Optionally add a dedicated read-only access token. Secret fields are encrypted by Kumbuka and are available only to the owning plugin at runtime.
+5. Enable the source, then enable the External Files plugin.
 
-Examples of API endpoints:
+Typical API endpoints are `https://api.github.com`, GitHub Enterprise `/api/v3`, GitLab `https://gitlab.com/api/v4`, or a self-hosted GitLab `/api/v4` endpoint.
 
-- GitHub.com: `https://api.github.com`
-- GitHub Enterprise: `https://git.example.com/api/v3`
-- GitLab.com: `https://gitlab.com/api/v4`
-- Self-hosted GitLab: `https://git.example.com/api/v4`
-
-GitHub repositories use `owner/repository`. GitLab repositories may contain nested group paths. Use a commit SHA when annotations must remain stable.
-
-The source setting **Skip TLS certificate verification** is off by default. Prefer configuring a trusted CA with `SSL_CERT_FILE` or `SSL_CERT_DIR`; use the insecure switch only for a source whose transport you explicitly trust.
+Use **Skip TLS certificate verification** only for a source that cannot use normal certificate validation. A trusted certificate is preferable. The plugin must explicitly declare the `network:insecure-tls` capability before Kumbuka accepts such a request.
 
 ## Usage
-
-Place each macro on its own line, outside a code fence.
 
 Whole file:
 
@@ -41,77 +30,36 @@ Single original line:
 {{external-file source="engineering" path="src/main.go" lines="12"}}
 ```
 
-Inclusive line range with numbered annotations:
+Inclusive line range with annotations:
 
 ```markdown
 {{external-file source="engineering" path="src/main.go" lines="10-25" note="12:Initialize the client." note="19:Handle errors before continuing."}}
 ```
 
-Repeat `note` to annotate more lines, including multiple notes on one line. Descriptions are plain text. Annotation line numbers refer to the original file and must be inside the displayed range. References are rendered in a dedicated gutter instead of being inserted into the source text.
+Repeat `note` to annotate multiple lines. Annotation text is always HTML-escaped.
 
-### Presentation overrides
+## Architecture and security
 
-Appearance defaults are configured under **Administration → Plugin settings → External Files → Appearance**. The defaults are right-side references, accent color, referenced-line highlighting, line numbers, provider label, and branch/tag/commit metadata enabled.
+External Files owns its repository configuration and provider protocol. It reads its structured `sources` settings through `sdk.Resources()` and builds provider requests itself. Kumbuka core has no External Files URL, token, TLS switch, provider model, approval model, or repository-specific HTTP code.
 
-A single embed can override those defaults:
+Network I/O still crosses Kumbuka's generic `sdk.HTTP()` host capability. Kumbuka validates bounded HTTP requests, enforces the plugin's declared network permissions, blocks special-use destinations, limits concurrency and response sizes, and performs TLS. `network:private` is required before a plugin may connect to private address space, while loopback, link-local, metadata, and other special-use destinations remain blocked. `network:insecure-tls` is required before a plugin can disable certificate verification for a request.
 
-```markdown
-{{external-file source="engineering" path="src/main.go" lines="10-25" note="12:Initialize the client." reference-position="left" reference-color="yellow" highlight-references="false" line-numbers="true" show-provider="true" show-branch="false"}}
-```
+Tokens are stored as `secret` fields in the generic plugin settings framework. Kumbuka encrypts them at rest, masks them in administrator forms, and decrypts them only when returning the owning plugin's resource records. Plugins never receive Kumbuka's encryption key.
 
-Supported `reference-position` values are `right` and `left`. Supported colors are `accent`, `blue`, `green`, `yellow`, `orange`, `red`, `purple`, and `gray`. Boolean overrides accept `true` or `false`.
+Files are limited to 128 KiB of valid UTF-8 text and 10,000 lines. Control and Unicode formatting characters are rejected. Provider errors and credentials are never rendered into page output.
 
-The rendered header shows provider, repository, file path, and revision metadata according to those settings. Line numbers remain separate from annotation markers so the source stays visually aligned.
+## Screenshots
 
-## Settings ownership
+Rendered file with an inline annotation:
 
-All source and appearance fields belong to this plugin. Kumbuka does not have External Files-specific URL, token, provider, TLS, reference-position, color, or line-number configuration.
+![External Files renders annotated source excerpts inside Kumbuka.](assets/screenshots/external-files-annotated-readme.png)
 
-Kumbuka generically renders and stores the plugin's manifest-declared typed settings and resource fields. `secret` fields are encrypted at rest and masked in administration; the plugin receives the decrypted value through `sdk.Resources()` when it reads its own source record.
-
-External Files then creates an `sdk.HTTPRequest`. Kumbuka performs the actual network I/O and applies generic host security policy. The plugin requests these permissions:
-
-- `settings:read` to read its source records;
-- `network:http` for outbound HTTP(S);
-- `network:private` so explicitly configured exact private addresses can be used;
-- `network:insecure-tls` so a source can explicitly disable origin certificate verification.
-
-## Security and limits
-
-- Tokens never appear in Markdown, URLs, browser storage, or rendered plugin output.
-- Only authenticated Kumbuka invocation contexts can use the generic HTTP capability. Public share rendering cannot fetch external files.
-- External Files accepts HTTPS provider endpoints only and never follows redirects because the host HTTP client disables them.
-- Kumbuka validates and pins resolved destination addresses before dialing. Private destinations require exact addresses supplied by this plugin from the administrator-managed source. Loopback, link-local, shared-address space, metadata, documentation, and other special-use destinations remain blocked.
-- External Files validates provider responses and accepts at most 128 KiB of UTF-8 text and 10,000 lines. Binary/control content and Unicode formatting controls are rejected. Git LFS objects are not expanded.
-- A maximum of 32 annotations is allowed per embed, with 2,048 bytes per description.
-- The plugin permits at most 30 fetch attempts per source per minute. Kumbuka separately applies generic HTTP request/response bounds, timeouts, concurrency limits, and the plugin invocation deadline.
-- Provider errors and credentials are never copied into page error boxes.
-- External content is not stored in rendered-page artifacts or a shared content cache.
-
-An administrator-configured source grants this plugin access to the repository at the selected revision. It is not a per-reader repository ACL. Use a dedicated repository when only a subset of content should be disclosed.
-
-## Proxy and CA environment settings
-
-Kumbuka's generic plugin HTTP client honors conventional deployment networking settings:
-
-- `HTTPS_PROXY` / `https_proxy`
-- `HTTP_PROXY` / `http_proxy`
-- `NO_PROXY` / `no_proxy`
-- `SSL_CERT_FILE`
-- `SSL_CERT_DIR`
-
-Proxy configuration belongs to the Kumbuka process, not to this plugin. Proxy TLS verification is never disabled by a plugin source's **Skip TLS certificate verification** setting.
+The screenshot above shows the current renderer before the right-side annotation gutter redesign. It still demonstrates the plugin's core workflow: stable line selection, escaped source text, copy support, and a human-readable explanation anchored to original file lines.
 
 ## Build
 
-Build the package with the repository tooling:
+External Files requires the SDK release that provides `Resources()` and the generic `HTTP()` capability.
 
 ```sh
 ./scripts/build-plugin.sh external-files dist
 ```
-
-## References
-
-- [GitHub repository contents API](https://docs.github.com/en/rest/repos/contents)
-- [GitLab repository files API](https://docs.gitlab.com/api/repository_files/)
-- [OWASP SSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html)
