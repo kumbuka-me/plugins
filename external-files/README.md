@@ -82,13 +82,13 @@ The proxy endpoint is trusted deployment infrastructure and may reside on a priv
 
 ## Build
 
-The plugin and host pull requests temporarily pin the companion SDK fork commit while [the SDK capability](https://github.com/kumbuka-me/sdk/pull/5) is under review:
+The plugin uses the merged [upstream SDK capability](https://github.com/kumbuka-me/sdk/pull/5), pinned to its upstream commit until the next tagged SDK release:
 
 ```sh
 ./scripts/build-plugin.sh external-files dist
 ```
 
-Build the Kumbuka application normally from its checkout. Before merging the dependent pull requests, publish the updated upstream SDK, update both repositories' SDK dependency, and remove the temporary fork replacements; the existing released SDK does not contain this capability.
+Build the Kumbuka application normally from its checkout. Both repositories use the upstream SDK directly; no fork replacement or sibling checkout is required. The host must include the approved external-file capability.
 
 ## References
 
