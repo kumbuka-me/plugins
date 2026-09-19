@@ -233,14 +233,15 @@ func atxHeading(line string) (level int, title string, ok bool) {
 	for level < len(trimmed) && level < 6 && trimmed[level] == '#' {
 		level++
 	}
-	if level == len(trimmed) || (trimmed[level] != ' ' && trimmed[level] != '\t') {
+	if level < len(trimmed) && trimmed[level] != ' ' && trimmed[level] != '\t' {
 		return 0, "", false
 	}
 	title = strings.TrimSpace(trimmed[level:])
-	for strings.HasSuffix(title, "#") {
-		title = strings.TrimSpace(strings.TrimSuffix(title, "#"))
+	closing := strings.TrimRight(title, "#")
+	if closing == "" || strings.HasSuffix(closing, " ") || strings.HasSuffix(closing, "\t") {
+		title = strings.TrimSpace(closing)
 	}
-	return level, title, title != ""
+	return level, title, true
 }
 
 // headingID mirrors Kumbuka's stable ASCII heading-anchor normalization.

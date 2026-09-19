@@ -57,3 +57,26 @@ func TestExpandIncludesLeavesFencedSyntaxLiteral(t *testing.T) {
 		t.Fatalf("fenced include changed: got %q want %q", got, source)
 	}
 }
+
+func TestSectionEndsAtEmptySiblingHeading(t *testing.T) {
+	for _, heading := range []string{"#", "#   ", "# ###"} {
+		t.Run(heading, func(t *testing.T) {
+			section, err := markdownSection("# Guide\nIncluded\n"+heading+"\nOutside", "guide")
+			if err != nil || section != "# Guide\nIncluded" {
+				t.Fatalf("section = %q, error = %v", section, err)
+			}
+		})
+	}
+}
+
+func TestATXHeadingPreservesLiteralTrailingHashes(t *testing.T) {
+	for _, line := range []string{"# C#", "# C# ###"} {
+		level, title, ok := atxHeading(line)
+		if !ok || level != 1 || title != "C#" {
+			t.Fatalf("heading %q = %d, %q, %t", line, level, title, ok)
+		}
+	}
+	if _, _, ok := atxHeading("####### Too many"); ok {
+		t.Fatal("accepted a seven-level heading")
+	}
+}
