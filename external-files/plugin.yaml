@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.external-files
 name: External Files
-version: 1.5.2
+version: 1.5.3
 description: Embed GitHub and GitLab files with line ranges, annotations, and revision metadata.
 default_enabled: false
 modules:
