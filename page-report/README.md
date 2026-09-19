@@ -2,6 +2,8 @@
 
 Page Report adds the `{{pages ...}}` macro for rendering live lists of pages that match a Kumbuka search query.
 
+![A live Page Report rendered as a table](assets/screenshots/page-report.png)
+
 ## Usage
 
 ```text

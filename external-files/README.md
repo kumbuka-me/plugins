@@ -1,6 +1,10 @@
 # External Files
 
-Display whole files or selected lines from configured GitHub and GitLab repositories, including self-hosted instances. File content is displayed as text and is never executed or interpreted as Markdown.
+External Files embeds repository files from GitHub and GitLab directly into Kumbuka pages. Show a whole file or selected lines, add numbered annotations, and pin content to a branch, tag, or commit. GitHub Enterprise and self-hosted GitLab are supported.
+
+Repository content is displayed as escaped text and is never executed or interpreted as Markdown.
+
+![Annotated source lines embedded from a repository](assets/screenshots/external-files-annotated-readme.png)
 
 This plugin is disabled by default. It uses Kumbuka's generic plugin resources for connection settings, a bounded in-memory plugin cache, and the generic host-mediated HTTP capability for network access.
 

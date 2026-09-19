@@ -2,6 +2,8 @@
 
 Mermaid renders fenced `mermaid` code blocks as diagrams in an isolated browser frame. The original code block remains available as a fallback when the browser module is unavailable or the plugin is disabled.
 
+![A Mermaid flowchart rendered on a Kumbuka page](assets/screenshots/mermaid.png)
+
 ## Usage
 
 ````markdown

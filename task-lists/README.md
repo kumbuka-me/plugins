@@ -2,6 +2,8 @@
 
 Task Lists renders GitHub-style Markdown task items with accessible visible checkbox state.
 
+![Rendered task list with completed and open items](assets/screenshots/task-lists.png)
+
 ## Usage
 
 ```markdown

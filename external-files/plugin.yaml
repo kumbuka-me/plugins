@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.external-files
 name: External Files
 version: 1.5.0
-description: Display configured GitHub and GitLab files with line ranges and annotations.
+description: Embed GitHub and GitLab files with line ranges, annotations, and revision metadata.
 default_enabled: false
 modules:
   - type: settings

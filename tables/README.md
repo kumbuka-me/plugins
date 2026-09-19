@@ -2,6 +2,8 @@
 
 Tables adds Markdown tables with optional theme-aware colors, client-side sorting, and per-column filtering.
 
+![A colored sortable table with status values](assets/screenshots/tables.png)
+
 ## Usage
 
 ```markdown

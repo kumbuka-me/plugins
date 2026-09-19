@@ -2,6 +2,8 @@
 
 Tabs renders consecutive Material-style tab declarations as an interactive tab group while keeping each panel body as normal Kumbuka Markdown.
 
+![An interactive tab group with platform-specific commands](assets/screenshots/tabs.png)
+
 ## Usage
 
 ````markdown
