@@ -2,7 +2,7 @@
 
 Syntax Highlighting highlights fenced code blocks using Chroma and the explicit Markdown fence language supplied by Kumbuka.
 
-![A Go code block rendered with syntax highlighting](assets/screenshots/syntax-highlighting.png)
+![A Go code block rendered with syntax highlighting](screenshots/syntax-highlighting.png)
 
 ## Usage
 

@@ -2,7 +2,7 @@
 
 Adds the [Simple Icons](https://simpleicons.org/) brand-logo catalog to Kumbuka's normal icon picker.
 
-![Simple Icons available in the Kumbuka icon picker](assets/screenshots/simple-icons.png)
+![Simple Icons available in the Kumbuka icon picker](screenshots/simple-icons.png)
 
 Icons keep the existing `-simple` identifiers, for example `github-simple`, so pages and navigation items that already use Simple Icons continue to work when this plugin is enabled.
 

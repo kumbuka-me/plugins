@@ -4,7 +4,7 @@ External Files embeds repository files from GitHub and GitLab directly into Kumb
 
 Repository content is displayed as escaped text and is never executed or interpreted as Markdown.
 
-![Annotated source lines embedded from a repository](assets/screenshots/external-files-annotated-readme.png)
+![Annotated source lines embedded from a repository](screenshots/external-files-annotated-readme.png)
 
 This plugin is disabled by default. It uses Kumbuka's generic plugin resources for connection settings, a bounded in-memory plugin cache, and the generic host-mediated HTTP capability for network access.
 

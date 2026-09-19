@@ -2,7 +2,7 @@
 
 Subpages adds the `{{subpages}}` macro for showing the current page's child navigation.
 
-![Subpages rendered as child navigation inside a page](assets/screenshots/subpages.png)
+![Subpages rendered as child navigation inside a page](screenshots/subpages.png)
 
 ## Usage
 

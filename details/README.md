@@ -2,7 +2,7 @@
 
 Collapsible Details renders `???` blocks as native expandable sections while keeping their body as normal Kumbuka Markdown.
 
-![Open and closed collapsible detail blocks](assets/screenshots/details.png)
+![Open and closed collapsible detail blocks](screenshots/details.png)
 
 ## Usage
 

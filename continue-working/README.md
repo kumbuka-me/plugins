@@ -2,7 +2,7 @@
 
 Continue Working shows bounded private draft metadata and the current viewer's recently edited pages on Home. Draft form values never leave Kumbuka core.
 
-![The Continue Working Home widget with drafts and recent edits](assets/screenshots/continue-working.png)
+![The Continue Working Home widget with drafts and recent edits](screenshots/continue-working.png)
 
 ## Permissions
 
