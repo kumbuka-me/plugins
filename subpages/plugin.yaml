@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.subpages
 name: Subpages
-version: 1.0.6
+version: 1.0.7
 default_enabled: true
 modules:
   - type: macro

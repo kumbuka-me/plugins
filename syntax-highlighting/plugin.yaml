@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.syntax-highlighting
 name: Syntax Highlighting
-version: 1.4.4
+version: 1.4.5
 description: Highlight fenced code blocks with Chroma's full lexer registry.
 default_enabled: true
 modules:
