@@ -28,11 +28,17 @@ type cacheEntry struct {
 	Content string
 }
 
-var externalFileCache = struct {
+// fileCacheState protects the shared file cache and administrator invalidation boundary.
+type fileCacheState struct {
+	// Mutex serializes entry updates and cache invalidation.
 	sync.Mutex
-	Entries      map[string]cacheEntry
+	// Entries maps source-and-path fingerprints to complete cached files.
+	Entries map[string]cacheEntry
+	// RefreshAfter marks fetches at or before this time stale; zero means no manual refresh.
 	RefreshAfter time.Time
-}{Entries: make(map[string]cacheEntry)}
+}
+
+var externalFileCache = fileCacheState{Entries: make(map[string]cacheEntry)}
 
 // loadCacheTTL reads the plugin-owned cache duration and falls back to one hour.
 func loadCacheTTL(read settingsReader) time.Duration {
@@ -171,19 +177,9 @@ func fileCacheKey(sourceName, path string) string {
 
 // sourceFingerprint detects any repository connection change, including credential changes.
 func sourceFingerprint(value source) string {
-	payload := struct {
-		Provider           string   `json:"provider"`
-		Endpoint           string   `json:"endpoint"`
-		Repository         string   `json:"repository"`
-		Ref                string   `json:"ref"`
-		Token              string   `json:"token"`
-		PrivateIPs         []string `json:"private_ips"`
-		InsecureSkipVerify bool     `json:"insecure_skip_verify"`
-	}{
-		Provider: value.Provider, Endpoint: value.Endpoint, Repository: value.Repository, Ref: value.Ref,
-		Token: value.Token, PrivateIPs: value.PrivateIPs, InsecureSkipVerify: value.InsecureSkipVerify,
-	}
-	encoded, _ := json.Marshal(payload)
+	// source contains only JSON-serializable connection settings, so new settings
+	// automatically participate in invalidation without a second field list.
+	encoded, _ := json.Marshal(value)
 	sum := sha256.Sum256(encoded)
 	return hex.EncodeToString(sum[:])
 }

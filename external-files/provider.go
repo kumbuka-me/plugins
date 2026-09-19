@@ -29,31 +29,47 @@ var errUnavailable = errors.New("external file unavailable")
 
 // source contains one validated administrator-managed repository connection.
 type source struct {
-	Provider           string
-	Endpoint           string
-	Repository         string
-	Ref                string
-	Token              string
-	PrivateIPs         []string
+	// Provider selects the GitHub or GitLab API adapter.
+	Provider string
+	// Endpoint is the HTTPS API base URL, including any installation path prefix.
+	Endpoint string
+	// Repository is the owner/repository path or GitLab project path.
+	Repository string
+	// Ref selects the branch, tag, or commit fetched by the adapter.
+	Ref string
+	// Token authenticates requests and is never included in rendered output.
+	Token string
+	// PrivateIPs lists exact private addresses authorized for this connection.
+	PrivateIPs []string
+	// InsecureSkipVerify permits the host to skip TLS certificate verification for this source.
 	InsecureSkipVerify bool
 }
 
 // selectedFile contains a validated line selection with its original first line number.
 type selectedFile struct {
+	// Content contains only the selected lines with normalized line endings.
 	Content string
-	Start   int
+	// Start is the one-based line number in the original file.
+	Start int
 }
 
-// sourceRate tracks one source's bounded rolling fetch window.
+// sourceRate tracks one source's bounded fixed fetch window.
 type sourceRate struct {
+	// Since is the start of the current one-minute window.
 	Since time.Time
+	// Count is the number of fetch attempts charged to that window.
 	Count int
 }
 
-var sourceFetchRates = struct {
+// sourceRateState serializes per-source request accounting across renders.
+type sourceRateState struct {
+	// Mutex protects the request counters and expired-window cleanup.
 	sync.Mutex
+	// Values maps source names to their active fetch windows.
 	Values map[string]sourceRate
-}{Values: make(map[string]sourceRate)}
+}
+
+var sourceFetchRates = sourceRateState{Values: make(map[string]sourceRate)}
 
 // loadSource reads and validates one manifest-declared source resource.
 func loadSource(name string, read resourceReader) (source, error) {
@@ -91,14 +107,7 @@ func validSource(value source) bool {
 	if value.Provider != "github" && value.Provider != "gitlab" {
 		return false
 	}
-	endpoint, err := url.Parse(value.Endpoint)
-	if err != nil || endpoint.Scheme != "https" || endpoint.Hostname() == "" || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.ForceQuery || endpoint.Fragment != "" || endpoint.RawPath != "" || strings.ContainsAny(endpoint.Host, "%\\") || len(value.Endpoint) > 512 {
-		return false
-	}
-	if endpoint.Path != "" && (!validPath(strings.Trim(endpoint.Path, "/")) || strings.Contains(endpoint.Path, "//")) {
-		return false
-	}
-	if !validPath(value.Repository) || len(value.Repository) > 256 || (value.Provider == "github" && len(strings.Split(value.Repository, "/")) != 2) {
+	if !validProviderEndpoint(value.Endpoint) || !validRepository(value.Provider, value.Repository) {
 		return false
 	}
 	if value.Ref == "" || len(value.Ref) > 256 || strings.IndexFunc(value.Ref, unicode.IsControl) >= 0 || len(value.PrivateIPs) > 16 {
@@ -111,6 +120,32 @@ func validSource(value source) bool {
 		}
 	}
 	return len(value.Token) <= 4096 && strings.IndexFunc(value.Token, unicode.IsControl) < 0
+}
+
+// validProviderEndpoint accepts an unambiguous HTTPS API base without credentials, queries, or fragments.
+func validProviderEndpoint(value string) bool {
+	if len(value) > 512 {
+		return false
+	}
+	endpoint, err := url.Parse(value)
+	if err != nil || endpoint.Scheme != "https" || endpoint.Hostname() == "" {
+		return false
+	}
+	if endpoint.User != nil || endpoint.RawQuery != "" || endpoint.ForceQuery || endpoint.Fragment != "" {
+		return false
+	}
+	if endpoint.RawPath != "" || strings.ContainsAny(endpoint.Host, "%\\") {
+		return false
+	}
+	return endpoint.Path == "" || (validPath(strings.Trim(endpoint.Path, "/")) && !strings.Contains(endpoint.Path, "//"))
+}
+
+// validRepository checks a repository path and GitHub's exact owner/name requirement.
+func validRepository(provider, repository string) bool {
+	if !validPath(repository) || len(repository) > 256 {
+		return false
+	}
+	return provider != "github" || strings.Count(repository, "/") == 1
 }
 
 // splitPrivateIPs parses comma- or whitespace-separated exact private address exceptions.
@@ -175,10 +210,14 @@ func fetchFile(value source, path string, do httpDoer) (string, error) {
 	body := response.Body
 	if value.Provider == "github" {
 		var file struct {
-			Type     string `json:"type"`
+			// Type distinguishes regular files from directories and links.
+			Type string `json:"type"`
+			// Encoding must identify the supported base64 representation.
 			Encoding string `json:"encoding"`
-			Content  string `json:"content"`
-			Size     int    `json:"size"`
+			// Content contains the encoded provider file bytes.
+			Content string `json:"content"`
+			// Size is the provider-reported decoded byte count.
+			Size int `json:"size"`
 		}
 		if json.Unmarshal(body, &file) != nil || file.Type != "file" || file.Encoding != "base64" || file.Size > maxFileBytes {
 			return "", errUnavailable
@@ -238,7 +277,7 @@ func selectLines(content string, start, end int) (selectedFile, error) {
 	return selectedFile{Content: strings.Join(lines[start-1:end], "\n"), Start: start}, nil
 }
 
-// allowSourceFetch enforces the plugin's per-source rolling request limit.
+// allowSourceFetch enforces the plugin's per-source fixed-window request limit.
 func allowSourceFetch(name string) bool {
 	now := time.Now()
 	sourceFetchRates.Lock()
