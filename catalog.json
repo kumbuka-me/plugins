@@ -133,6 +133,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.5",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:17Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/details/v1.0.5/details-1.0.5.kumbukaplugin",
+          "sha256": "14b9b08207f2826009551efc926230fd63fb96ab6567f4c8ba37476e5c8e2aba"
+        },
+        {
           "version": "1.0.4",
           "api_version": 1,
           "released_at": "2026-09-17T15:05:00Z",
@@ -153,6 +160,13 @@
       "name": "External Files",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.5.2",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:16Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/external-files/v1.5.2/external-files-1.5.2.kumbukaplugin",
+          "sha256": "db8b427367b42be734d12f504f84ba27ba58bf172a9d68172da862d12b796d42"
+        },
         {
           "version": "1.5.1",
           "api_version": 1,
@@ -273,6 +287,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.4",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:23Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/mermaid/v1.0.4/mermaid-1.0.4.kumbukaplugin",
+          "sha256": "9709be5fd498d114a2fe1d8142c26f5b5d71d4ec040b6837157be9b82bf7f16a"
+        },
+        {
           "version": "1.0.3",
           "api_version": 1,
           "released_at": "2026-09-17T15:05:05Z",
@@ -343,6 +364,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.5",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:32Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/recent-changes/v1.0.5/recent-changes-1.0.5.kumbukaplugin",
+          "sha256": "60c0448fde5642d98eecf13443e36bd9165d0adbe575f707553f52a075f81d14"
+        },
+        {
           "version": "1.0.4",
           "api_version": 1,
           "released_at": "2026-09-17T15:05:14Z",
@@ -363,6 +391,13 @@
       "name": "Recently Viewed",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.0.6",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:17Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/recently-viewed/v1.0.6/recently-viewed-1.0.6.kumbukaplugin",
+          "sha256": "e60c6c175eeb9e080accee8917a4ef4459b0d712ce7acb08d5919f59d420cffe"
+        },
         {
           "version": "1.0.5",
           "api_version": 1,
@@ -392,6 +427,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.4",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:16Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/related-pages/v1.0.4/related-pages-1.0.4.kumbukaplugin",
+          "sha256": "f463ee1592387a6e70f808bccba443bec6248519198da37e5d54864a736b8678"
+        },
+        {
           "version": "1.0.3",
           "api_version": 1,
           "released_at": "2026-09-17T15:05:11Z",
@@ -413,6 +455,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.4",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:19Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/revision-history/v1.0.4/revision-history-1.0.4.kumbukaplugin",
+          "sha256": "7e2b4c9c35a6af35b060e722b81febe23f5f2c2da58b4dc16aef7953b8248687"
+        },
+        {
           "version": "1.0.3",
           "api_version": 1,
           "released_at": "2026-09-17T15:05:12Z",
@@ -433,6 +482,13 @@
       "name": "Simple Icons",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.0.4",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:30Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/simple-icons/v1.0.4/simple-icons-1.0.4.kumbukaplugin",
+          "sha256": "e5f47c8086e923807ac9b395cea5e5172c82ab96d8df788b99d822c7938d6600"
+        },
         {
           "version": "1.0.3",
           "api_version": 1,
@@ -504,6 +560,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.7",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:27Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/subpages/v1.0.7/subpages-1.0.7.kumbukaplugin",
+          "sha256": "6fdcb731df9672ec666a283650cf3659f6bade757d9385461feffd602c93b12d"
+        },
+        {
           "version": "1.0.6",
           "api_version": 1,
           "released_at": "2026-09-17T15:05:26Z",
@@ -532,6 +595,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.4.5",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:26Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/syntax-highlighting/v1.4.5/syntax-highlighting-1.4.5.kumbukaplugin",
+          "sha256": "a2904cf40550c978f4694adf20da10cb07e3002a6891cfb7d62b0200774e79bd"
+        },
+        {
           "version": "1.4.4",
           "api_version": 1,
           "released_at": "2026-09-17T15:05:40Z",
@@ -552,6 +622,13 @@
       "name": "Tables",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.0.5",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:27Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tables/v1.0.5/tables-1.0.5.kumbukaplugin",
+          "sha256": "2343eabc3d0e3ad5056e4a568915b0087ad0b2db86a053b8f4dfc9c9204da7b2"
+        },
         {
           "version": "1.0.4",
           "api_version": 1,
@@ -601,6 +678,13 @@
       "name": "Task Lists",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.0.6",
+          "api_version": 1,
+          "released_at": "2026-09-19T12:34:30Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/task-lists/v1.0.6/task-lists-1.0.6.kumbukaplugin",
+          "sha256": "eaff4645a95b7fcc5acf32ceeca58420b9483575d92ba841499c4569e723df2b"
+        },
         {
           "version": "1.0.5",
           "api_version": 1,
