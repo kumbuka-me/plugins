@@ -595,6 +595,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.7",
+          "api_version": 1,
+          "released_at": "2026-09-20T17:55:43Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/revision-history/v1.0.7/revision-history-1.0.7.kumbukaplugin",
+          "sha256": "a4a27eb5a3efdfb45c8fc6754c9fcdb821ab2d838dac0de77e669257b8f097d5"
+        },
+        {
           "version": "1.0.4",
           "api_version": 1,
           "released_at": "2026-09-19T12:34:19Z",
