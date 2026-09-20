@@ -2,8 +2,6 @@
 
 Syntax Highlighting highlights fenced code blocks using Chroma and the explicit Markdown fence language supplied by Kumbuka.
 
-![A Go code block rendered with syntax highlighting](screenshots/syntax-highlighting.png)
-
 ## Usage
 
 ````markdown
@@ -25,3 +23,4 @@ The plugin owns its token markup and presentation stylesheet. Kumbuka sanitizes 
 ## Permissions
 
 This plugin requests no Kumbuka capabilities.
+

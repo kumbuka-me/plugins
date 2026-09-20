@@ -2,10 +2,9 @@
 
 Revision History adds the latest revision summary to page details and contributes a host-rendered page action that opens Kumbuka's full revision-history fragment in a dialog.
 
-![Latest revision details and the Revision history page action](screenshots/revision-history.png)
-
 Kumbuka core continues to own revision persistence, restore authorization, diffs, and the full history endpoint. The plugin owns the optional page-details presentation.
 
 ## Permissions
 
 - `pages:read` reads authorized public revision metadata for the current page.
+

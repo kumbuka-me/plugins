@@ -2,8 +2,6 @@
 
 Callouts adds styled note and warning blocks to Kumbuka Markdown pages.
 
-![Callouts rendered as note, info, and success blocks](screenshots/callouts.png)
-
 ## Usage
 
 ```markdown
@@ -16,3 +14,4 @@ Supported kinds are `note`, `info`, `tip`, `success`, `warning`, `danger`, and `
 ## Permissions
 
 This plugin does not request any Kumbuka capabilities.
+

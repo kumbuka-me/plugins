@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.includes
 name: Includes
-version: 1.0.4
+version: 1.0.5
 description: Transclude complete pages or heading sections into Markdown.
 default_enabled: true
 modules:

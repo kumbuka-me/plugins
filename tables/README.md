@@ -2,8 +2,6 @@
 
 Tables adds Markdown tables with optional theme-aware colors, client-side sorting, and per-column filtering.
 
-![A colored sortable table with status values](screenshots/tables.png)
-
 ## Usage
 
 ```markdown
@@ -24,3 +22,4 @@ Rows and columns in table directives are one-based. Supported tones are `accent`
 ## Permissions
 
 This plugin requests `browser:render` for its isolated sorting and filtering browser module. The normal rendered table remains the fallback when browser enhancements are unavailable.
+

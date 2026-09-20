@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.snippets
 name: Snippets
 icon: braces-lucide
-version: 1.0.3
+version: 1.0.4
 description: Reusable Markdown blocks with editor completion.
 default_enabled: true
 modules:

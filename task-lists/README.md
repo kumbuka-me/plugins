@@ -2,8 +2,6 @@
 
 Task Lists renders GitHub-style Markdown task items with accessible visible checkbox state.
 
-![Rendered task list with completed and open items](screenshots/task-lists.png)
-
 ## Usage
 
 ```markdown
@@ -16,3 +14,4 @@ The rendered checkboxes are presentation only; editing the Markdown remains the 
 ## Permissions
 
 This plugin requests no Kumbuka capabilities. Kumbuka supplies only the standard `task-list` Markdown grammar adapter; this plugin's WASM module and filtered content stylesheet own the accessible checkbox presentation. Disabling the plugin therefore removes both parsing and presentation from new renders.
+

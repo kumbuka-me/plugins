@@ -2,8 +2,6 @@
 
 Tabs renders consecutive Material-style tab declarations as an interactive tab group while keeping each panel body as normal Kumbuka Markdown.
 
-![An interactive tab group with platform-specific commands](screenshots/tabs.png)
-
 ## Usage
 
 ````markdown
@@ -25,3 +23,4 @@ Tab declarations must start at the beginning of a line. Panel content is indente
 ## Permissions
 
 This plugin requests no Kumbuka capabilities. Panel Markdown is rendered by Kumbuka through the normal plugin pipeline and sanitizer.
+

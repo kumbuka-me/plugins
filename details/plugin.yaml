@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.details
 name: Collapsible Details
-version: 1.0.5
+version: 1.0.6
 description: Render collapsible Markdown detail blocks with optional open state.
 default_enabled: true
 modules:
