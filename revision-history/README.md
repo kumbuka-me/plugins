@@ -7,4 +7,3 @@ Kumbuka core continues to own revision persistence, restore authorization, diffs
 ## Permissions
 
 - `pages:read` reads authorized public revision metadata for the current page.
-

@@ -5,4 +5,3 @@ Recently Viewed shows pages recently opened by the current viewer on Home and, w
 ## Permissions
 
 - `activity:read` reads recent page metadata already visible to the current viewer.
-

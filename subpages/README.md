@@ -18,4 +18,3 @@ The default heading is **Pages in this section**. Set a custom heading or hide i
 ## Permissions
 
 This plugin requests `pages:read` to read the current page's navigation children.
-

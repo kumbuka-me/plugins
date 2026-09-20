@@ -9,4 +9,3 @@ The plugin registers an SDK `icon-resource` module backed by `assets/icons.json`
 ## Permissions
 
 This plugin requests no Kumbuka capabilities.
-

@@ -5,4 +5,3 @@ Related Pages adds a page-details widget that finds other authorized pages shari
 ## Permissions
 
 - `pages:read` searches pages visible to the current viewer.
-

@@ -14,4 +14,3 @@ Supported kinds are `note`, `info`, `tip`, `success`, `warning`, `danger`, and `
 ## Permissions
 
 This plugin does not request any Kumbuka capabilities.
-

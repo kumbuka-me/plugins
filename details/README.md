@@ -23,4 +23,3 @@ The declaration must start at the beginning of a line. Body content is indented 
 ## Permissions
 
 This plugin requests no Kumbuka capabilities. Body Markdown is rendered by Kumbuka through the normal plugin pipeline and sanitizer.
-

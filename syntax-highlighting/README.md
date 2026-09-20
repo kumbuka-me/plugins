@@ -23,4 +23,3 @@ The plugin owns its token markup and presentation stylesheet. Kumbuka sanitizes 
 ## Permissions
 
 This plugin requests no Kumbuka capabilities.
-

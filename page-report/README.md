@@ -19,4 +19,3 @@ A more detailed report can select columns, presentation, sorting, and a result l
 ## Permissions
 
 This plugin requests `pages:read` to search pages and load the metadata needed for report results.
-

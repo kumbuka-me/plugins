@@ -23,4 +23,3 @@ Tab declarations must start at the beginning of a line. Panel content is indente
 ## Permissions
 
 This plugin requests no Kumbuka capabilities. Panel Markdown is rendered by Kumbuka through the normal plugin pipeline and sanitizer.
-

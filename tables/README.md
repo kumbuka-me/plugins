@@ -22,4 +22,3 @@ Rows and columns in table directives are one-based. Supported tones are `accent`
 ## Permissions
 
 This plugin requests `browser:render` for its isolated sorting and filtering browser module. The normal rendered table remains the fallback when browser enhancements are unavailable.
-

@@ -5,4 +5,3 @@ Favorites shows the current viewer's favorite pages on Home and, when enabled in
 ## Permissions
 
 - `activity:read` reads favorite pages already visible to the current viewer.
-
