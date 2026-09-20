@@ -2,7 +2,8 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.page-report
 name: Page Report
-version: 1.0.5
+description: Build filtered page reports from Kumbuka content.
+version: 1.0.6
 default_enabled: true
 modules:
   - type: macro

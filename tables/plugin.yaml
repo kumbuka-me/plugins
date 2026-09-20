@@ -2,7 +2,8 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.tables
 name: Tables
-version: 1.0.5
+icon: table-2-lucide
+version: 1.0.6
 description: Markdown tables with colors, sorting, and filtering.
 default_enabled: true
 modules:

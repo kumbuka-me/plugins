@@ -2,7 +2,8 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.variables
 name: Variables
-version: 1.0.2
+icon: variable-lucide
+version: 1.0.3
 description: Reusable text values with editor completion, page inspection, and temporary export overrides.
 default_enabled: true
 modules:

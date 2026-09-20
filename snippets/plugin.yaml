@@ -2,7 +2,8 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.snippets
 name: Snippets
-version: 1.0.2
+icon: braces-lucide
+version: 1.0.3
 description: Reusable Markdown blocks with editor completion.
 default_enabled: true
 modules:
