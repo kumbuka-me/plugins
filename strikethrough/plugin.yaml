@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.strikethrough
 name: Strikethrough
-version: 1.0.4
+version: 1.0.5
 description: Render GitHub-style strikethrough text.
 default_enabled: true
 modules:

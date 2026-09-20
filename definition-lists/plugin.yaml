@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.definition-lists
 name: Definition Lists
-version: 1.0.3
+version: 1.0.4
 description: Add term and definition list syntax to Markdown.
 default_enabled: false
 modules:

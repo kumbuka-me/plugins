@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.simple-icons
 name: Simple Icons
-version: 1.0.5
+version: 1.0.6
 description: Add brand icons from Simple Icons to the Kumbuka icon catalog.
 default_enabled: true
 modules:
