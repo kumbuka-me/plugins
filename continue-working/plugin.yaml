@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.continue-working
 name: Continue Working
-version: 1.0.6
+version: 1.0.7
 description: Show private drafts and pages recently edited by the current user on Home.
 default_enabled: true
 modules:
