@@ -7,6 +7,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.5",
+          "api_version": 1,
+          "released_at": "2026-09-20T17:53:07Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/autolinks/v1.0.5/autolinks-1.0.5.kumbukaplugin",
+          "sha256": "b07ffa2702af299e61013f5430024a65a632700722a7abae137630968a350bf5"
+        },
+        {
           "version": "1.0.2",
           "api_version": 1,
           "released_at": "2026-09-17T15:04:50Z",
@@ -55,6 +62,13 @@
       "name": "Coding Ligatures",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.0.6",
+          "api_version": 1,
+          "released_at": "2026-09-20T17:53:14Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/coding-ligatures/v1.0.6/coding-ligatures-1.0.6.kumbukaplugin",
+          "sha256": "18816b51b70cf4435fb7cb4713321bae4550f447799e4c0e8c1e320bdc84cf05"
+        },
         {
           "version": "1.0.3",
           "api_version": 1,
