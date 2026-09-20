@@ -27,7 +27,7 @@ GH_TOKEN=$(gh auth token) make catalog
 
 See the [Kumbuka plugin development guide](https://kumbuka.me/plugins/).
 
-## Bump all pugins at once
+## Bump all plugins at once
 
 ```sh
 make version-all BUMP=patch
@@ -36,7 +36,17 @@ git commit -m "chore: bump plugin versions"
 make test lint build
 make tag-all
 git push origin main --tags
+make release-missing
+make check-releases
 ```
+
+GitHub does not trigger tag push workflows when more than three tags are pushed
+at once, so the explicit dispatch step is required for a bulk release. See
+[GitHub’s push event documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#push).
+
+`release-missing` dispatches releases for the latest remote plugin tags that do
+not have a release yet. Run it after pushing the tags so it selects the new
+versions. `check-releases` reports any releases still pending or missing.
 
 ## License
 
