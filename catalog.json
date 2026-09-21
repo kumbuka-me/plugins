@@ -203,6 +203,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.11",
+          "api_version": 1,
+          "released_at": "2026-09-21T11:49:22Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/details/v1.0.11/details-1.0.11.kumbukaplugin",
+          "sha256": "d132413a53c575d57b7f1b3165b088a222a02ba82ebffb38acbd831259ef1701"
+        },
+        {
           "version": "1.0.10",
           "api_version": 1,
           "released_at": "2026-09-21T11:04:35Z",
@@ -1028,6 +1035,13 @@
       "name": "Tabs",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.0.11",
+          "api_version": 1,
+          "released_at": "2026-09-21T11:49:22Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tabs/v1.0.11/tabs-1.0.11.kumbukaplugin",
+          "sha256": "2c5b859f33437107dae40eaa3de6d8dd9f150f26fdab1af32702a43617349fb2"
+        },
         {
           "version": "1.0.10",
           "api_version": 1,
