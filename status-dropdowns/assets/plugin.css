@@ -1,0 +1,111 @@
+.prose .kumbuka-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.12rem 0.48rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+  vertical-align: 0.08em;
+  white-space: nowrap;
+}
+
+.prose .kumbuka-status-prefix {
+  opacity: 0.72;
+  font-weight: 550;
+}
+
+.prose .kumbuka-status-prefix::after {
+  content: "·";
+  margin-left: 0.35rem;
+}
+
+.prose .kumbuka-status-gray.kumbuka-status-solid {
+  background-color: #64748b;
+  color: #fff;
+}
+
+.prose .kumbuka-status-blue.kumbuka-status-solid {
+  background-color: #2563eb;
+  color: #fff;
+}
+
+.prose .kumbuka-status-green.kumbuka-status-solid {
+  background-color: #16a34a;
+  color: #fff;
+}
+
+.prose .kumbuka-status-yellow.kumbuka-status-solid {
+  background-color: #ca8a04;
+  color: #fff;
+}
+
+.prose .kumbuka-status-orange.kumbuka-status-solid {
+  background-color: #ea580c;
+  color: #fff;
+}
+
+.prose .kumbuka-status-red.kumbuka-status-solid {
+  background-color: #dc2626;
+  color: #fff;
+}
+
+.prose .kumbuka-status-purple.kumbuka-status-solid {
+  background-color: #9333ea;
+  color: #fff;
+}
+
+.prose .kumbuka-status-teal.kumbuka-status-solid {
+  background-color: #0f766e;
+  color: #fff;
+}
+
+.prose .kumbuka-status-gray.kumbuka-status-outline {
+  border-color: #64748b;
+  color: #64748b;
+}
+
+.prose .kumbuka-status-blue.kumbuka-status-outline {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.prose .kumbuka-status-green.kumbuka-status-outline {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.prose .kumbuka-status-yellow.kumbuka-status-outline {
+  border-color: #ca8a04;
+  color: #a16207;
+}
+
+.prose .kumbuka-status-orange.kumbuka-status-outline {
+  border-color: #ea580c;
+  color: #c2410c;
+}
+
+.prose .kumbuka-status-red.kumbuka-status-outline {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.prose .kumbuka-status-purple.kumbuka-status-outline {
+  border-color: #9333ea;
+  color: #9333ea;
+}
+
+.prose .kumbuka-status-teal.kumbuka-status-outline {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+
+.prose .kumbuka-status-error {
+  border-color: #dc2626;
+  color: #dc2626;
+}

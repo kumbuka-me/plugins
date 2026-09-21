@@ -1,0 +1,56 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.status-dropdowns
+name: Status Dropdowns
+icon: list-checks-lucide
+version: 1.0.0
+description: Configurable inline statuses with page-view controls and persistent values.
+default_enabled: true
+modules:
+  - type: admin-resource
+    id: sets
+    name: Status sets
+    description: Reusable status choices. Enter one status per line as Label|color.
+    fields:
+      - id: name
+        name: Name
+        type: text
+        required: true
+        key: true
+        max_bytes: 128
+      - id: description
+        name: Description
+        type: text
+        max_bytes: 1024
+      - id: statuses
+        name: Statuses
+        type: textarea
+        required: true
+        max_bytes: 4096
+  - type: renderer-extension
+    id: status
+    stage: preprocess
+    usage:
+      - contains: "{{status"
+  - type: content-style
+    id: style
+    css: plugin.css
+    usage:
+      - contains: "{{status"
+  - type: widget
+    id: page-details
+    surface: page.details
+    order: 30
+  - type: editor-insert
+    id: status
+    name: Status
+    description: Insert a persistent status badge.
+    markdown: '{{status id="release-readiness" set="workflow" prefix="Release"}}'
+    inline: true
+    group: insert
+    icon: list-checks-lucide
+permissions:
+  - settings:read
+  - storage:read
+  - storage:write
+  - pages:content
