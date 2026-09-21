@@ -13,14 +13,6 @@ import (
 
 const maxControlledStatuses = 8
 
-// statusDeclaration couples parsed options with its resolved status set.
-type statusDeclaration struct {
-	// Options is the declaration found in the page source.
-	Options statusOptions
-	// Set contains the currently configured choices for Options.Set.
-	Set statusSet
-}
-
 // discoverStatuses returns unique status declarations from non-code Markdown source in document order.
 func discoverStatuses(source string) []statusOptions {
 	lines := strings.Split(source, "\n")
