@@ -45,7 +45,7 @@ func readVersion(manifest string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer file.Close() // nolint:errcheck
 
 	scanner := bufio.NewScanner(file)
 	version := ""
@@ -74,12 +74,12 @@ func readVersion(manifest string) (string, error) {
 
 // choosePlugins prompts until the user selects one, several, or all plugins.
 func choosePlugins(reader *bufio.Reader, output io.Writer, plugins []releasePlugin) ([]releasePlugin, error) {
-	fmt.Fprintln(output, "Select plugins:")
-	fmt.Fprintln(output)
+	fmt.Fprintln(output, "Select plugins:") // nolint:errcheck
+	fmt.Fprintln(output)                    // nolint:errcheck
 	for index, plugin := range plugins {
-		fmt.Fprintf(output, "  %2d) %-24s %s\n", index+1, plugin.Name, plugin.Current)
+		fmt.Fprintf(output, "  %2d) %-24s %s\n", index+1, plugin.Name, plugin.Current) // nolint:errcheck
 	}
-	fmt.Fprintln(output, "\nEnter numbers/ranges such as 2,5-7 or 'all'.")
+	fmt.Fprintln(output, "\nEnter numbers/ranges such as 2,5-7 or 'all'.") // nolint:errcheck
 
 	for {
 		value, err := promptLine(reader, output, "Plugins: ")
@@ -88,7 +88,7 @@ func choosePlugins(reader *bufio.Reader, output io.Writer, plugins []releasePlug
 		}
 		indices, err := parseSelection(value, len(plugins))
 		if err != nil {
-			fmt.Fprintf(output, "Invalid selection: %v\n", err)
+			fmt.Fprintf(output, "Invalid selection: %v\n", err) // nolint:errcheck
 			continue
 		}
 
@@ -115,8 +115,8 @@ func parseSelection(value string, count int) ([]int, error) {
 	}
 
 	selected := make([]bool, count)
-	tokens := strings.Fields(strings.ReplaceAll(value, ",", " "))
-	for _, token := range tokens {
+	tokens := strings.FieldsSeq(strings.ReplaceAll(value, ",", " "))
+	for token := range tokens {
 		startText, endText, ranged := strings.Cut(token, "-")
 		start, err := selectionNumber(startText, count)
 		if err != nil {
@@ -163,12 +163,12 @@ func selectionNumber(value string, count int) (int, error) {
 
 // chooseBumps selects one bump for all plugins or prompts for each plugin individually.
 func chooseBumps(reader *bufio.Reader, output io.Writer, plugins []releasePlugin) error {
-	fmt.Fprintln(output, "\nVersion bump:")
-	fmt.Fprintln(output)
-	fmt.Fprintln(output, "  1) patch for all selected plugins")
-	fmt.Fprintln(output, "  2) minor for all selected plugins")
-	fmt.Fprintln(output, "  3) major for all selected plugins")
-	fmt.Fprintln(output, "  4) choose per plugin")
+	fmt.Fprintln(output, "\nVersion bump:")                     // nolint:errcheck
+	fmt.Fprintln(output)                                        // nolint:errcheck
+	fmt.Fprintln(output, "  1) patch for all selected plugins") // nolint:errcheck
+	fmt.Fprintln(output, "  2) minor for all selected plugins") // nolint:errcheck
+	fmt.Fprintln(output, "  3) major for all selected plugins") // nolint:errcheck
+	fmt.Fprintln(output, "  4) choose per plugin")              // nolint:errcheck
 
 	for {
 		value, err := promptLine(reader, output, "Bump: ")
@@ -188,7 +188,7 @@ func chooseBumps(reader *bufio.Reader, output io.Writer, plugins []releasePlugin
 
 		bump, ok := parseBump(value)
 		if !ok {
-			fmt.Fprintln(output, "Invalid bump. Choose patch, minor, major, or custom.")
+			fmt.Fprintln(output, "Invalid bump. Choose patch, minor, major, or custom.") // nolint:errcheck
 			continue
 		}
 		for index := range plugins {
@@ -213,7 +213,7 @@ func choosePluginBump(reader *bufio.Reader, output io.Writer, plugin releasePlug
 		if ok {
 			return bump, nil
 		}
-		fmt.Fprintln(output, "Invalid bump. Choose patch, minor, or major.")
+		fmt.Fprintln(output, "Invalid bump. Choose patch, minor, or major.") // nolint:errcheck
 	}
 }
 
@@ -291,17 +291,17 @@ func preparePlan(plugins []releasePlugin) {
 
 // printPlan displays the exact release commits, tags, and push destination.
 func printPlan(output io.Writer, plugins []releasePlugin, remote, branch string) {
-	fmt.Fprintln(output, "\nRelease plan:")
-	fmt.Fprintln(output)
+	fmt.Fprintln(output, "\nRelease plan:") // nolint:errcheck
+	fmt.Fprintln(output)                    // nolint:errcheck
 	for _, plugin := range plugins {
-		fmt.Fprintf(output, "  %-24s %s -> %-10s %s\n", plugin.Name, plugin.Current, plugin.Next, plugin.Tag)
+		fmt.Fprintf(output, "  %-24s %s -> %-10s %s\n", plugin.Name, plugin.Current, plugin.Next, plugin.Tag) // nolint:errcheck
 	}
-	fmt.Fprintf(output, "\nThe wizard will run tests/lint, build every selected plugin, create one commit and tag per plugin, push %s to %s, then push each tag separately.\n\n", branch, remote)
+	fmt.Fprintf(output, "\nThe wizard will run tests/lint, build every selected plugin, create one commit and tag per plugin, push %s to %s, then push each tag separately.\n\n", branch, remote) // nolint:errcheck
 }
 
 // promptLine reads one trimmed line from an interactive prompt.
 func promptLine(reader *bufio.Reader, output io.Writer, prompt string) (string, error) {
-	fmt.Fprint(output, prompt)
+	fmt.Fprint(output, prompt) // nolint:errcheck
 	value, err := reader.ReadString('\n')
 	if err != nil && !errors.Is(err, io.EOF) {
 		return "", err
@@ -325,7 +325,7 @@ func confirm(reader *bufio.Reader, output io.Writer, prompt string) (bool, error
 		case "", "n", "no":
 			return false, nil
 		default:
-			fmt.Fprintln(output, "Please answer yes or no.")
+			fmt.Fprintln(output, "Please answer yes or no.") // nolint:errcheck
 		}
 	}
 }

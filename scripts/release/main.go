@@ -79,7 +79,7 @@ func run(ctx context.Context, input io.Reader, stdout, stderr io.Writer) error {
 		return err
 	}
 	if !confirmed {
-		fmt.Fprintln(stdout, "Release cancelled.")
+		fmt.Fprintln(stdout, "Release cancelled.") // nolint:errcheck
 		return nil
 	}
 	if err := checkTagsAvailable(ctx, runner, remote, selected); err != nil {
@@ -116,7 +116,7 @@ func run(ctx context.Context, input io.Reader, stdout, stderr io.Writer) error {
 		return rollback(err)
 	}
 
-	fmt.Fprintln(stdout, "\nCreating release commits and tags...")
+	fmt.Fprintln(stdout, "\nCreating release commits and tags...") // nolint:errcheck
 	commitsStarted = true
 	if err := commitAndTag(ctx, runner, selected); err != nil {
 		return err
@@ -129,17 +129,17 @@ func run(ctx context.Context, input io.Reader, stdout, stderr io.Writer) error {
 		return err
 	}
 
-	fmt.Fprintln(stdout, "\nReleased:")
+	fmt.Fprintln(stdout, "\nReleased:") // nolint:errcheck
 	for _, plugin := range selected {
-		fmt.Fprintf(stdout, "  %s\n", plugin.Tag)
+		fmt.Fprintf(stdout, "  %s\n", plugin.Tag) // nolint:errcheck
 	}
-	fmt.Fprintln(stdout, "Each tag was pushed separately so every tag-triggered release workflow can run.")
+	fmt.Fprintln(stdout, "Each tag was pushed separately so every tag-triggered release workflow can run.") // nolint:errcheck
 	return nil
 }
 
 // validateReleases runs repository checks and builds every selected plugin before committing.
 func validateReleases(ctx context.Context, runner commandRunner, makeCommand string, plugins []releasePlugin) error {
-	fmt.Fprintln(runner.stdout, "\nValidating repository...")
+	fmt.Fprintln(runner.stdout, "\nValidating repository...") // nolint:errcheck
 	if err := runner.run(ctx, makeCommand, "test"); err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func commitAndTag(ctx context.Context, runner commandRunner, plugins []releasePl
 
 // pushReleases pushes the branch once and each tag separately to preserve GitHub tag events.
 func pushReleases(ctx context.Context, runner commandRunner, output io.Writer, remote, branch string, plugins []releasePlugin) error {
-	fmt.Fprintf(output, "\nPushing %s and release tags...\n", branch)
+	fmt.Fprintf(output, "\nPushing %s and release tags...\n", branch) // nolint:errcheck
 	if err := runner.run(ctx, "git", "push", remote, branch); err != nil {
 		return fmt.Errorf("release commits and tags remain local: %w", err)
 	}
