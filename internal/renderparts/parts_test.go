@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/kumbuka-me/sdk"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAppendText(t *testing.T) {
@@ -13,9 +14,8 @@ func TestAppendText(t *testing.T) {
 		t.Parallel()
 		parts := []sdk.RenderPart{{Text: "a"}}
 		AppendText(&parts, "b")
-		if len(parts) != 1 || parts[0].Text != "ab" {
-			t.Fatalf("AppendText() = %#v", parts)
-		}
+		require.Len(t, parts, 1, "AppendText() = %#v", parts)
+		require.Equal(t, "ab", parts[0].Text, "AppendText() = %#v", parts)
 	})
 
 	t.Run("preserves markdown boundary", func(t *testing.T) {
@@ -23,17 +23,15 @@ func TestAppendText(t *testing.T) {
 		markdown := "body"
 		parts := []sdk.RenderPart{{Markdown: &markdown}}
 		AppendText(&parts, "tail")
-		if len(parts) != 2 || parts[1].Text != "tail" {
-			t.Fatalf("AppendText() = %#v", parts)
-		}
+		require.Len(t, parts, 2, "AppendText() = %#v", parts)
+		require.Equal(t, "tail", parts[1].Text, "AppendText() = %#v", parts)
 	})
 
 	t.Run("ignores empty text", func(t *testing.T) {
 		t.Parallel()
 		parts := []sdk.RenderPart{{Text: "a"}}
 		AppendText(&parts, "")
-		if len(parts) != 1 || parts[0].Text != "a" {
-			t.Fatalf("AppendText() = %#v", parts)
-		}
+		require.Len(t, parts, 1, "AppendText() = %#v", parts)
+		require.Equal(t, "a", parts[0].Text, "AppendText() = %#v", parts)
 	})
 }

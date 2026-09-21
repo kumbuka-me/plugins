@@ -124,7 +124,7 @@ func TestNewRenderer(t *testing.T) {
 	assert.NotContains(t, html, "<script>")
 	assert.Contains(t, html, "&lt;unsafe&gt;")
 	assert.Contains(t, html, `href="#ZgotmplZ"`)
-	html, err = newRenderer(nil, func(string, int) (template.HTML, error) { t.Fatal("unexpected icon call"); return "", nil })(macroOptions{ShowTitle: true})
+	html, err = newRenderer(nil, func(string, int) (template.HTML, error) { require.FailNow(t, "unexpected icon call"); return "", nil })(macroOptions{ShowTitle: true})
 	require.NoError(t, err)
 	assert.Empty(t, html)
 	html, err = newRenderer([]sdk.NavigationNode{{Title: "Folder", Children: nodes}}, icon)(macroOptions{})

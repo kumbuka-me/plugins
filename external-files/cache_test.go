@@ -8,30 +8,26 @@ import (
 	"time"
 
 	sdk "github.com/kumbuka-me/sdk"
+	"github.com/stretchr/testify/require"
 )
 
 // TestCacheTTLDefaultsAndConfiguredValue verifies the manifest default is mirrored safely in plugin code.
 func TestCacheTTLDefaultsAndConfiguredValue(t *testing.T) {
-	if got := loadCacheTTL(nil); got != time.Hour {
-		t.Fatalf("default TTL = %s", got)
-	}
+	got := loadCacheTTL(nil)
+	require.Equal(t, time.Hour, got, "default TTL = %s", got)
 
 	settings := func(key string) (sdk.StoredValue, error) {
-		if key != cacheSettingKey {
-			t.Fatalf("unexpected setting %q", key)
-		}
+		require.Equal(t, cacheSettingKey, key, "unexpected setting %q", key)
 		return sdk.StoredValue{Found: true, Value: []byte("6h")}, nil
 	}
-	if got := loadCacheTTL(settings); got != 6*time.Hour {
-		t.Fatalf("configured TTL = %s", got)
-	}
+	got = loadCacheTTL(settings)
+	require.Equal(t, 6*time.Hour, got, "configured TTL = %s", got)
 
 	invalid := func(string) (sdk.StoredValue, error) {
 		return sdk.StoredValue{Found: true, Value: []byte("forever")}, nil
 	}
-	if got := loadCacheTTL(invalid); got != time.Hour {
-		t.Fatalf("invalid TTL fallback = %s", got)
-	}
+	got = loadCacheTTL(invalid)
+	require.Equal(t, time.Hour, got, "invalid TTL fallback = %s", got)
 }
 
 // TestCachedFileUsesFreshEntry verifies a cache hit avoids provider network access.
@@ -49,12 +45,11 @@ func TestCachedFileUsesFreshEntry(t *testing.T) {
 	})
 
 	content, err := cachedFile("docs", connection, "README.md", time.Hour, now, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
-		t.Fatal("fresh cache hit reached provider")
+		require.FailNow(t, "fresh cache hit reached provider")
 		return sdk.HTTPResponse{}, nil
 	})
-	if err != nil || content != "cached" {
-		t.Fatalf("cached content = %q, %v", content, err)
-	}
+	require.NoError(t, err, "cached content = %q, %v", content, err)
+	require.Equal(t, "cached", content, "cached content = %q, %v", content, err)
 }
 
 // TestCachedFileRefreshesExpiredEntry verifies the first visit after TTL expiry replaces cached content.
@@ -74,13 +69,13 @@ func TestCachedFileRefreshesExpiredEntry(t *testing.T) {
 	content, err := cachedFile("expired", connection, "README.md", time.Hour, now, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
 		return sdk.HTTPResponse{StatusCode: http.StatusOK, Body: []byte("fresh")}, nil
 	})
-	if err != nil || content != "fresh" {
-		t.Fatalf("refreshed content = %q, %v", content, err)
-	}
+	require.NoError(t, err, "refreshed content = %q, %v", content, err)
+	require.Equal(t, "fresh", content, "refreshed content = %q, %v", content, err)
 	entry, usable, fresh := readFileCache(key, sourceFingerprint(connection), now, time.Hour)
-	if !usable || !fresh || entry.Content != "fresh" || !entry.FetchedAt.Equal(now) {
-		t.Fatalf("stored cache entry = %+v usable=%t fresh=%t", entry, usable, fresh)
-	}
+	require.True(t, usable, "stored cache entry = %+v usable=%t fresh=%t", entry, usable, fresh)
+	require.True(t, fresh, "stored cache entry = %+v usable=%t fresh=%t", entry, usable, fresh)
+	require.Equal(t, "fresh", entry.Content, "stored cache entry = %+v usable=%t fresh=%t", entry, usable, fresh)
+	require.True(t, entry.FetchedAt.Equal(now), "stored cache entry = %+v usable=%t fresh=%t", entry, usable, fresh)
 }
 
 // TestCachedFileFallsBackToStaleContent verifies provider failures do not discard the last valid cached copy.
@@ -99,9 +94,8 @@ func TestCachedFileFallsBackToStaleContent(t *testing.T) {
 	content, err := cachedFile("fallback", connection, "README.md", time.Hour, now, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
 		return sdk.HTTPResponse{}, errors.New("provider unavailable")
 	})
-	if err != nil || content != "last-known-good" {
-		t.Fatalf("stale fallback = %q, %v", content, err)
-	}
+	require.NoError(t, err, "stale fallback = %q, %v", content, err)
+	require.Equal(t, "last-known-good", content, "stale fallback = %q, %v", content, err)
 }
 
 // TestRefreshCacheMarksFreshEntriesStale verifies the admin action invalidates all entries without deleting fallback content.
@@ -121,9 +115,9 @@ func TestRefreshCacheMarksFreshEntriesStale(t *testing.T) {
 
 	refreshCacheAt(refreshAt)
 	entry, usable, fresh := readFileCache(key, sourceFingerprint(connection), refreshAt.Add(time.Minute), time.Hour)
-	if !usable || fresh || entry.Content != "cached" {
-		t.Fatalf("manual refresh state = %+v usable=%t fresh=%t", entry, usable, fresh)
-	}
+	require.True(t, usable, "manual refresh state = %+v usable=%t fresh=%t", entry, usable, fresh)
+	require.False(t, fresh, "manual refresh state = %+v usable=%t fresh=%t", entry, usable, fresh)
+	require.Equal(t, "cached", entry.Content, "manual refresh state = %+v usable=%t fresh=%t", entry, usable, fresh)
 }
 
 // TestFileCacheEvictsLeastRecentlyUsedEntry verifies memory use stays bounded.
@@ -143,9 +137,7 @@ func TestFileCacheEvictsLeastRecentlyUsedEntry(t *testing.T) {
 	externalFileCache.Lock()
 	count := len(externalFileCache.Entries)
 	externalFileCache.Unlock()
-	if count != maxCacheEntries {
-		t.Fatalf("cache entries = %d, want %d", count, maxCacheEntries)
-	}
+	require.Equal(t, maxCacheEntries, count, "cache entries = %d, want %d", count, maxCacheEntries)
 }
 
 // TestSourceFingerprintChangesWithConnection verifies source edits invalidate the existing cache value.
@@ -153,9 +145,7 @@ func TestSourceFingerprintChangesWithConnection(t *testing.T) {
 	first := testCacheSource()
 	second := first
 	second.Ref = "release"
-	if sourceFingerprint(first) == sourceFingerprint(second) {
-		t.Fatal("source revision did not affect cache fingerprint")
-	}
+	require.NotEqual(t, sourceFingerprint(second), sourceFingerprint(first), "source revision did not affect cache fingerprint")
 }
 
 // testCacheSource returns one valid GitLab connection whose responses are plain text.

@@ -1,39 +1,34 @@
 package main
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/alecthomas/chroma/v2/lexers"
 	sdk "github.com/kumbuka-me/sdk"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTransformHighlightsKnownLanguage(t *testing.T) {
 	result := transform(sdk.RenderRequest{APIVersion: sdk.Version, Module: "chroma", Stage: "highlight", Language: "go", Source: "package main\n"})
-	if result.Error != "" {
-		t.Fatalf("transform returned error: %s", result.Error)
-	}
-	if !result.Matched || len(result.Parts) != 1 || !strings.Contains(result.Parts[0].Text, `class="chroma"`) {
-		t.Fatalf("unexpected highlight result: %#v", result)
-	}
+	require.Empty(t, result.Error, "transform returned error: %s", result.Error)
+	require.True(t, result.Matched, "unexpected highlight result: %#v", result)
+	require.Len(t, result.Parts, 1, "unexpected highlight result: %#v", result)
+	require.Contains(t, result.Parts[0].Text, `class="chroma"`, "unexpected highlight result: %#v", result)
 }
 
 func TestTransformHighlightsFenceAlias(t *testing.T) {
 	result := transform(sdk.RenderRequest{APIVersion: sdk.Version, Module: "chroma", Stage: "highlight", Language: "sh", Source: "echo Kumbuka\n"})
-	if result.Error != "" || !result.Matched {
-		t.Fatalf("unexpected alias result: %#v", result)
-	}
+	require.Empty(t, result.Error, "unexpected alias result: %#v", result)
+	require.True(t, result.Matched, "unexpected alias result: %#v", result)
 }
 
 func TestFullChromaRegistryIsAvailable(t *testing.T) {
 	for _, language := range []string{"go", "typescript", "yaml", "brainfuck"} {
-		if lexer := lexers.Get(language); lexer == nil {
-			t.Errorf("expected %q lexer to be available", language)
-		}
+		lexer := lexers.Get(language)
+		assert.NotNil(t, lexer, "expected %q lexer to be available", language)
 	}
-	if len(lexers.Names(false)) < 200 {
-		t.Fatalf("expected full Chroma lexer registry, got %d lexers", len(lexers.Names(false)))
-	}
+	require.GreaterOrEqual(t, len(lexers.Names(false)), 200, "expected full Chroma lexer registry, got %d lexers", len(lexers.Names(false)))
 }
 
 func TestTransformNeverAutoDetectsLanguage(t *testing.T) {
@@ -45,9 +40,9 @@ func TestTransformNeverAutoDetectsLanguage(t *testing.T) {
 			Language:   language,
 			Source:     "package main\n\nfunc main() {}\n",
 		})
-		if result.Error != "" || result.Matched || len(result.Parts) != 0 {
-			t.Fatalf("language %q must stay unmatched instead of being auto-detected: %#v", language, result)
-		}
+		require.Empty(t, result.Error, "language %q must stay unmatched instead of being auto-detected: %#v", language, result)
+		require.False(t, result.Matched, "language %q must stay unmatched instead of being auto-detected: %#v", language, result)
+		require.Len(t, result.Parts, 0, "language %q must stay unmatched instead of being auto-detected: %#v", language, result)
 	}
 }
 
@@ -60,17 +55,17 @@ func TestTransformUsesLanguagePerCodeBlock(t *testing.T) {
 
 	for _, request := range requests {
 		result := transform(request)
-		if result.Error != "" || !result.Matched || len(result.Parts) != 1 {
-			t.Fatalf("language %q did not use its explicit lexer: %#v", request.Language, result)
-		}
+		require.Empty(t, result.Error, "language %q did not use its explicit lexer: %#v", request.Language, result)
+		require.True(t, result.Matched, "language %q did not use its explicit lexer: %#v", request.Language, result)
+		require.Len(t, result.Parts, 1, "language %q did not use its explicit lexer: %#v", request.Language, result)
 	}
 }
 
 func TestTransformLeavesUnknownLanguageUnmatched(t *testing.T) {
 	result := transform(sdk.RenderRequest{APIVersion: sdk.Version, Module: "chroma", Stage: "highlight", Language: "not-a-real-language", Source: "text"})
-	if result.Error != "" || result.Matched || len(result.Parts) != 0 {
-		t.Fatalf("unexpected unmatched result: %#v", result)
-	}
+	require.Empty(t, result.Error, "unexpected unmatched result: %#v", result)
+	require.False(t, result.Matched, "unexpected unmatched result: %#v", result)
+	require.Len(t, result.Parts, 0, "unexpected unmatched result: %#v", result)
 }
 
 func TestTransformRejectsUnsupportedRequest(t *testing.T) {
@@ -79,9 +74,8 @@ func TestTransformRejectsUnsupportedRequest(t *testing.T) {
 		{APIVersion: sdk.Version, Module: "chroma", Stage: "other", Language: "go", Source: "package main\n"},
 	} {
 		result := transform(request)
-		if result.Error == "" || result.Matched {
-			t.Fatalf("unexpected unsupported request result: %#v", result)
-		}
+		require.NotEmpty(t, result.Error, "unexpected unsupported request result: %#v", result)
+		require.False(t, result.Matched, "unexpected unsupported request result: %#v", result)
 	}
 }
 

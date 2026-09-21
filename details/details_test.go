@@ -5,13 +5,12 @@ import (
 	"testing"
 
 	sdk "github.com/kumbuka-me/sdk"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTransformDetails(t *testing.T) {
 	result := transform(sdk.RenderRequest{Stage: "preprocess", Source: "Before\n\n???+ \"Show command\"\n\n    **Markdown**\n\nAfter"})
-	if result.Error != "" {
-		t.Fatal(result.Error)
-	}
+	require.Empty(t, result.Error)
 
 	var text strings.Builder
 	var markdown []string
@@ -22,18 +21,15 @@ func TestTransformDetails(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(text.String(), `<details class="markdown-details" open>`) || !strings.Contains(text.String(), `<summary>Show command</summary>`) {
-		t.Fatalf("details markup missing: %s", text.String())
-	}
-	if len(markdown) != 1 || !strings.Contains(markdown[0], "**Markdown**") {
-		t.Fatalf("unexpected details markdown: %#v", markdown)
-	}
+	require.Contains(t, text.String(), `<details class="markdown-details" open>`, "details markup missing: %s", text.String())
+	require.Contains(t, text.String(), `<summary>Show command</summary>`, "details markup missing: %s", text.String())
+	require.Len(t, markdown, 1, "unexpected details markdown: %#v", markdown)
+	require.Contains(t, markdown[0], "**Markdown**", "unexpected details markdown: %#v", markdown)
 }
 
 func TestTransformDetailsIgnoresFences(t *testing.T) {
 	source := "```text\n??? \"Not details\"\n```\n"
 	result := transform(sdk.RenderRequest{Stage: "preprocess", Source: source})
-	if len(result.Parts) != 1 || result.Parts[0].Text != source {
-		t.Fatalf("fenced source changed: %#v", result.Parts)
-	}
+	require.Len(t, result.Parts, 1, "fenced source changed: %#v", result.Parts)
+	require.Equal(t, source, result.Parts[0].Text, "fenced source changed: %#v", result.Parts)
 }

@@ -8,30 +8,29 @@ import (
 	"testing"
 
 	sdk "github.com/kumbuka-me/sdk"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestSelectionAndAnnotations verifies configured sources are fetched generically and output is escaped.
 func TestSelectionAndAnnotations(t *testing.T) {
 	value, ok := parse(`{{external-file source="engineering" path="src/main.go" lines="20-21" note="21:Avoid <script> injection" note="21:Second note"}}`)
-	if !ok || value.Invalid {
-		t.Fatalf("parse: %+v", value)
-	}
+	require.True(t, ok, "parse: %+v", value)
+	require.False(t, value.Invalid, "parse: %+v", value)
 	resources := func(resource, key string) (sdk.PluginResourceRecord, error) {
-		if resource != "sources" || key != "engineering" {
-			t.Fatalf("resource %q %q", resource, key)
-		}
+		require.Equal(t, "sources", resource, "resource %q %q", resource, key)
+		require.Equal(t, "engineering", key, "resource %q %q", resource, key)
 		return sdk.PluginResourceRecord{Key: key, Values: map[string]string{
 			"provider": "github", "endpoint": "https://api.github.com", "repository": "kumbuka-me/kumbuka", "ref": "main",
 			"enabled": "true", "insecure_skip_verify": "false", "token": "secret",
 		}}, nil
 	}
 	httpDo := func(request sdk.HTTPRequest) (sdk.HTTPResponse, error) {
-		if request.Method != http.MethodGet || request.URL != "https://api.github.com/repos/kumbuka-me/kumbuka/contents/src/main.go?ref=main" {
-			t.Fatalf("request: %+v", request)
-		}
-		if request.Headers["Authorization"] != "Bearer secret" || request.InsecureSkipVerify || len(request.AllowedPrivateIPs) != 0 {
-			t.Fatalf("network policy: %+v", request)
-		}
+		require.Equal(t, http.MethodGet, request.Method, "request: %+v", request)
+		require.Equal(t, "https://api.github.com/repos/kumbuka-me/kumbuka/contents/src/main.go?ref=main", request.URL, "request: %+v", request)
+		require.Equal(t, "Bearer secret", request.Headers["Authorization"], "network policy: %+v", request)
+		require.False(t, request.InsecureSkipVerify, "network policy: %+v", request)
+		require.Len(t, request.AllowedPrivateIPs, 0, "network policy: %+v", request)
 		content := "" + strings.Repeat("before\n", 19) + "<script>alert(1)</script>\n{{include:private}}\nafter"
 		encoded := base64.StdEncoding.EncodeToString([]byte(content))
 		return sdk.HTTPResponse{StatusCode: http.StatusOK, Body: []byte(`{"type":"file","encoding":"base64","size":` + stringInt(len(content)) + `,"content":"` + encoded + `"}`)}, nil
@@ -39,13 +38,9 @@ func TestSelectionAndAnnotations(t *testing.T) {
 	result := render(value, resources, nil, httpDo)
 	out := result.Parts[0].Text
 	for _, want := range []string{"&lt;script&gt;", "Line 21:", `class="external-file-marker" title="Annotation 1">1</span>`, `class="external-file-marker" title="Annotation 2">2</span>`, "{{include:private}}", "GitHub", "kumbuka-me/kumbuka", "main"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("missing %q", want)
-		}
+		assert.Contains(t, out, want, "missing %q", want)
 	}
-	if strings.Contains(out, "<script>") {
-		t.Fatal("raw HTML escaped boundary")
-	}
+	require.NotContains(t, out, "<script>", "raw HTML escaped boundary")
 }
 
 // stringInt formats a small integer for inline JSON fixtures.
@@ -69,22 +64,19 @@ func TestInvalidSyntaxNeverFetches(t *testing.T) {
 	for _, args := range []string{`source="a"`, `source="a" path="b" lines="0"`, `source="a" path="b" lines="4-2"`, `source="a" path="b" url="https://x"`, `source="a" source="b" path="x"`, `source="a" path="b" note="0:no"`, `source="a" path="b" note="2:"`, `source="a"path="b"`, `source="a" path="b" lines="999999999999999999999"`} {
 		t.Run(args, func(t *testing.T) {
 			value, matched := parse("{{external-file " + args + "}}")
-			if !matched || !value.Invalid {
-				t.Fatalf("accepted %+v", value)
-			}
+			require.True(t, matched, "accepted %+v", value)
+			require.True(t, value.Invalid, "accepted %+v", value)
 			result := render(value, func(string, string) (sdk.PluginResourceRecord, error) {
-				t.Fatal("invalid syntax read resources")
+				require.FailNow(t, "invalid syntax read resources")
 				return sdk.PluginResourceRecord{}, nil
 			}, func(string) (sdk.StoredValue, error) {
-				t.Fatal("invalid syntax read settings")
+				require.FailNow(t, "invalid syntax read settings")
 				return sdk.StoredValue{}, nil
 			}, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
-				t.Fatal("invalid syntax fetched")
+				require.FailNow(t, "invalid syntax fetched")
 				return sdk.HTTPResponse{}, nil
 			})
-			if !strings.Contains(result.Parts[0].Text, "Invalid external file") {
-				t.Fatal(result.Parts[0].Text)
-			}
+			require.Contains(t, result.Parts[0].Text, "Invalid external file")
 		})
 	}
 }
@@ -96,9 +88,10 @@ func TestWholeAndSingleLine(t *testing.T) {
 		start, end int
 	}{{"", 0, 0}, {` lines="3"`, 3, 3}} {
 		value, ok := parse(`{{external-file source="docs" path="README.md"` + test.suffix + `}}`)
-		if !ok || value.Invalid || value.Start != test.start || value.End != test.end {
-			t.Fatalf("selection %+v", value)
-		}
+		require.True(t, ok, "selection %+v", value)
+		require.False(t, value.Invalid, "selection %+v", value)
+		require.Equal(t, test.start, value.Start, "selection %+v", value)
+		require.Equal(t, test.end, value.End, "selection %+v", value)
 	}
 }
 
@@ -111,21 +104,15 @@ func TestSourceNetworkSettings(t *testing.T) {
 		}}, nil
 	}
 	value, err := loadSource("internal", resources)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, err = fetchFile(value, "runbooks/a.md", func(request sdk.HTTPRequest) (sdk.HTTPResponse, error) {
-		if request.URL != "https://git.internal.example/api/v4/projects/platform%2Fdocs/repository/files/runbooks%2Fa.md/raw?ref=release&lfs=false" {
-			t.Fatalf("url %s", request.URL)
-		}
-		if request.Headers["PRIVATE-TOKEN"] != "read-token" || !request.InsecureSkipVerify || strings.Join(request.AllowedPrivateIPs, ",") != "10.0.0.12,fd00::12" {
-			t.Fatalf("request %+v", request)
-		}
+		require.Equal(t, "https://git.internal.example/api/v4/projects/platform%2Fdocs/repository/files/runbooks%2Fa.md/raw?ref=release&lfs=false", request.URL, "url %s", request.URL)
+		require.Equal(t, "read-token", request.Headers["PRIVATE-TOKEN"], "request %+v", request)
+		require.True(t, request.InsecureSkipVerify, "request %+v", request)
+		require.Equal(t, "10.0.0.12,fd00::12", strings.Join(request.AllowedPrivateIPs, ","), "request %+v", request)
 		return sdk.HTTPResponse{StatusCode: http.StatusOK, Body: []byte("hello")}, nil
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 // TestErrorsAndOutOfRangeNotes verifies provider errors stay opaque and annotation bounds are enforced.
@@ -137,17 +124,16 @@ func TestErrorsAndOutOfRangeNotes(t *testing.T) {
 	out := render(value, resources, nil, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
 		return sdk.HTTPResponse{}, errors.New("secret upstream")
 	}).Parts[0].Text
-	if strings.Contains(out, "secret token") || strings.Contains(out, "secret upstream") || !strings.Contains(out, "unavailable") {
-		t.Fatal(out)
-	}
+	require.NotContains(t, out, "secret token")
+	require.NotContains(t, out, "secret upstream")
+	require.Contains(t, out, "unavailable")
 
 	selected, err := selectLines("one\ntwo", 1, 1)
-	if err != nil || selected.Start != 1 || selected.Content != "one" {
-		t.Fatalf("selection %+v %v", selected, err)
-	}
-	if _, err := selectLines("one", 4, 4); err == nil {
-		t.Fatal("out-of-range line accepted")
-	}
+	require.NoError(t, err, "selection %+v %v", selected, err)
+	require.Equal(t, 1, selected.Start, "selection %+v %v", selected, err)
+	require.Equal(t, "one", selected.Content, "selection %+v %v", selected, err)
+	_, err = selectLines("one", 4, 4)
+	require.Error(t, err, "out-of-range line accepted")
 }
 
 // TestPresentationSettingsAndOverrides verifies plugin defaults and per-embed overrides stay inside External Files.
@@ -166,18 +152,23 @@ func TestPresentationSettingsAndOverrides(t *testing.T) {
 	}
 
 	appearance := loadPresentation(settings)
-	if appearance.ReferencePosition != "left" || appearance.ReferenceColor != "purple" || appearance.HighlightReferences || appearance.ShowLineNumbers || appearance.ShowProvider || appearance.ShowBranch {
-		t.Fatalf("unexpected settings: %+v", appearance)
-	}
+	require.Equal(t, "left", appearance.ReferencePosition, "unexpected settings: %+v", appearance)
+	require.Equal(t, "purple", appearance.ReferenceColor, "unexpected settings: %+v", appearance)
+	require.False(t, appearance.HighlightReferences, "unexpected settings: %+v", appearance)
+	require.False(t, appearance.ShowLineNumbers, "unexpected settings: %+v", appearance)
+	require.False(t, appearance.ShowProvider, "unexpected settings: %+v", appearance)
+	require.False(t, appearance.ShowBranch, "unexpected settings: %+v", appearance)
 
 	value, ok := parse(`{{external-file source="docs" path="README.md" reference-position="right" reference-color="yellow" highlight-references="true" line-numbers="true" show-provider="true" show-branch="true"}}`)
-	if !ok || value.Invalid {
-		t.Fatalf("parse: %+v", value)
-	}
+	require.True(t, ok, "parse: %+v", value)
+	require.False(t, value.Invalid, "parse: %+v", value)
 	appearance = applyPresentationOverrides(appearance, value)
-	if appearance.ReferencePosition != "right" || appearance.ReferenceColor != "yellow" || !appearance.HighlightReferences || !appearance.ShowLineNumbers || !appearance.ShowProvider || !appearance.ShowBranch {
-		t.Fatalf("unexpected overrides: %+v", appearance)
-	}
+	require.Equal(t, "right", appearance.ReferencePosition, "unexpected overrides: %+v", appearance)
+	require.Equal(t, "yellow", appearance.ReferenceColor, "unexpected overrides: %+v", appearance)
+	require.True(t, appearance.HighlightReferences, "unexpected overrides: %+v", appearance)
+	require.True(t, appearance.ShowLineNumbers, "unexpected overrides: %+v", appearance)
+	require.True(t, appearance.ShowProvider, "unexpected overrides: %+v", appearance)
+	require.True(t, appearance.ShowBranch, "unexpected overrides: %+v", appearance)
 }
 
 // TestPresentationMarkupUsesSeparateReferenceGutter verifies annotations are not inserted before the source text.
@@ -198,9 +189,7 @@ func TestPresentationMarkupUsesSeparateReferenceGutter(t *testing.T) {
 		`class="external-file-source">second</span><span class="external-file-gutter">`,
 		`class="external-file-marker" title="Annotation 1">1</span>`,
 	} {
-		if !strings.Contains(output, expected) {
-			t.Fatalf("output does not contain %q: %s", expected, output)
-		}
+		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 
 	left := appearance
@@ -209,13 +198,10 @@ func TestPresentationMarkupUsesSeparateReferenceGutter(t *testing.T) {
 	left.ShowProvider = false
 	left.ShowBranch = false
 	output = renderExternalFile(value, source, file, left)
-	if !strings.Contains(output, `class="external-file-gutter"><span class="external-file-marker"`) || !strings.Contains(output, `</span><span class="external-file-source">second</span>`) {
-		t.Fatalf("left gutter not rendered before source: %s", output)
-	}
+	require.Contains(t, output, `class="external-file-gutter"><span class="external-file-marker"`, "left gutter not rendered before source: %s", output)
+	require.Contains(t, output, `</span><span class="external-file-source">second</span>`, "left gutter not rendered before source: %s", output)
 	for _, absent := range []string{"external-file-number", ">GitLab<", `class="external-file-ref"`} {
-		if strings.Contains(output, absent) {
-			t.Fatalf("output unexpectedly contains %q: %s", absent, output)
-		}
+		require.NotContains(t, output, absent, "output unexpectedly contains %q: %s", absent, output)
 	}
 }
 
@@ -227,8 +213,7 @@ func TestPresentationOverrideValidationRejectsUnknownValues(t *testing.T) {
 		`source="a" path="b" line-numbers="maybe"`,
 	} {
 		value, matched := parse("{{external-file " + args + "}}")
-		if !matched || !value.Invalid {
-			t.Fatalf("accepted presentation override %q: %+v", args, value)
-		}
+		require.True(t, matched, "accepted presentation override %q: %+v", args, value)
+		require.True(t, value.Invalid, "accepted presentation override %q: %+v", args, value)
 	}
 }

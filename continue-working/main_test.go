@@ -1,11 +1,11 @@
 package main
 
 import (
-	"strings"
 	"testing"
 	"time"
 
 	sdk "github.com/kumbuka-me/sdk"
+	"github.com/stretchr/testify/require"
 )
 
 func fakeIcon(name string, _ int) string { return "[" + name + "]" }
@@ -19,8 +19,6 @@ func TestRenderContinueWorking(t *testing.T) {
 		fakeIcon,
 	)
 	for _, expected := range []string{"Continue working", `href="/edit/guide/start"`, "Draft &amp; Guide", "10m ago", "Page changed since draft started", "Fix &amp; polish", "2h ago"} {
-		if !strings.Contains(output, expected) {
-			t.Fatalf("output does not contain %q: %s", expected, output)
-		}
+		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 }
