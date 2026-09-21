@@ -27,26 +27,41 @@ GH_TOKEN=$(gh auth token) make catalog
 
 See the [Kumbuka plugin development guide](https://kumbuka.me/plugins/).
 
-## Bump all plugins at once
+## Release plugins
+
+Use the interactive release wizard for normal releases:
 
 ```sh
-make version-all BUMP=patch
-git add '*/plugin.yaml'
-git commit -m "chore: bump plugin versions"
-make test lint build
-make tag-all
-git push origin main --tags
+make release
+```
+
+The wizard lists all plugins and lets you select one, several, or all of them. You can apply the same patch, minor, or major bump to every selected plugin, or choose the bump separately for each plugin. Before changing Git history it shows the complete release plan and asks for confirmation.
+
+After confirmation, the wizard:
+
+1. updates the selected `plugin.yaml` versions;
+2. runs `make test` and `make lint`;
+3. builds every selected plugin with `make build-plugin`;
+4. creates one version commit and one `plugin/vX.Y.Z` tag per plugin;
+5. pushes `main`;
+6. pushes every release tag separately so GitHub emits a release workflow event for every plugin.
+
+The working tree must be clean and the current branch must be `main`. Set `RELEASE_REF` or `RELEASE_REMOTE` when releasing from a different branch or remote:
+
+```sh
+make release RELEASE_REF=main RELEASE_REMOTE=origin
+```
+
+The lower-level versioning and tagging targets remain available for automation and recovery:
+
+```sh
+make version-plugin PLUGIN=status-dropdowns BUMP=minor
+make tag-plugin PLUGIN=status-dropdowns
 make release-missing
 make check-releases
 ```
 
-GitHub does not trigger tag push workflows when more than three tags are pushed
-at once, so the explicit dispatch step is required for a bulk release. See
-[GitHub’s push event documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#push).
-
-`release-missing` dispatches releases for the latest remote plugin tags that do
-not have a release yet. Run it after pushing the tags so it selects the new
-versions. `check-releases` reports any releases still pending or missing.
+`release-missing` dispatches release workflows for latest remote plugin tags that do not have a release yet. `check-releases` reports releases that are still pending or missing.
 
 ## License
 

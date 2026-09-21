@@ -29,6 +29,7 @@ GH ?= gh
 GITHUB_REPOSITORY ?= kumbuka-me/plugins
 RELEASE_WORKFLOW ?= release.yml
 RELEASE_REF ?= main
+RELEASE_REMOTE ?= origin
 
 ## Build Configuration
 DIST ?= dist
@@ -129,6 +130,10 @@ clean: ## Remove generated plugin packages and local binaries.
 
 ##@ Versioning
 
+.PHONY: release
+release: check-plugins ## Interactively version, validate, commit, tag, and push plugin releases.
+	+RELEASE_MAKE="$(MAKE)" RELEASE_REMOTE="$(RELEASE_REMOTE)" RELEASE_REF="$(RELEASE_REF)" go run ./scripts/release
+
 .PHONY: version
 version: check-plugins ## Interactively bump one plugin version.
 	./scripts/version-plugins.sh
@@ -215,5 +220,7 @@ golangci-lint: $(GO_INSTALL_TOOL) ## Download golangci-lint locally if necessary
 
 $(KUMBUKA_CLI): scripts/previews/install-cli.sh
 	./scripts/previews/install-cli.sh "$(KUMBUKA_CLI_VERSION)" "$@"
+
+
 
 
