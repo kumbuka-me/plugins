@@ -159,43 +159,11 @@ catalog: ## Regenerate catalog.json from published plugin releases.
 
 .PHONY: check-releases
 check-releases: ## Check whether every plugin's latest tag has a GitHub release.
-	@set -eu; \
-	tags="$$($(GH) api --paginate "repos/$(GITHUB_REPOSITORY)/tags" --jq '.[].name')"; \
-	releases="$$($(GH) api --paginate "repos/$(GITHUB_REPOSITORY)/releases" --jq '.[].tag_name')"; \
-	for plugin in $$(printf '%s\n' "$$tags" | cut -d/ -f1 | sort -u); do \
-		tag=$$(printf '%s\n' "$$tags" | grep "^$${plugin}/v" | sort -V | tail -1); \
-		if printf '%s\n' "$$releases" | grep -Fqx "$$tag"; then \
-			printf "%-22s %-10s OK\n" "$$plugin" "$${tag#*/}"; \
-		else \
-			printf "%-22s %-10s MISSING RELEASE\n" "$$plugin" "$${tag#*/}"; \
-		fi; \
-	done
+	GH="$(GH)" GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" ./scripts/check-releases.sh
 
 .PHONY: release-missing
 release-missing: ## Create releases for latest plugin tags that do not have one.
-	@set -eu; \
-	tags="$$($(GH) api --paginate "repos/$(GITHUB_REPOSITORY)/tags" --jq '.[].name')"; \
-	releases="$$($(GH) api --paginate "repos/$(GITHUB_REPOSITORY)/releases" --jq '.[].tag_name')"; \
-	count=0; \
-	for plugin in $$(printf '%s\n' "$$tags" | cut -d/ -f1 | sort -u); do \
-		tag=$$(printf '%s\n' "$$tags" | grep "^$${plugin}/v" | sort -V | tail -1); \
-		if printf '%s\n' "$$releases" | grep -Fqx "$$tag"; then \
-			continue; \
-		fi; \
-		version="$${tag#*/v}"; \
-		printf "%-22s %-10s CREATE\n" "$$plugin" "v$$version"; \
-		$(GH) workflow run "$(RELEASE_WORKFLOW)" \
-			--repo "$(GITHUB_REPOSITORY)" \
-			--ref "$(RELEASE_REF)" \
-			-f "plugin=$$plugin" \
-			-f "version=$$version"; \
-		count=$$((count + 1)); \
-	done; \
-	if [ "$$count" -eq 0 ]; then \
-		echo "All latest plugin tags already have releases."; \
-	else \
-		echo "Dispatched $$count release workflow(s)."; \
-	fi
+	GH="$(GH)" GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" RELEASE_WORKFLOW="$(RELEASE_WORKFLOW)" RELEASE_REF="$(RELEASE_REF)" ./scripts/release-missing.sh
 
 
 ##@ Formatting
