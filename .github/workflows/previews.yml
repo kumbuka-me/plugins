@@ -60,3 +60,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "docs: update plugin previews"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+
+  documentation:
+    needs: previews
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/docs.yml
+    secrets: inherit

@@ -23,6 +23,20 @@ Regenerate the catalog locally from existing GitHub releases with:
 GH_TOKEN=$(gh auth token) make catalog
 ```
 
+## Documentation
+
+Each plugin owns its documentation in `README.md`, its metadata in `plugin.yaml`, and its canonical preview in `assets/preview.png`. Edit those sources rather than their generated copies in the documentation repository.
+
+Generate the catalog, detail pages, and copied previews locally:
+
+```sh
+make docs DOCS_DIR=../docs
+```
+
+The documentation workflow synchronizes changes on `main` into `kumbuka-me/docs`, using the same `DOCS_REPOSITORY_TOKEN` secret as the release catalog publisher. The token must have contents write access to that repository. Preview generation explicitly calls the documentation workflow after committing previews; bot commits do not trigger push workflows. The documentation repository's normal Pages workflow deploys the resulting commit.
+
+Generated pages live in `content/plugins/packages/`, the overview in `content/plugins/catalog.md`, and previews in `assets/plugins/<plugin>/`. Stale generated pages and their previews are removed when a plugin disappears; manually maintained guides are preserved. Documentation follows `main` and labels manifest versions as source versions; release availability remains governed by `catalog.json`.
+
 ## Build a plugin
 
 See the [Kumbuka plugin development guide](https://kumbuka.me/plugins/).

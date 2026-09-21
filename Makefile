@@ -37,6 +37,8 @@ PLUGIN ?=
 BUMP ?=
 PLUGIN_DIRS := $(sort $(patsubst %/plugin.yaml,%,$(wildcard */plugin.yaml)))
 
+DOCS_DIR ?= ../docs
+
 ## Previews
 PREVIEW_BROWSER_CHANNEL ?=
 PREVIEW_SKIP_BROWSER_INSTALL ?= 0
@@ -86,6 +88,11 @@ build: $(NODE_MODULES) check-plugins ## Build all versioned plugin packages.
 build-plugin: $(NODE_MODULES) check-plugins ## Build PLUGIN=<name> as a versioned package.
 	@test -n "$(PLUGIN)" || { echo "PLUGIN is required" >&2; exit 1; }
 	./scripts/build-plugin.sh "$(PLUGIN)" "$(DIST)"
+
+.PHONY: docs
+docs: $(NODE_MODULES) ## Generate plugin pages and previews into DOCS_DIR.
+	go run ./scripts/docs --docs "$(DOCS_DIR)"
+	$(NPX) prettier --write "$(DOCS_DIR)/content/plugins/catalog.md" "$(DOCS_DIR)/content/plugins/packages/*.md"
 
 .PHONY: previews
 previews: $(NODE_MODULES) $(KUMBUKA_CLI) ## Rebuild every plugin preview from its preview.md.

@@ -1,0 +1,62 @@
+name: Publish plugin documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*/README.md"
+      - "*/plugin.yaml"
+      - "*/assets/**"
+      - "scripts/docs/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-documentation
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - uses: actions/checkout@v7
+        with:
+          repository: kumbuka-me/docs
+          token: ${{ secrets.DOCS_REPOSITORY_TOKEN }}
+          path: .plugin-docs
+      - name: Generate plugin documentation
+        run: make docs DOCS_DIR=.plugin-docs
+      - name: Publish changed pages and previews
+        working-directory: .plugin-docs
+        run: |
+          set -euo pipefail
+          git add -A -- content/plugins/catalog.md content/plugins/packages assets/plugins
+          if git diff --cached --quiet; then
+            echo "Plugin documentation is unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: sync plugin documentation and previews"
+          # The release catalog publisher may have updated this repository meanwhile.
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then exit 0; fi
+          done
+          exit 1
