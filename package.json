@@ -5,6 +5,7 @@
     "node": ">=24"
   },
   "devDependencies": {
+    "playwright": "1.63.0",
     "prettier": "3.9.8",
     "typescript": "7.0.2"
   }
