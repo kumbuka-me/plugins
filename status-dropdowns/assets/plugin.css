@@ -1,14 +1,3 @@
-.prose .kumbuka-status-browser {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  vertical-align: 0.08em;
-}
-
-.prose .kumbuka-status-options {
-  display: none;
-}
-
 .prose .kumbuka-status {
   display: inline-flex;
   align-items: center;
@@ -120,5 +109,3 @@
   border-color: #dc2626;
   color: #dc2626;
 }
-
-

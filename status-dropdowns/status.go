@@ -358,31 +358,12 @@ func renderStatus(options statusOptions, sets map[string]statusSet, readResource
 	}
 
 	choice := selectedChoice(options, set, readStorage)
-	return statusHTML(options, set, choice)
+	return statusHTML(options, choice)
 }
 
-// statusHTML renders one escaped fallback badge plus bounded browser-module choice metadata.
-func statusHTML(options statusOptions, set statusSet, choice statusChoice) string {
+// statusHTML renders one escaped status badge with bounded class names.
+func statusHTML(options statusOptions, choice statusChoice) string {
 	var output strings.Builder
-	output.WriteString(`<span class="kumbuka-status-browser" data-kumbuka-plugin="me.kumbuka.status-dropdowns" data-kumbuka-module="status-ui" data-kumbuka-input="html">`)
-	output.WriteString(`<span class="kumbuka-status-fallback" data-kumbuka-fallback>`)
-	output.WriteString(`<span class="kumbuka-status-options`)
-	for index, candidate := range set.Choices {
-		output.WriteString(` kumbuka-status-choice__`)
-		output.WriteString(candidate.Tone)
-		output.WriteString(`__`)
-		output.WriteString(actionID(options.ID, index))
-		output.WriteString(`__`)
-		output.WriteString(hex.EncodeToString([]byte(candidate.Label)))
-	}
-	output.WriteString(`"></span>`)
-	writeStatusBadge(&output, options, choice)
-	output.WriteString(`</span></span>`)
-	return output.String()
-}
-
-// writeStatusBadge renders the passive fallback shown when browser modules are unavailable.
-func writeStatusBadge(output *strings.Builder, options statusOptions, choice statusChoice) {
 	output.WriteString(`<span class="kumbuka-status kumbuka-status-`)
 	output.WriteString(choice.Tone)
 	output.WriteString(` kumbuka-status-`)
@@ -398,6 +379,7 @@ func writeStatusBadge(output *strings.Builder, options statusOptions, choice sta
 	output.WriteString(`<span class="kumbuka-status-value">`)
 	output.WriteString(html.EscapeString(choice.Label))
 	output.WriteString(`</span></span>`)
+	return output.String()
 }
 
 // storageKey derives a bounded opaque storage key from a public status identifier.
