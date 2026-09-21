@@ -42,7 +42,7 @@ modules:
     surface: page.details
     order: 30
   - type: editor-insert
-    id: status
+    id: status-insert
     name: Status
     description: Insert a persistent status badge.
     markdown: '{{status id="release-readiness" set="workflow" prefix="Release"}}'
