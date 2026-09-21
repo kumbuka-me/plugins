@@ -122,7 +122,7 @@ cover: ## Display Go test coverage.
 clean: ## Remove generated plugin packages and local binaries.
 	rm -rf "$(DIST)"
 	rm -rf */dist
-	rm -f tables/assets/plugin.js
+	rm -f */assets/plugin.js
 	rm -f simple-icons/assets/icons.json
 	rm -f coverage.out coverage.html
 
@@ -215,3 +215,5 @@ golangci-lint: $(GO_INSTALL_TOOL) ## Download golangci-lint locally if necessary
 
 $(KUMBUKA_CLI): scripts/previews/install-cli.sh
 	./scripts/previews/install-cli.sh "$(KUMBUKA_CLI_VERSION)" "$@"
+
+

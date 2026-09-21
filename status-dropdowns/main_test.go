@@ -71,6 +71,11 @@ func TestTransformSource(t *testing.T) {
 	if !strings.Contains(output, "kumbuka-status-green") || !strings.Contains(output, ">Done</span>") {
 		t.Fatalf("stored status was not rendered: %s", output)
 	}
+	if !strings.Contains(output, `data-kumbuka-plugin="me.kumbuka.status-dropdowns"`) ||
+		!strings.Contains(output, `data-kumbuka-module="status-ui"`) ||
+		!strings.Contains(output, "kumbuka-status-choice__green__"+actionID("release/api", 3)+"__446f6e65") {
+		t.Fatalf("interactive status metadata was not rendered: %s", output)
+	}
 	if !strings.Contains(output, "`{{status id=\"inline-code\" set=\"workflow\"}}`") {
 		t.Fatalf("inline code changed: %s", output)
 	}

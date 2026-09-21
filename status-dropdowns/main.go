@@ -1,4 +1,4 @@
-// Package main implements persistent, configurable inline status badges for Kumbuka.
+// Package main implements persistent, configurable inline status dropdowns for Kumbuka.
 package main
 
 import (
@@ -10,7 +10,7 @@ import (
 // main provides the WASI plugin entry point.
 func main() {}
 
-// init registers the status renderer and page-details controls.
+// init registers the status renderer and page-details command fallback.
 func init() {
 	sdk.RegisterModule("status", transform)
 	sdk.RegisterWidgetWithCommands("page-details", renderWidget, commandWidget)

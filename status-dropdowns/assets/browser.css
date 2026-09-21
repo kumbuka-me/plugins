@@ -1,0 +1,140 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+body,
+#plugin-root,
+.status-dropdown-root {
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+}
+
+.status-dropdown-shell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  font-family: inherit;
+}
+
+.status-dropdown-prefix {
+  max-width: 8rem;
+  overflow: hidden;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.78rem;
+  font-weight: 550;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-dropdown-prefix::after {
+  content: "·";
+  margin-left: 0.35rem;
+}
+
+.status-dropdown {
+  max-width: 16rem;
+  min-height: 1.65rem;
+  padding: 0.12rem 1.65rem 0.12rem 0.48rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.status-dropdown:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 2px;
+}
+
+.status-dropdown-solid.status-dropdown-gray {
+  background: #64748b;
+  color: #fff;
+}
+
+.status-dropdown-solid.status-dropdown-blue {
+  background: #2563eb;
+  color: #fff;
+}
+
+.status-dropdown-solid.status-dropdown-green {
+  background: #16a34a;
+  color: #fff;
+}
+
+.status-dropdown-solid.status-dropdown-yellow {
+  background: #ca8a04;
+  color: #fff;
+}
+
+.status-dropdown-solid.status-dropdown-orange {
+  background: #ea580c;
+  color: #fff;
+}
+
+.status-dropdown-solid.status-dropdown-red {
+  background: #dc2626;
+  color: #fff;
+}
+
+.status-dropdown-solid.status-dropdown-purple {
+  background: #9333ea;
+  color: #fff;
+}
+
+.status-dropdown-solid.status-dropdown-teal {
+  background: #0f766e;
+  color: #fff;
+}
+
+.status-dropdown-outline {
+  background: transparent;
+}
+
+.status-dropdown-outline.status-dropdown-gray {
+  border-color: #64748b;
+  color: #64748b;
+}
+
+.status-dropdown-outline.status-dropdown-blue {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.status-dropdown-outline.status-dropdown-green {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.status-dropdown-outline.status-dropdown-yellow {
+  border-color: #ca8a04;
+  color: #a16207;
+}
+
+.status-dropdown-outline.status-dropdown-orange {
+  border-color: #ea580c;
+  color: #c2410c;
+}
+
+.status-dropdown-outline.status-dropdown-red {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.status-dropdown-outline.status-dropdown-purple {
+  border-color: #9333ea;
+  color: #9333ea;
+}
+
+.status-dropdown-outline.status-dropdown-teal {
+  border-color: #0f766e;
+  color: #0f766e;
+}

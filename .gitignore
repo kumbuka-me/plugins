@@ -6,6 +6,9 @@ coverage.out
 /internal/icons/catalog_gen.go
 /node_modules/
 
+# Generated browser-module bundles
+/*/assets/plugin.js
+
 /docs/site/
 
 # kumbuka development port assignments
@@ -14,3 +17,5 @@ coverage.out
 
 # Generated icon resources
 /simple-icons/assets/icons.json
+
+

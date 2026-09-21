@@ -3,8 +3,8 @@ provider: Kumbuka
 id: me.kumbuka.status-dropdowns
 name: Status Dropdowns
 icon: list-checks-lucide
-version: 1.0.1
-description: Configurable inline statuses with page-view controls and persistent values.
+version: 1.1.0
+description: Interactive inline status dropdowns with reusable choices and persistent values.
 default_enabled: true
 modules:
   - type: admin-resource
@@ -37,6 +37,10 @@ modules:
     css: plugin.css
     usage:
       - contains: "{{status"
+  - type: browser-module
+    id: status-ui
+    javascript: plugin.js
+    css: browser.css
   - type: widget
     id: page-details
     surface: page.details
@@ -50,6 +54,7 @@ modules:
     group: insert
     icon: list-checks-lucide
 permissions:
+  - browser:render
   - settings:read
   - storage:read
   - storage:write
