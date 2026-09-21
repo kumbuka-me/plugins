@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.recent-changes
 name: Recent Changes
-version: 1.0.9
+version: 1.0.10
 description: Show the newest visible pages on the Home dashboard.
 default_enabled: true
 modules:

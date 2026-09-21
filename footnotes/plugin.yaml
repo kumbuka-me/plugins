@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.footnotes
 name: Footnotes
-version: 1.0.6
+version: 1.0.7
 description: Add Markdown footnote references and definitions.
 default_enabled: false
 modules:
