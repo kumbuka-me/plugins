@@ -4,7 +4,7 @@ import (
 	stdhtml "html"
 	"strings"
 
-	"github.com/kumbuka-me/kumbuka-plugins/internal/markdownblock"
+	"github.com/kumbuka-me/kumbuka-plugins/internal/renderparts"
 	sdk "github.com/kumbuka-me/sdk"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
@@ -29,7 +29,7 @@ func transformTabs(source string) []sdk.RenderPart {
 		if len(plain) == 0 {
 			return
 		}
-		markdownblock.AppendText(&parts, strings.Join(plain, "\n"))
+		renderparts.AppendText(&parts, strings.Join(plain, "\n"))
 		plain = plain[:0]
 	}
 
@@ -68,7 +68,7 @@ func parseTabGroup(lines []string, start int) ([]tabSection, int, bool) {
 	sections := make([]tabSection, 0, 2)
 	index := start
 	for {
-		bodyLines, next := markdownblock.IndentedBody(lines, index+1)
+		bodyLines, next := pluginmarkdown.IndentedBody(lines, index+1)
 		sections = append(sections, tabSection{title: title, body: strings.Join(bodyLines, "\n")})
 		index = next
 		if index >= len(lines) {
@@ -84,11 +84,11 @@ func parseTabGroup(lines []string, start int) ([]tabSection, int, bool) {
 
 // appendTabGroup appends the host-rendered controls and Markdown panels for one tab group.
 func appendTabGroup(parts *[]sdk.RenderPart, sections []tabSection) {
-	markdownblock.AppendText(parts, "\n<div class=\"markdown-tabs\"><div class=\"markdown-tab-list\" role=\"tablist\">")
+	renderparts.AppendText(parts, "\n<div class=\"markdown-tabs\"><div class=\"markdown-tab-list\" role=\"tablist\">")
 	appendTabButtons(parts, sections)
-	markdownblock.AppendText(parts, `</div><div class="markdown-tab-panels">`)
+	renderparts.AppendText(parts, `</div><div class="markdown-tab-panels">`)
 	appendTabPanels(parts, sections)
-	markdownblock.AppendText(parts, "</div></div>\n")
+	renderparts.AppendText(parts, "</div></div>\n")
 }
 
 // appendTabButtons appends accessible tab buttons with the first tab selected.
@@ -100,7 +100,7 @@ func appendTabButtons(parts *[]sdk.RenderPart, sections []tabSection) {
 			class += " active"
 			selected = "true"
 		}
-		markdownblock.AppendText(parts, `<button type="button" class="`+class+`" role="tab" aria-selected="`+selected+`">`+stdhtml.EscapeString(section.title)+`</button>`)
+		renderparts.AppendText(parts, `<button type="button" class="`+class+`" role="tab" aria-selected="`+selected+`">`+stdhtml.EscapeString(section.title)+`</button>`)
 	}
 }
 
@@ -111,10 +111,10 @@ func appendTabPanels(parts *[]sdk.RenderPart, sections []tabSection) {
 		if index != 0 {
 			class += " markdown-tab-panel-hidden"
 		}
-		markdownblock.AppendText(parts, `<div class="`+class+`" role="tabpanel">`)
+		renderparts.AppendText(parts, `<div class="`+class+`" role="tabpanel">`)
 		body := section.body
 		*parts = append(*parts, sdk.RenderPart{Markdown: &body})
-		markdownblock.AppendText(parts, `</div>`)
+		renderparts.AppendText(parts, `</div>`)
 	}
 }
 
@@ -129,9 +129,5 @@ func parseTabTitle(line string) (string, bool) {
 		return "", false
 	}
 
-	return markdownblock.ParseQuotedTitle(strings.TrimSpace(remaining))
+	return pluginmarkdown.ParseQuotedTitle(strings.TrimSpace(remaining))
 }
-
-// parseQuotedTitle parses one non-empty Go-style quoted title.
-// indentedBody collects blank and four-space- or tab-indented body lines.
-// stripBlockIndent removes one supported custom-block indentation level.

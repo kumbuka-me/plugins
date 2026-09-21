@@ -4,7 +4,7 @@ import (
 	stdhtml "html"
 	"strings"
 
-	"github.com/kumbuka-me/kumbuka-plugins/internal/markdownblock"
+	"github.com/kumbuka-me/kumbuka-plugins/internal/renderparts"
 	sdk "github.com/kumbuka-me/sdk"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
@@ -20,7 +20,7 @@ func transformDetails(source string) []sdk.RenderPart {
 		if len(plain) == 0 {
 			return
 		}
-		markdownblock.AppendText(&parts, strings.Join(plain, "\n"))
+		renderparts.AppendText(&parts, strings.Join(plain, "\n"))
 		plain = plain[:0]
 	}
 
@@ -37,17 +37,17 @@ func transformDetails(source string) []sdk.RenderPart {
 			continue
 		}
 
-		bodyLines, next := markdownblock.IndentedBody(lines, index+1)
+		bodyLines, next := pluginmarkdown.IndentedBody(lines, index+1)
 		flushPlain()
 
 		openAttribute := ""
 		if open {
 			openAttribute = " open"
 		}
-		markdownblock.AppendText(&parts, "\n<details class=\"markdown-details\""+openAttribute+`><summary>`+stdhtml.EscapeString(title)+`</summary><div class="markdown-details-body">`)
+		renderparts.AppendText(&parts, "\n<details class=\"markdown-details\""+openAttribute+`><summary>`+stdhtml.EscapeString(title)+`</summary><div class="markdown-details-body">`)
 		body := strings.Join(bodyLines, "\n")
 		parts = append(parts, sdk.RenderPart{Markdown: &body})
-		markdownblock.AppendText(&parts, "</div></details>\n")
+		renderparts.AppendText(&parts, "</div></details>\n")
 		index = next
 	}
 
@@ -59,7 +59,6 @@ func transformDetails(source string) []sdk.RenderPart {
 	return parts
 }
 
-// appendText appends literal output and coalesces adjacent text fragments.
 // parseDetailsTitle parses ??? and ???+ declarations.
 func parseDetailsTitle(line string) (title string, open bool, ok bool) {
 	if strings.TrimLeft(line, " \t") != line {
@@ -76,10 +75,6 @@ func parseDetailsTitle(line string) (title string, open bool, ok bool) {
 		}
 	}
 
-	title, ok = markdownblock.ParseQuotedTitle(strings.TrimSpace(remaining))
+	title, ok = pluginmarkdown.ParseQuotedTitle(strings.TrimSpace(remaining))
 	return title, open, ok
 }
-
-// parseQuotedTitle parses one non-empty Go-style quoted title.
-// indentedBody collects blank and four-space- or tab-indented body lines.
-// stripBlockIndent removes one supported custom-block indentation level.
