@@ -1,3 +1,14 @@
+.prose .kumbuka-status-browser {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  vertical-align: 0.08em;
+}
+
+.prose .kumbuka-status-options {
+  display: none;
+}
+
 .prose .kumbuka-status {
   display: inline-flex;
   align-items: center;
@@ -65,6 +76,11 @@
   color: #fff;
 }
 
+.prose .kumbuka-status-pink.kumbuka-status-solid {
+  background-color: #db2777;
+  color: #fff;
+}
+
 .prose .kumbuka-status-gray.kumbuka-status-outline {
   border-color: #64748b;
   color: #64748b;
@@ -105,7 +121,18 @@
   color: #0f766e;
 }
 
+.prose .kumbuka-status-pink.kumbuka-status-outline {
+  border-color: #db2777;
+  color: #db2777;
+}
+
 .prose .kumbuka-status-error {
   border-color: #dc2626;
+  background: color-mix(in srgb, #dc2626 8%, transparent);
   color: #dc2626;
+  white-space: normal;
 }
+
+
+
+

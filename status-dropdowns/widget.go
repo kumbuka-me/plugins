@@ -71,7 +71,7 @@ func statusTokens(line string) []statusOptions {
 			end := strings.Index(line[index:], "}}")
 			if end >= 0 {
 				end += index + 2
-				if options, ok := parseStatusToken(line[index:end]); ok {
+				if options, err := parseStatusToken(line[index:end]); err == nil {
 					result = append(result, options)
 					index = end
 					continue
@@ -96,18 +96,25 @@ func renderControls(source string, readResource resourceReader, readStorage stor
 	setCache := make(map[string]statusSet)
 
 	for _, current := range options {
-		set, ok := setCache[current.Set]
-		if !ok {
-			set, ok = loadStatusSet(current.Set, readResource)
-			if ok {
-				setCache[current.Set] = set
-			}
-		}
-		if !ok {
+		set, err := resolveStatusSet(current, setCache, readResource)
+		if err != nil {
+			output.WriteString(`<div class="status-control status-control-error"><strong>`)
+			output.WriteString(html.EscapeString(current.ID))
+			output.WriteString(`</strong><small>`)
+			output.WriteString(html.EscapeString(err.Error()))
+			output.WriteString(`</small></div>`)
 			continue
 		}
 
-		choice := selectedChoice(current, set, readStorage)
+		choice, err := selectedChoice(current, set, readStorage)
+		if err != nil {
+			output.WriteString(`<div class="status-control status-control-error"><strong>`)
+			output.WriteString(html.EscapeString(current.ID))
+			output.WriteString(`</strong><small>`)
+			output.WriteString(html.EscapeString(err.Error()))
+			output.WriteString(`</small></div>`)
+			continue
+		}
 		label := current.Prefix
 		if label == "" {
 			label = current.ID
@@ -140,14 +147,8 @@ func renderControls(source string, readResource resourceReader, readStorage stor
 func resolveAction(source, action string, readResource resourceReader) (string, string, bool) {
 	setCache := make(map[string]statusSet)
 	for _, options := range discoverStatuses(source) {
-		set, ok := setCache[options.Set]
-		if !ok {
-			set, ok = loadStatusSet(options.Set, readResource)
-			if ok {
-				setCache[options.Set] = set
-			}
-		}
-		if !ok {
+		set, err := resolveStatusSet(options, setCache, readResource)
+		if err != nil {
 			continue
 		}
 		for index, choice := range set.Choices {

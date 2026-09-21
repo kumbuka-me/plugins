@@ -1,16 +1,6 @@
 (() => {
   const choiceClassPrefix = "kumbuka-status-choice__";
-  const toneClassPrefix = "kumbuka-status-";
-  const tones = new Set([
-    "gray",
-    "blue",
-    "green",
-    "yellow",
-    "orange",
-    "red",
-    "purple",
-    "teal",
-  ]);
+  const colorPattern = /^#[0-9a-f]{6}$/;
 
   type BrowserContext = {
     html: string;
@@ -19,9 +9,10 @@
   type StatusOption = {
     action: string;
     label: string;
-    tone: string;
+    color: string;
   };
 
+  // decodeHex decodes UTF-8 metadata transported through sanitizer-safe class tokens.
   function decodeHex(value: string): string {
     if (
       value.length === 0 ||
@@ -41,15 +32,7 @@
     }
   }
 
-  function statusTone(element: Element): string {
-    for (const name of element.classList) {
-      if (!name.startsWith(toneClassPrefix)) continue;
-      const tone = name.slice(toneClassPrefix.length);
-      if (tones.has(tone)) return tone;
-    }
-    return "gray";
-  }
-
+  // parseOptions extracts bounded status choices from sanitized fallback metadata.
   function parseOptions(fallback: HTMLElement): StatusOption[] {
     const result: StatusOption[] = [];
     for (const name of fallback.classList) {
@@ -57,21 +40,37 @@
       const fields = name.slice(choiceClassPrefix.length).split("__");
       if (fields.length !== 3) continue;
 
-      const [tone, action, encodedLabel] = fields;
+      const [encodedColor, action, encodedLabel] = fields;
+      const color = decodeHex(encodedColor || "").toLowerCase();
       const label = decodeHex(encodedLabel || "");
       if (
-        !tone ||
-        !tones.has(tone) ||
+        !colorPattern.test(color) ||
         !action ||
         !/^[a-z0-9][a-z0-9._-]{0,127}$/.test(action) ||
         !label
       )
         continue;
-      result.push({ action, label, tone });
+      result.push({ action, label, color });
     }
     return result;
   }
 
+  // readableForeground chooses black or white text for a solid custom status color.
+  function readableForeground(color: string): string {
+    const red = Number.parseInt(color.slice(1, 3), 16);
+    const green = Number.parseInt(color.slice(3, 5), 16);
+    const blue = Number.parseInt(color.slice(5, 7), 16);
+    const luminance = (red * 299 + green * 587 + blue * 114) / 1000;
+    return luminance >= 150 ? "#111827" : "#ffffff";
+  }
+
+  // applyStatusColor updates the host-isolated dropdown presentation for one choice.
+  function applyStatusColor(select: HTMLSelectElement, color: string): void {
+    select.style.setProperty("--status-color", color);
+    select.style.setProperty("--status-foreground", readableForeground(color));
+  }
+
+  // renderStatus replaces the passive sanitized fallback with one interactive native dropdown.
   function renderStatus(root: HTMLElement, context: BrowserContext): void {
     const template = document.createElement("template");
     template.innerHTML = context.html;
@@ -112,7 +111,7 @@
     }
 
     const select = document.createElement("select");
-    select.className = `status-dropdown status-dropdown-${style} status-dropdown-${statusTone(badge)}`;
+    select.className = `status-dropdown status-dropdown-${style}`;
     select.setAttribute("aria-label", prefix ? `${prefix} status` : "Status");
     select.dataset.kumbukaCommandModule = "page-details";
 
@@ -121,15 +120,14 @@
       item.value = option.action;
       item.textContent = option.label;
       item.selected = option.action === selected.action;
-      item.dataset.tone = option.tone;
+      item.dataset.color = option.color;
       select.append(item);
     }
 
+    applyStatusColor(select, selected.color);
     select.addEventListener("change", () => {
-      for (const tone of tones)
-        select.classList.remove(`status-dropdown-${tone}`);
-      const tone = select.selectedOptions[0]?.dataset.tone || "gray";
-      select.classList.add(`status-dropdown-${tone}`);
+      const color = select.selectedOptions[0]?.dataset.color || "#64748b";
+      applyStatusColor(select, color);
     });
 
     shell.append(select);

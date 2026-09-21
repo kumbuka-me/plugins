@@ -1,87 +1,69 @@
 # Status Dropdowns
 
-Status Dropdowns adds compact, configurable status badges to Kumbuka pages and lets readers change their persisted value from the page's **Status controls** panel without editing Markdown.
+Status Dropdowns adds compact, configurable status dropdowns to Kumbuka pages. Choices can live directly in the page Markdown or come from reusable administrator-managed sets. On a rendered page, selecting a new value goes through Kumbuka's host-mediated plugin command boundary, is validated against the page's current declaration, persisted, and then shown everywhere that uses the same status ID.
 
-It is inspired by the status workflow of Confluence apps such as Handy Status, while staying inside Kumbuka's host-mediated plugin APIs.
+The plugin is inspired by the status workflow of Confluence apps such as Handy Status while keeping browser code isolated from Kumbuka's DOM, credentials, and storage APIs.
 
-## Usage
+## Page-local statuses
 
-Insert a status anywhere normal Markdown text is allowed, including table cells:
+For ordinary page-specific workflows, put the choices directly in the status declaration:
 
 ```markdown
-{{status id="release-readiness" set="workflow" prefix="Release"}}
+{{status id="release-readiness" options="To do;In progress;Blocked;Done" prefix="Release"}}
 ```
+
+The `options` list accepts semicolon-separated values. Commas are also accepted when no semicolon is present. When `colors` is omitted, Status Dropdowns assigns a stable default palette.
+
+Specify colors only when the page needs them explicitly:
+
+```markdown
+{{status id="risk" options="Low;Medium;High;Critical" colors="#64748b;#2563eb;#ea580c;#dc2626" style="outline"}}
+```
+
+Named colors `gray`, `blue`, `green`, `yellow`, `orange`, `red`, `purple`, `teal`, and `pink` are accepted in `colors` as a shorthand for their built-in hexadecimal values.
 
 The `id` is the persistent identity of the status. Keep it stable when moving the declaration and make it globally unique across the Kumbuka instance. Two declarations with the same `id` intentionally share one stored value.
 
 Available attributes are:
 
 - `id` — required stable identifier. Letters, numbers, `.`, `_`, `-`, `/`, and `:` are supported.
-- `set` — required status-set name.
-- `initial` — optional initial value. If omitted, the first status in the set is used.
+- `options` — page-local choices. Use this or `set`, never both.
+- `colors` — optional page-local colors parallel to `options`.
+- `set` — optional reusable built-in or administrator-managed set name instead of `options`.
+- `initial` — optional initial value. If omitted, the first configured status is used.
 - `prefix` — optional text displayed before the current value.
 - `style` — `solid` (default) or `outline`.
 
-Example inside a table:
+Status declarations inside fenced code blocks or inline code stay literal.
+
+## Reusable status sets
+
+For workflows shared by many pages, open **Administration → Plugin settings → Status Dropdowns → Status sets** and create a set. The status editor presents one row per choice with separate **Status** and **Color** columns; the color uses the browser's color picker. Add and remove rows without writing `Label|color` syntax.
+
+Then reference the reusable set:
 
 ```markdown
-| Service | Readiness                                                               |
-| ------- | ----------------------------------------------------------------------- |
-| API     | {{status id="release/api" set="workflow" prefix="API"}}                 |
-| Web     | {{status id="release/web" set="workflow" prefix="Web" style="outline"}} |
+{{status id="production-deployment" set="deployment" prefix="Production"}}
 ```
 
-Status declarations inside fenced code blocks or inline code stay literal.
+Two built-in sets work without administration setup. `workflow` contains **To do**, **In progress**, **Blocked**, and **Done**; `approval` contains **Draft**, **In review**, **Approved**, and **Rejected**. An administrator-managed set with either name overrides its built-in counterpart.
+
+## Errors
+
+Malformed declarations and invalid reusable sets render a visible inline **Status error** with the concrete reason instead of silently disappearing or becoming a generic unavailable badge. Host-side administrator validation also rejects malformed structured rows and invalid colors before they are stored.
 
 ## Change a status
 
-Open a page containing one or more statuses. The **Status controls** section in page details exposes host-rendered actions for the configured alternatives. Selecting an action stores the new value in the plugin's namespaced storage and reloads the page, so every matching declaration renders the new value.
+On a rendered page, open the status dropdown and select another value. The dropdown runs inside Kumbuka's isolated browser-module frame. A trusted user change is relayed by Kumbuka to the plugin's page-details widget command; plugin JavaScript cannot directly access Kumbuka cookies, DOM, HTTP APIs, or storage.
 
-The command handler does not trust the submitted action alone: it rereads the current page, finds the current declaration, reloads the configured set, and only then accepts a matching status choice.
+The command handler does not trust the submitted action alone. It rereads the current page, finds the current declaration, resolves its current page-local or reusable choices, and only then accepts a matching status choice before writing plugin storage.
 
-## Built-in status sets
-
-`workflow` is available without configuration:
-
-```text
-To do|gray
-In progress|blue
-Blocked|red
-Done|green
-```
-
-`approval` is also built in:
-
-```text
-Draft|gray
-In review|yellow
-Approved|green
-Rejected|red
-```
-
-## Custom status sets
-
-Open **Administration → Plugin settings → Status Dropdowns → Status sets** and add a record. Enter one status per line using `Label|color`.
-
-Example `deployment` set:
-
-```text
-Planned|gray
-Deploying|blue
-Verifying|yellow
-Live|green
-Rolled back|red
-```
-
-Supported colors are `gray`, `blue`, `green`, `yellow`, `orange`, `red`, `purple`, and `teal`. A custom set named `workflow` or `approval` overrides the corresponding built-in set.
-
-## Differences from Handy Status
-
-Kumbuka browser modules run in isolated iframes and cannot directly persist an inline click. Status Dropdowns therefore keeps the badge itself passive and performs changes through Kumbuka's host-mediated page-details commands. Kumbuka also does not currently expose a page-tag write capability, so this plugin does not synchronize statuses to page tags.
+The **Status controls** section in page details remains available as a non-JavaScript fallback for the same actions. Editor previews deliberately do not submit status commands; change persisted statuses from the rendered page.
 
 ## Permissions
 
-- `settings:read` reads administrator-managed status sets.
+- `browser:render` runs the dropdown UI in Kumbuka's isolated browser-module frame.
+- `settings:read` reads administrator-managed reusable status sets.
 - `storage:read` reads the persisted value for each status ID.
-- `storage:write` changes a status after a validated page-details command.
+- `storage:write` changes a status after a validated host-mediated command.
 - `pages:content` rereads the current page so status commands can be validated against its current Markdown.

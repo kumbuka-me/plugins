@@ -4,13 +4,13 @@ id: me.kumbuka.status-dropdowns
 name: Status Dropdowns
 icon: list-checks-lucide
 version: 1.2.0
-description: Configurable inline statuses with page-view controls and persistent values.
+description: Interactive inline status dropdowns with page-local or reusable choices and persistent values.
 default_enabled: true
 modules:
   - type: admin-resource
     id: sets
     name: Status sets
-    description: Reusable status choices. Enter one status per line as Label|color.
+    description: Reusable status choices shared across pages.
     fields:
       - id: name
         name: Name
@@ -24,9 +24,21 @@ modules:
         max_bytes: 1024
       - id: statuses
         name: Statuses
-        type: textarea
+        type: list
         required: true
         max_bytes: 4096
+        max_items: 16
+        columns:
+          - id: label
+            name: Status
+            type: text
+            required: true
+            max_bytes: 64
+          - id: color
+            name: Color
+            type: color
+            required: true
+            default: "#64748b"
   - type: renderer-extension
     id: status
     stage: preprocess
@@ -37,6 +49,10 @@ modules:
     css: plugin.css
     usage:
       - contains: "{{status"
+  - type: browser-module
+    id: status-ui
+    javascript: plugin.js
+    css: browser.css
   - type: widget
     id: page-details
     surface: page.details
@@ -44,12 +60,13 @@ modules:
   - type: editor-insert
     id: status-insert
     name: Status
-    description: Insert a persistent status badge.
-    markdown: '{{status id="release-readiness" set="workflow" prefix="Release"}}'
+    description: Insert a persistent page-local status dropdown.
+    markdown: '{{status id="release-readiness" options="To do;In progress;Blocked;Done" prefix="Release"}}'
     inline: true
     group: insert
     icon: list-checks-lucide
 permissions:
+  - browser:render
   - settings:read
   - storage:read
   - storage:write
