@@ -1,0 +1,4 @@
+- [x] Create backup
+- [x] Review migration
+- [ ] Run upgrade
+- [ ] Verify application

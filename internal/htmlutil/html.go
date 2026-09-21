@@ -2,7 +2,6 @@
 package htmlutil
 
 import (
-	"slices"
 	"strings"
 
 	xhtml "golang.org/x/net/html"
@@ -69,8 +68,10 @@ func SetAttribute(node *xhtml.Node, key, value string) {
 // AddClass adds a class token when the element does not already contain it.
 func AddClass(node *xhtml.Node, className string) {
 	classes := strings.Fields(Attribute(node, "class"))
-	if slices.Contains(classes, className) {
-		return
+	for _, existing := range classes {
+		if existing == className {
+			return
+		}
 	}
 	classes = append(classes, className)
 	SetAttribute(node, "class", strings.Join(classes, " "))

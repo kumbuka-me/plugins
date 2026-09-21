@@ -1,20 +1,20 @@
 # Plugin previews
 
-`make previews` regenerates every plugin's canonical `assets/preview.png` from the current plugin checkout without starting the PostgreSQL-backed Kumbuka server.
+`make previews` regenerates every plugin's canonical `assets/preview.png` from the current checkout without starting the PostgreSQL-backed Kumbuka server.
 
-The runner builds every local `.kumbukaplugin`, seeds those packages into an isolated Kumbuka CLI cache, renders each plugin README as a small static Kumbuka site, and captures one preview per plugin with Playwright.
+Every plugin owns a small `preview.md` beside its `README.md`. The README remains the complete documentation; `preview.md` contains only the representative content that belongs in the preview image. Do not add a page title, introduction, permissions, usage explanation, or other documentation copy to `preview.md`.
 
-For Markdown-facing plugins, the preview generator uses the first fenced `markdown` example from the README as a live rendered example when it is safe to render offline. Plugins that require application state, stored configuration, or server-only capabilities fall back to their rendered README. This keeps the preview source close to the documentation instead of maintaining separate preview fixtures.
+The runner builds the current `.kumbukaplugin` packages, prepares one isolated static Kumbuka site per plugin, renders that plugin's `preview.md` with the pinned Kumbuka CLI, and captures only the rendered `.prose` element with Playwright. The generated image therefore excludes the Kumbuka page title, breadcrumbs, top bar, navigation sidebar, table of contents, footer, and floating controls.
 
-The temporary static site also creates minimal support pages for wiki-link targets referenced by plugin READMEs. These pages exist only during preview generation so documentation examples such as `[[Page]]` satisfy the CLI's static-link validation without adding permanent fixtures to the repository.
+Some plugins need small static support pages while rendering their preview. These are generated only in the temporary build directory. Includes receives a source page to transclude and Subpages receives a few child pages. They are not additional checked-in fixtures.
 
-The Kumbuka CLI version is pinned in the repository Makefile. Local plugin packages are supplied through the CLI's normal validated plugin cache, so previews never use published plugin packages in place of the current checkout.
-
-Playwright is a pinned development dependency in this repository, matching the documentation repository's screenshot setup. `npm ci` installs the Playwright package. Local preview generation installs Playwright's matching Chromium browser when needed:
+Playwright is a pinned development dependency, matching the documentation repository's screenshot setup. `npm ci` installs the Playwright package. Local preview generation installs Playwright's matching Chromium browser when needed:
 
 ```sh
 make previews
 ```
+
+The Kumbuka CLI uses an isolated temporary home and cache, but the Playwright install runs in the caller's normal environment. Playwright's normal browser cache is therefore reused between runs instead of downloading Chromium every time.
 
 CI installs Chromium with its system dependencies once and then skips the runner's browser-install step:
 

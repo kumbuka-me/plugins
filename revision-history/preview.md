@@ -1,0 +1,3 @@
+- **Revision 18** — Clarify rollback procedure · 12 minutes ago
+- **Revision 17** — Update Kubernetes command · yesterday
+- **Revision 16** — Add deployment checklist · 3 days ago

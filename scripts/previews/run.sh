@@ -21,7 +21,9 @@ work=$(mktemp -d "${TMPDIR:-/tmp}/kumbuka-plugin-previews.XXXXXX")
 trap 'rm -rf "$work"' EXIT INT TERM
 
 dist="$work/dist"
-mkdir -p "$dist"
+cli_home="$work/home"
+cli_cache="$work/cache"
+mkdir -p "$dist" "$cli_home" "$cli_cache"
 
 printf '%s\n' "Building plugin packages from the current checkout..."
 for manifest in "$repository"/*/plugin.yaml; do
@@ -30,26 +32,30 @@ for manifest in "$repository"/*/plugin.yaml; do
   "$repository/scripts/build-plugin.sh" "$plugin" "$dist" >/dev/null
 done
 
-mkdir -p "$work/home" "$work/cache"
-export HOME="$work/home"
-export XDG_CACHE_HOME="$work/cache"
-
+HOME="$cli_home" \
+XDG_CACHE_HOME="$cli_cache" \
 PREVIEW_REPOSITORY="$repository" \
 PREVIEW_DIST="$dist" \
 PREVIEW_WORK="$work" \
   node "$repository/scripts/previews/prepare.mjs"
 
 printf '%s\n' "Rendering plugin previews with kumbuka-cli..."
-"$cli" build \
-  --config "$work/kumbuka-site.toml" \
-  --plugins "$work/.kumbukaplugins" \
-  --log-format text
+while IFS= read -r plugin; do
+  [ -n "$plugin" ] || continue
+  printf '  %s\n' "$plugin"
+  HOME="$cli_home" \
+  XDG_CACHE_HOME="$cli_cache" \
+    "$cli" build \
+      --config "$work/configs/$plugin.toml" \
+      --plugins "$work/plugins/$plugin.toml" \
+      --log-format text
+done < "$work/plugins.txt"
 
 if [ "${PREVIEW_SKIP_BROWSER_INSTALL:-0}" != "1" ]; then
   "$repository/node_modules/.bin/playwright" install chromium
 fi
 
 PREVIEW_REPOSITORY="$repository" \
-PREVIEW_SITE="$work/site" \
+PREVIEW_SITE="$work/sites" \
 PREVIEW_BROWSER_CHANNEL="${PREVIEW_BROWSER_CHANNEL:-}" \
   node "$repository/scripts/previews/capture.mjs"

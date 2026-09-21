@@ -30,12 +30,49 @@ const contentTypes = new Map([
   [".woff2", "font/woff2"],
 ]);
 
+const previewCSS = `
+  .topbar,
+  .sidebar,
+  .sidebar-backdrop,
+  .sidebar-visibility-toggle,
+  .page-heading,
+  .page-contents,
+  .contents-backdrop,
+  .contents-toggle,
+  footer {
+    display: none !important;
+  }
+
+  .shell,
+  main,
+  main.with-page-contents,
+  article.page,
+  .page-reading,
+  .page-reading.with-contents {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .prose {
+    box-sizing: border-box !important;
+    width: 820px !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 32px 36px !important;
+  }
+`;
+
 async function pluginDirectories() {
   const entries = await readdir(repository, { withFileTypes: true });
   const result = [];
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
+
     try {
       await stat(join(repository, entry.name, "plugin.yaml"));
       result.push(entry.name);
@@ -128,7 +165,9 @@ let browser;
 
 async function settle(page) {
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(150);
+  await page.waitForFunction(() =>
+    [...document.images].every((image) => image.complete),
+  );
 
   const frames = page.locator("iframe.kumbuka-plugin-frame");
   if ((await frames.count()) > 0) {
@@ -142,11 +181,11 @@ async function settle(page) {
     );
   }
 
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(150);
 }
 
 async function capturePreview(page, plugin) {
-  const path = `/previews/${plugin}/`;
+  const path = `/${plugin}/`;
   const response = await page.goto(new URL(path, baseURL).toString(), {
     waitUntil: "networkidle",
   });
@@ -157,9 +196,14 @@ async function capturePreview(page, plugin) {
   }
 
   await settle(page);
+  await page.addStyleTag({ content: previewCSS });
+
+  const preview = page.locator(".prose").first();
+  await preview.waitFor({ state: "visible" });
+
   const output = join(repository, plugin, "assets", "preview.png");
   await mkdir(dirname(output), { recursive: true });
-  await page.screenshot({
+  await preview.screenshot({
     path: output,
     animations: "disabled",
   });
@@ -169,7 +213,7 @@ try {
   browser = await chromium.launch(launchOptions);
   const plugins = await pluginDirectories();
   const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
+    viewport: { width: 1280, height: 900 },
     deviceScaleFactor: 1,
     colorScheme: "light",
     reducedMotion: "reduce",
@@ -183,7 +227,7 @@ try {
   }
 
   await context.close();
-  console.log(`Generated ${plugins.length} plugin previews.`);
+  console.log(`Generated ${plugins.length} cropped plugin previews.`);
 } finally {
   await browser?.close();
   await new Promise((resolveServer) => server.close(resolveServer));

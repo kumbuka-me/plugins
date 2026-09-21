@@ -1,11 +1,5 @@
 import { createHash } from "node:crypto";
-import {
-  cp,
-  mkdir,
-  readFile,
-  readdir,
-  writeFile,
-} from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 
@@ -17,64 +11,10 @@ if (!repository || !dist || !work) {
   throw new Error("Missing preview preparation environment.");
 }
 
-const liveExamplePlugins = new Set([
-  "autolinks",
-  "callouts",
-  "definition-lists",
-  "details",
-  "footnotes",
-  "mermaid",
-  "strikethrough",
-  "syntax-highlighting",
-  "tables",
-  "tabs",
-  "task-lists",
-  "typographer",
-]);
-
 function topLevelValue(source, field) {
   const match = source.match(new RegExp(`^${field}:\\s*(.+?)\\s*$`, "m"));
   if (!match) throw new Error(`Missing ${field} in plugin manifest.`);
   return match[1].trim().replace(/^["']|["']$/g, "");
-}
-
-function firstMarkdownFence(source) {
-  const lines = source.split(/\r?\n/);
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const opening = lines[index].match(/^(`{3,}|~{3,})\s*(markdown|md)\s*$/i);
-    if (!opening) continue;
-
-    const marker = opening[1][0];
-    const width = opening[1].length;
-    const content = [];
-
-    for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
-      const closing = lines[cursor].match(/^(`+|~+)\s*$/);
-      if (
-        closing &&
-        closing[1][0] === marker &&
-        closing[1].length >= width
-      ) {
-        return `${content.join("\n").trim()}\n`;
-      }
-      content.push(lines[cursor]);
-    }
-  }
-
-  return "";
-}
-
-function wikiTargets(source) {
-  const targets = new Set();
-
-  for (const match of source.matchAll(/\[\[([^\]\n]+)\]\]/g)) {
-    let target = match[1].split("|", 1)[0].trim();
-    target = target.split("#", 1)[0].trim();
-    if (target) targets.add(target);
-  }
-
-  return targets;
 }
 
 function goUserCacheDir() {
@@ -100,6 +40,7 @@ async function pluginDirectories() {
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
+
     try {
       await readFile(join(repository, entry.name, "plugin.yaml"), "utf8");
       result.push(entry.name);
@@ -111,66 +52,91 @@ async function pluginDirectories() {
   return result.sort();
 }
 
+async function writeSupportPages(plugin, sourceDir) {
+  if (plugin === "includes") {
+    await writeFile(
+      join(sourceDir, "shared-warning.md"),
+      `# Shared content
+
+## Warning
+
+!!! warning
+Back up the database before changing production.
+`,
+    );
+  }
+
+  if (plugin === "subpages") {
+    await writeFile(
+      join(sourceDir, "getting-started.md"),
+      `# Getting started
+
+Prepare the service and confirm access before making changes.
+`,
+    );
+    await writeFile(
+      join(sourceDir, "operations.md"),
+      `# Operations
+
+Day-two procedures for running the service safely.
+`,
+    );
+    await writeFile(
+      join(sourceDir, "troubleshooting.md"),
+      `# Troubleshooting
+
+Common symptoms, checks, and recovery steps.
+`,
+    );
+  }
+}
+
 const plugins = await pluginDirectories();
 if (plugins.length === 0) throw new Error("No plugin manifests found.");
 
-const sourceDir = join(work, "source");
-const siteDir = join(work, "site");
-await mkdir(sourceDir, { recursive: true });
-
-const index = [
-  "# Kumbuka Plugins",
-  "",
-  "Rendered from the plugin READMEs in the current checkout.",
-  "",
-];
-
-const dependencies = ["format = 1", ""];
 const cacheRoot = join(goUserCacheDir(), "kumbuka", "plugins");
-const requiredWikiTargets = new Map();
+const configsDir = join(work, "configs");
+const dependenciesDir = join(work, "plugins");
+const sourcesDir = join(work, "sources");
+const sitesDir = join(work, "sites");
+
+await mkdir(configsDir, { recursive: true });
+await mkdir(dependenciesDir, { recursive: true });
+await mkdir(sourcesDir, { recursive: true });
+await mkdir(sitesDir, { recursive: true });
 
 for (const plugin of plugins) {
   const pluginDir = join(repository, plugin);
   const manifest = await readFile(join(pluginDir, "plugin.yaml"), "utf8");
-  const readme = await readFile(join(pluginDir, "README.md"), "utf8");
-  for (const target of wikiTargets(readme)) {
-    if (!requiredWikiTargets.has(target)) requiredWikiTargets.set(target, plugin);
+  const previewPath = join(pluginDir, "preview.md");
+  const preview = await readFile(previewPath, "utf8");
+
+  if (preview.trim() === "") {
+    throw new Error(`${plugin}/preview.md must not be empty.`);
   }
+
   const id = topLevelValue(manifest, "id");
   const version = topLevelValue(manifest, "version");
   const name = topLevelValue(manifest, "name");
-  const description = topLevelValue(manifest, "description");
+  const sourceDir = join(sourcesDir, plugin);
+  const siteDir = join(sitesDir, plugin);
 
-  const documentationDir = join(sourceDir, plugin);
-  await mkdir(documentationDir, { recursive: true });
-  await writeFile(join(documentationDir, "index.md"), readme);
-
-  const previewDir = join(sourceDir, "previews", plugin);
-  await mkdir(previewDir, { recursive: true });
-
-  let example = "";
-  if (liveExamplePlugins.has(plugin)) {
-    example = firstMarkdownFence(readme);
-  }
-
-  const previewSource = example
-    ? `# ${name}\n\n${description}\n\n## Example\n\n${example}`
-    : readme;
-  await writeFile(join(previewDir, "index.md"), previewSource);
-
-  index.push(`- [${name}](${plugin}/)`);
+  await mkdir(sourceDir, { recursive: true });
+  await writeFile(join(sourceDir, "index.md"), preview);
+  await writeSupportPages(plugin, sourceDir);
 
   const tagPrefix = `${plugin}/v`;
   const asset = plugin;
-  dependencies.push(
-    "[[plugin]]",
-    `id = ${JSON.stringify(id)}`,
-    'repository = "kumbuka-me/plugins"',
-    `tag_prefix = ${JSON.stringify(tagPrefix)}`,
-    `asset = ${JSON.stringify(asset)}`,
-    `version = ${JSON.stringify(version)}`,
-    "",
-  );
+  const dependencies = `format = 1
+
+[[plugin]]
+id = ${JSON.stringify(id)}
+repository = "kumbuka-me/plugins"
+tag_prefix = ${JSON.stringify(tagPrefix)}
+asset = ${JSON.stringify(asset)}
+version = ${JSON.stringify(version)}
+`;
+  await writeFile(join(dependenciesDir, `${plugin}.toml`), dependencies);
 
   const cacheKey = createHash("sha256")
     .update(`kumbuka-me/plugins\n${tagPrefix}\n${asset}`)
@@ -186,23 +152,9 @@ for (const plugin of plugins) {
 
   const packageFile = join(dist, `${plugin}-${version}.kumbukaplugin`);
   await cp(packageFile, cacheFile);
-}
 
-for (const [target, plugin] of [...requiredWikiTargets].sort(([left], [right]) =>
-  left.localeCompare(right),
-)) {
-  const digest = createHash("sha256").update(target).digest("hex").slice(0, 12);
-  await writeFile(
-    join(sourceDir, plugin, `preview-target-${digest}.md`),
-    `# ${target}\n\nGenerated only to resolve wiki-link examples while rendering plugin previews.\n`,
-  );
-}
-
-await writeFile(join(sourceDir, "index.md"), `${index.join("\n")}\n`);
-await writeFile(join(work, ".kumbukaplugins"), `${dependencies.join("\n")}\n`);
-
-const config = `site_name = "Kumbuka Plugins"
-site_url = "http://127.0.0.1/"
+  const config = `site_name = ${JSON.stringify(name)}
+site_url = ${JSON.stringify(`http://127.0.0.1/${plugin}/`)}
 source_dir = ${JSON.stringify(sourceDir)}
 output_dir = ${JSON.stringify(siteDir)}
 theme = "Light"
@@ -212,13 +164,9 @@ navigation_density = "comfortable"
 expand_content_when_hidden = true
 sidebar_width = 280
 robots = "none"
-
-[[external_links]]
-label = "GitHub"
-url = "https://github.com/kumbuka-me/plugins"
-icon = "github-simple"
-description = "Plugins"
 `;
+  await writeFile(join(configsDir, `${plugin}.toml`), config);
+}
 
-await writeFile(join(work, "kumbuka-site.toml"), config);
-console.log(`Prepared ${plugins.length} plugin documentation pages.`);
+await writeFile(join(work, "plugins.txt"), `${plugins.join("\n")}\n`);
+console.log(`Prepared ${plugins.length} plugin preview pages.`);

@@ -45,6 +45,7 @@ PRETTIER_SOURCES := \
 	README.md \
 	catalog.json \
 	"*/README.md" \
+	"*/preview.md" \
 	"*/plugin.yaml" \
 	"*/browser.ts" \
 	".github/workflows/*.yml" \
@@ -86,7 +87,7 @@ build-plugin: $(NODE_MODULES) check-plugins ## Build PLUGIN=<name> as a versione
 	./scripts/build-plugin.sh "$(PLUGIN)" "$(DIST)"
 
 .PHONY: previews
-previews: $(NODE_MODULES) $(KUMBUKA_CLI) ## Rebuild every plugin preview from rendered plugin documentation.
+previews: $(NODE_MODULES) $(KUMBUKA_CLI) ## Rebuild every plugin preview from its preview.md.
 	@PREVIEW_BROWSER_CHANNEL="$(PREVIEW_BROWSER_CHANNEL)" \
 		PREVIEW_SKIP_BROWSER_INSTALL="$(PREVIEW_SKIP_BROWSER_INSTALL)" \
 		KUMBUKA_CLI="$(abspath $(KUMBUKA_CLI))" \

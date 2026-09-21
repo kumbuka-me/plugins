@@ -18,6 +18,10 @@ for manifest in */plugin.yaml; do
     echo "$manifest: id must be me.kumbuka.$plugin" >&2
     exit 1
   fi
+  if [ ! -f "$plugin/preview.md" ]; then
+    echo "$plugin/preview.md: plugin preview source is required" >&2
+    exit 1
+  fi
   if [ ! -f "$plugin/assets/preview.png" ]; then
     echo "$plugin/assets/preview.png: plugin preview is required" >&2
     exit 1
@@ -28,5 +32,3 @@ if [ "$found" -eq 0 ]; then
   echo "no plugin manifests found" >&2
   exit 1
 fi
-
-
