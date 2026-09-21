@@ -847,6 +847,13 @@
           "sha256": "5dd922f5b56d951173fb8d6331f9f82a166cd618a6c4280025750356ec08d078"
         },
         {
+          "version": "1.1.0",
+          "api_version": 1,
+          "released_at": "2026-09-21T16:21:51Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/status-dropdowns/v1.1.0/status-dropdowns-1.1.0.kumbukaplugin",
+          "sha256": "d24a37a75f657699d3c5537e34f431b7e7c45e54c570d6952aebbfe54c82d611"
+        },
+        {
           "version": "1.0.1",
           "api_version": 1,
           "released_at": "2026-09-21T12:54:23Z",
