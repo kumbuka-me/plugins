@@ -1,0 +1,62 @@
+---
+name: Plugin Previews
+
+on:
+  workflow_dispatch:
+
+jobs:
+  previews:
+    name: Update Previews
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out plugins
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install plugin preview dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Generate plugin previews
+        run: make previews PREVIEW_SKIP_BROWSER_INSTALL=1
+
+      - name: Upload previews
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-previews
+          path: "*/assets/preview.png"
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit changed previews
+        if: github.ref_type == 'branch'
+        run: |
+          git add -A -- '*/assets/preview.png'
+          if git diff --cached --quiet; then
+            echo "Previews are unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: update plugin previews"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

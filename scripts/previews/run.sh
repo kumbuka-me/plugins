@@ -45,7 +45,7 @@ printf '%s\n' "Rendering plugin previews with kumbuka-cli..."
   --plugins "$work/.kumbukaplugins" \
   --log-format text
 
-if [ "${PREVIEW_SKIP_BROWSER_INSTALL:-0}" != "1" ] && [ -z "${PREVIEW_BROWSER_CHANNEL:-}" ]; then
+if [ "${PREVIEW_SKIP_BROWSER_INSTALL:-0}" != "1" ]; then
   "$repository/node_modules/.bin/playwright" install chromium
 fi
 

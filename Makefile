@@ -36,6 +36,10 @@ PLUGIN ?=
 BUMP ?=
 PLUGIN_DIRS := $(sort $(patsubst %/plugin.yaml,%,$(wildcard */plugin.yaml)))
 
+## Previews
+PREVIEW_BROWSER_CHANNEL ?=
+PREVIEW_SKIP_BROWSER_INSTALL ?= 0
+
 ## Formatting
 PRETTIER_SOURCES := \
 	README.md \
@@ -83,7 +87,10 @@ build-plugin: $(NODE_MODULES) check-plugins ## Build PLUGIN=<name> as a versione
 
 .PHONY: previews
 previews: $(NODE_MODULES) $(KUMBUKA_CLI) ## Rebuild every plugin preview from rendered plugin documentation.
-	KUMBUKA_CLI="$(abspath $(KUMBUKA_CLI))" ./scripts/previews/run.sh
+	@PREVIEW_BROWSER_CHANNEL="$(PREVIEW_BROWSER_CHANNEL)" \
+		PREVIEW_SKIP_BROWSER_INSTALL="$(PREVIEW_SKIP_BROWSER_INSTALL)" \
+		KUMBUKA_CLI="$(abspath $(KUMBUKA_CLI))" \
+		./scripts/previews/run.sh
 
 .PHONY: previews-check
 previews-check: previews ## Rebuild previews and fail when generated preview images changed.
