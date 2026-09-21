@@ -32,6 +32,13 @@ for manifest in "$repository"/*/plugin.yaml; do
   "$repository/scripts/build-plugin.sh" "$plugin" "$dist" >/dev/null
 done
 
+# The static CLI intentionally exposes only render-safe capabilities. Rewrite
+# temporary preview packages to that subset without changing release manifests.
+set -- "$dist"/*.kumbukaplugin
+if [ -f "$1" ]; then
+  (cd "$repository" && go run ./scripts/previews/package "$@")
+fi
+
 HOME="$cli_home" \
 XDG_CACHE_HOME="$cli_cache" \
 PREVIEW_REPOSITORY="$repository" \
