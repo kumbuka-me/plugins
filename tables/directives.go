@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kumbuka-me/kumbuka-plugins/internal/htmlutil"
+	"github.com/kumbuka-me/plugins/internal/htmlutil"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 	xhtml "golang.org/x/net/html"
 )

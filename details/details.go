@@ -4,7 +4,7 @@ import (
 	stdhtml "html"
 	"strings"
 
-	"github.com/kumbuka-me/kumbuka-plugins/internal/renderparts"
+	"github.com/kumbuka-me/plugins/internal/renderparts"
 	sdk "github.com/kumbuka-me/sdk"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )

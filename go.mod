@@ -1,11 +1,11 @@
-module github.com/kumbuka-me/kumbuka-plugins
+module github.com/kumbuka-me/plugins
 
 go 1.27.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.27.0
 	github.com/go-icons/simple-icons v0.1.0
-	github.com/kumbuka-me/sdk v0.11.0
+	github.com/kumbuka-me/sdk v0.12.0
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/net v0.59.0
 )

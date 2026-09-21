@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/kumbuka-me/kumbuka-plugins/internal/widgetui"
+	"github.com/kumbuka-me/plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
 

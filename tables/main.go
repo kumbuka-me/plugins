@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/kumbuka-me/kumbuka-plugins/internal/htmlutil"
+	"github.com/kumbuka-me/plugins/internal/htmlutil"
 	sdk "github.com/kumbuka-me/sdk"
 	xhtml "golang.org/x/net/html"
 )
