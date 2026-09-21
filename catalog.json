@@ -835,6 +835,20 @@
       ]
     },
     {
+      "id": "me.kumbuka.status-dropdowns",
+      "name": "Status Dropdowns",
+      "provider": "Kumbuka",
+      "versions": [
+        {
+          "version": "1.0.1",
+          "api_version": 1,
+          "released_at": "2026-09-21T12:54:23Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/status-dropdowns/v1.0.1/status-dropdowns-1.0.1.kumbukaplugin",
+          "sha256": "5e3d79966269a337bd710a90a3fc589d8a6a3af3c5b3190c6aa6dd9389b15f27"
+        }
+      ]
+    },
+    {
       "id": "me.kumbuka.strikethrough",
       "name": "Strikethrough",
       "provider": "Kumbuka",
