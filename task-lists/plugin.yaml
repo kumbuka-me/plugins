@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.task-lists
 name: Task Lists
-version: 1.0.11
+version: 1.1.0
 description: Render Markdown task list items with visible checkbox state.
 default_enabled: true
 modules:
