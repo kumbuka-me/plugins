@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$root"
 
 usage() {
@@ -93,7 +93,7 @@ bump_plugin() {
     exit 1
   fi
 
-  current=$(./scripts/plugin-version.sh "$plugin")
+  current=$(./scripts/version/read.sh "$plugin")
   next=$(next_version "$current" "$bump")
 
   write_version "$plugin" "$next"
@@ -137,7 +137,7 @@ wizard() {
   index=1
   for manifest; do
     plugin=${manifest%/plugin.yaml}
-    version=$(./scripts/plugin-version.sh "$plugin")
+    version=$(./scripts/version/read.sh "$plugin")
 
     printf '  %2d) %-24s %s\n' "$index" "$plugin" "$version"
 
@@ -171,7 +171,7 @@ wizard() {
     exit 1
   fi
 
-  current=$(./scripts/plugin-version.sh "$selected")
+  current=$(./scripts/version/read.sh "$selected")
 
   patch_version=$(next_version "$current" patch)
   minor_version=$(next_version "$current" minor)

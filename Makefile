@@ -66,13 +66,13 @@ download: $(NODE_MODULES) dev-tools ## Download Go, Node, and development depend
 
 .PHONY: check-plugins
 check-plugins: ## Verify first-party plugin identity and version metadata.
-	./scripts/check-plugins.sh
+	./scripts/validation/plugins.sh
 
 .PHONY: browser
 browser: $(NODE_MODULES) ## Build browser TypeScript assets.
 	@set -eu; \
 	for plugin in $(PLUGIN_DIRS); do \
-		./scripts/build-browser.sh "$$plugin"; \
+		./scripts/build/browser.sh "$$plugin"; \
 	done
 
 .PHONY: build
@@ -81,17 +81,17 @@ build: $(NODE_MODULES) check-plugins ## Build all versioned plugin packages.
 	@mkdir -p "$(DIST)"
 	@set -eu; \
 	for plugin in $(PLUGIN_DIRS); do \
-		./scripts/build-plugin.sh "$$plugin" "$(DIST)"; \
+		./scripts/build/plugin.sh "$$plugin" "$(DIST)"; \
 	done
 
 .PHONY: build-plugin
 build-plugin: $(NODE_MODULES) check-plugins ## Build PLUGIN=<name> as a versioned package.
 	@test -n "$(PLUGIN)" || { echo "PLUGIN is required" >&2; exit 1; }
-	./scripts/build-plugin.sh "$(PLUGIN)" "$(DIST)"
+	./scripts/build/plugin.sh "$(PLUGIN)" "$(DIST)"
 
 .PHONY: docs
 docs: $(NODE_MODULES) ## Generate plugin pages and previews into DOCS_DIR.
-	go run ./scripts/docs --docs "$(DOCS_DIR)"
+	./scripts/docs/generate.sh --docs "$(DOCS_DIR)"
 	$(NPX) prettier --write "$(DOCS_DIR)/content/plugins/catalog.md" "$(DOCS_DIR)/content/plugins/packages/*.md"
 
 .PHONY: previews
@@ -110,8 +110,12 @@ vet: ## Run Go static analysis.
 	go vet ./...
 
 .PHONY: test
-test: check-plugins vet ## Run executable plugin tests.
+test: check-plugins test-scripts vet ## Run executable plugin tests.
 	go test -covermode=set -timeout=3m ./...
+
+.PHONY: test-scripts
+test-scripts: ## Check shell automation with disposable documentation and Git fixtures.
+	./scripts/validation/scripts.sh
 
 .PHONY: test-fresh
 test-fresh: check-plugins vet ## Run executable plugin tests without the Go test cache.
@@ -139,43 +143,43 @@ clean: ## Remove generated plugin packages and local binaries.
 
 .PHONY: release
 release: check-plugins ## Interactively version, validate, commit, tag, and push plugin releases.
-	+RELEASE_MAKE="$(MAKE)" RELEASE_REMOTE="$(RELEASE_REMOTE)" RELEASE_REF="$(RELEASE_REF)" go run ./scripts/release
+	+RELEASE_MAKE="$(MAKE)" RELEASE_REMOTE="$(RELEASE_REMOTE)" RELEASE_REF="$(RELEASE_REF)" ./scripts/release/run.sh
 
 .PHONY: version
 version: check-plugins ## Interactively bump one plugin version.
-	./scripts/version-plugins.sh
+	./scripts/version/bump.sh
 
 .PHONY: version-plugin
 version-plugin: check-plugins ## Bump one plugin. Usage: make version-plugin PLUGIN=tables BUMP=patch
 	@test -n "$(PLUGIN)" || { echo "PLUGIN is required" >&2; exit 1; }
 	@test -n "$(BUMP)" || { echo "BUMP is required: patch, minor, or major" >&2; exit 1; }
-	./scripts/version-plugins.sh "$(PLUGIN)" "$(BUMP)"
+	./scripts/version/bump.sh "$(PLUGIN)" "$(BUMP)"
 
 .PHONY: version-all
 version-all: check-plugins ## Bump every plugin. Usage: make version-all BUMP=patch
 	@test -n "$(BUMP)" || { echo "BUMP is required: patch, minor, or major" >&2; exit 1; }
-	./scripts/version-plugins.sh --all "$(BUMP)"
+	./scripts/version/bump.sh --all "$(BUMP)"
 
 .PHONY: tag-plugin
 tag-plugin: check-plugins ## Tag one plugin's current version. Usage: make tag-plugin PLUGIN=tables
 	@test -n "$(PLUGIN)" || { echo "PLUGIN is required" >&2; exit 1; }
-	./scripts/tag-plugins.sh "$(PLUGIN)"
+	./scripts/release/tag.sh "$(PLUGIN)"
 
 .PHONY: tag-all
 tag-all: check-plugins ## Tag all current plugin versions that are not already tagged.
-	./scripts/tag-plugins.sh --all
+	./scripts/release/tag.sh --all
 
 .PHONY: catalog
 catalog: ## Regenerate catalog.json from published plugin releases.
-	GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" ./scripts/generate-catalog.sh catalog.json
+	GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" ./scripts/catalog/generate.sh catalog.json
 
 .PHONY: check-releases
 check-releases: ## Check whether every plugin's latest tag has a GitHub release.
-	GH="$(GH)" GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" ./scripts/check-releases.sh
+	GH="$(GH)" GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" ./scripts/release/check.sh
 
 .PHONY: release-missing
 release-missing: ## Create releases for latest plugin tags that do not have one.
-	GH="$(GH)" GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" RELEASE_WORKFLOW="$(RELEASE_WORKFLOW)" RELEASE_REF="$(RELEASE_REF)" ./scripts/release-missing.sh
+	GH="$(GH)" GITHUB_REPOSITORY="$(GITHUB_REPOSITORY)" RELEASE_WORKFLOW="$(RELEASE_WORKFLOW)" RELEASE_REF="$(RELEASE_REF)" ./scripts/release/missing.sh
 
 
 ##@ Formatting

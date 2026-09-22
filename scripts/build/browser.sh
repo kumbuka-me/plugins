@@ -8,7 +8,7 @@ if [ ! -f "$source" ]; then
   exit 0
 fi
 
-root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 tsc="$root/node_modules/.bin/tsc"
 
 if [ ! -x "$tsc" ]; then

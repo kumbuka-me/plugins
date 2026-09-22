@@ -8,7 +8,7 @@ for manifest in */plugin.yaml; do
   plugin=${manifest%/plugin.yaml}
   provider=$(awk '$1 == "provider:" { print $2; exit }' "$manifest")
   id=$(awk '$1 == "id:" { print $2; exit }' "$manifest")
-  ./scripts/plugin-version.sh "$plugin" >/dev/null
+  ./scripts/version/read.sh "$plugin" >/dev/null
 
   if [ "$provider" != "Kumbuka" ]; then
     echo "$manifest: provider must be Kumbuka" >&2

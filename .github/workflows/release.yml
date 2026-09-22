@@ -105,7 +105,7 @@ jobs:
             exit 1
           fi
 
-          manifest_version="$(./scripts/plugin-version.sh "$PLUGIN")"
+          manifest_version="$(./scripts/version/read.sh "$PLUGIN")"
 
           if [[ "$VERSION" != "$manifest_version" ]]; then
             echo "Tag version $VERSION does not match $PLUGIN/plugin.yaml ($manifest_version)" >&2
@@ -182,7 +182,7 @@ jobs:
       - name: Generate plugin catalog
         env:
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/generate-catalog.sh catalog.json
+        run: ./scripts/catalog/generate.sh catalog.json
 
       - name: Commit plugin catalog
         shell: bash

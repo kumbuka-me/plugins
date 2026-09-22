@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$root"
 
 usage() {
@@ -22,7 +22,7 @@ tag_plugin() {
     exit 1
   fi
 
-  version=$(./scripts/plugin-version.sh "$plugin")
+  version=$(./scripts/version/read.sh "$plugin")
   tag="$plugin/v$version"
 
   if git show-ref --verify --quiet "refs/tags/$tag"; then

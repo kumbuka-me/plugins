@@ -3,7 +3,7 @@ set -eu
 
 plugin=${1:?plugin directory required}
 dist=${2:-dist}
-root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$root"
 
 plugin=${plugin%/}
@@ -15,13 +15,13 @@ if [ ! -f "$manifest" ]; then
 fi
 
 name=$(basename "$plugin")
-version=$(./scripts/plugin-version.sh "$plugin")
+version=$(./scripts/version/read.sh "$plugin")
 
 if [ -x "$plugin/generate.sh" ]; then
   "$plugin/generate.sh"
 fi
 
-./scripts/build-browser.sh "$plugin"
+./scripts/build/browser.sh "$plugin"
 rm -rf "$plugin/dist"
 (
   cd "$plugin"
@@ -39,5 +39,5 @@ fi
 mkdir -p "$dist"
 mv "$source" "$artifact"
 rm -rf "$plugin/dist"
-./scripts/write-checksum.sh "$artifact"
+./scripts/build/checksum.sh "$artifact"
 printf '%s\n' "$artifact"

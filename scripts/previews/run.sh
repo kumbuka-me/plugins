@@ -29,7 +29,7 @@ printf '%s\n' "Building plugin packages from the current checkout..."
 for manifest in "$repository"/*/plugin.yaml; do
   [ -f "$manifest" ] || continue
   plugin=$(basename "$(dirname "$manifest")")
-  "$repository/scripts/build-plugin.sh" "$plugin" "$dist" >/dev/null
+  "$repository/scripts/build/plugin.sh" "$plugin" "$dist" >/dev/null
 done
 
 # The static CLI intentionally exposes only render-safe capabilities. Rewrite
