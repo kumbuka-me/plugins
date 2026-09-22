@@ -94,3 +94,7 @@ Repository automation is grouped by responsibility under `scripts/`:
 - `version/`: reading and bumping plugin versions.
 
 The release wizard supports the macOS system Bash (3.2) and Linux Bash. It restores selected manifests if validation fails before commits begin; once commits begin, it preserves commits and tags for recovery.
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
