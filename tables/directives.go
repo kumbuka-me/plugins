@@ -25,6 +25,8 @@ type tableOptions struct {
 
 // tableStyle describes trusted presentation classes applied to one rendered table.
 type tableStyle struct {
+	widths  []int
+	heights []int
 	// header is the optional header-row tone.
 	header string
 	// rows maps one-based body rows to tones.
@@ -163,6 +165,22 @@ func (s *tableStyle) applyToken(token string) bool {
 	}
 
 	key, tone, ok := strings.Cut(token, "=")
+	if ok && (key == "widths" || key == "heights") {
+		values := []int{}
+		for _, raw := range strings.Split(tone, ",") {
+			value, err := strconv.Atoi(raw)
+			if err != nil || value < 0 || value > 4000 {
+				return false
+			}
+			values = append(values, value)
+		}
+		if key == "widths" {
+			s.widths = values
+		} else {
+			s.heights = values
+		}
+		return true
+	}
 	if !ok || !tableTone(tone) {
 		return false
 	}
@@ -348,6 +366,27 @@ func applyTableDirective(table *xhtml.Node, directive tableStyle, options tableO
 		return
 	}
 
+	if len(directive.widths) > 0 {
+		total := 0
+		for _, width := range directive.widths {
+			if width == 0 {
+				total += 100
+			} else {
+				total += width
+			}
+		}
+		table.Attr = append(table.Attr, xhtml.Attribute{Key: "style", Val: "table-layout:fixed;width:" + strconv.Itoa(total) + "px"})
+	}
+	for index, row := range rows {
+		if index < len(directive.heights) && directive.heights[index] > 0 {
+			row.Attr = append(row.Attr, xhtml.Attribute{Key: "style", Val: "height:" + strconv.Itoa(directive.heights[index]) + "px"})
+		}
+		for column, cell := range rowCells(row) {
+			if column < len(directive.widths) && directive.widths[column] > 0 {
+				cell.Attr = append(cell.Attr, xhtml.Attribute{Key: "style", Val: "width:" + strconv.Itoa(directive.widths[column]) + "px"})
+			}
+		}
+	}
 	htmlutil.AddClass(table, "kumbuka-table-styled")
 	applyHeaderTone(rows, directive.header)
 	applyColumnTones(rows, directive.columns)
@@ -358,7 +397,7 @@ func applyTableDirective(table *xhtml.Node, directive tableStyle, options tableO
 
 // hasColors reports whether a directive contains any style tone assignments.
 func (s tableStyle) hasColors() bool {
-	return s.header != "" || len(s.rows) != 0 || len(s.columns) != 0 || len(s.cells) != 0
+	return len(s.widths) != 0 || len(s.heights) != 0 || s.header != "" || len(s.rows) != 0 || len(s.columns) != 0 || len(s.cells) != 0
 }
 
 // applyHeaderTone colors every cell in the rendered header row when configured.

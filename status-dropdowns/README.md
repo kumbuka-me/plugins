@@ -36,6 +36,12 @@ Available attributes are:
 
 Status declarations inside fenced code blocks or inline code stay literal.
 
+## Visual editing
+
+Kumbuka versions that support the optional plugin visual-editor contract render a status as its real badge in Visual mode. Select the badge to edit its ID, reusable set, page-local choices, colors, initial value, prefix, and style in a popover. Page-local choices use separate **Status** and **Color** columns with a color picker; `workflow` and `approval` are offered as reusable-set suggestions. Markdown remains the canonical saved format, and switching modes preserves the status declaration.
+
+Plugins and older Kumbuka versions that do not understand `assets/visual-editor.json` continue to use the Markdown declaration normally; the asset does not change the plugin runtime syntax.
+
 ## Reusable status sets
 
 For workflows shared by many pages, open **Administration → Plugin settings → Status Dropdowns → Status sets** and create a set. The status editor presents one row per choice with separate **Status** and **Color** columns; the color uses the browser's color picker. Add and remove rows without writing `Label|color` syntax.
