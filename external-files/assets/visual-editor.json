@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "external-file",
+      "name": "External file",
+      "inline": false,
+      "syntax": {
+        "kind": "macro",
+        "name": "external-file"
+      },
+      "attributes": [
+        {
+          "name": "source",
+          "type": "string",
+          "required": true,
+          "max_bytes": 128
+        },
+        {
+          "name": "path",
+          "type": "string",
+          "required": true,
+          "max_bytes": 1024
+        },
+        {
+          "name": "lines",
+          "type": "string",
+          "max_bytes": 32
+        },
+        {
+          "name": "note",
+          "type": "list",
+          "max_bytes": 2048,
+          "max_items": 32,
+          "separator": "\u001f",
+          "repeat": true
+        },
+        {
+          "name": "reference-position",
+          "type": "enum",
+          "values": [
+            "right",
+            "left"
+          ]
+        },
+        {
+          "name": "reference-color",
+          "type": "enum",
+          "values": [
+            "accent",
+            "blue",
+            "green",
+            "yellow",
+            "orange",
+            "red",
+            "purple",
+            "gray"
+          ]
+        },
+        {
+          "name": "highlight-references",
+          "type": "enum",
+          "values": [
+            "true",
+            "false"
+          ]
+        },
+        {
+          "name": "line-numbers",
+          "type": "enum",
+          "values": [
+            "true",
+            "false"
+          ]
+        },
+        {
+          "name": "show-provider",
+          "type": "enum",
+          "values": [
+            "true",
+            "false"
+          ]
+        },
+        {
+          "name": "show-branch",
+          "type": "enum",
+          "values": [
+            "true",
+            "false"
+          ]
+        }
+      ],
+      "settings": [
+        {
+          "type": "text",
+          "label": "Source",
+          "attribute": "source",
+          "placeholder": "engineering"
+        },
+        {
+          "type": "text",
+          "label": "Path",
+          "attribute": "path",
+          "placeholder": "src/main.go"
+        },
+        {
+          "type": "text",
+          "label": "Lines",
+          "attribute": "lines",
+          "placeholder": "10-25"
+        },
+        {
+          "type": "table",
+          "label": "Annotations",
+          "attributes": [
+            "note"
+          ],
+          "columns": [
+            {
+              "label": "Line: note",
+              "type": "textarea"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "label": "Reference position",
+          "attribute": "reference-position"
+        },
+        {
+          "type": "select",
+          "label": "Reference color",
+          "attribute": "reference-color"
+        },
+        {
+          "type": "select",
+          "label": "Highlight references",
+          "attribute": "highlight-references"
+        },
+        {
+          "type": "select",
+          "label": "Line numbers",
+          "attribute": "line-numbers"
+        },
+        {
+          "type": "select",
+          "label": "Show provider",
+          "attribute": "show-provider"
+        },
+        {
+          "type": "select",
+          "label": "Show branch, tag, or commit",
+          "attribute": "show-branch"
+        }
+      ],
+      "preview": {
+        "kind": "card",
+        "card": {
+          "class": "external-file",
+          "title": "External file",
+          "subtitle_attribute": "path",
+          "metadata_attributes": [
+            "source",
+            "lines"
+          ],
+          "body_text": "Repository content is loaded when the page is rendered."
+        }
+      }
+    }
+  ]
+}

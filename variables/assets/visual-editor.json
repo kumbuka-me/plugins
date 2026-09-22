@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "variable",
+      "name": "Variable",
+      "inline": true,
+      "syntax": {
+        "kind": "substitution",
+        "name": "var"
+      },
+      "attributes": [
+        {
+          "name": "name",
+          "type": "identifier",
+          "required": true,
+          "max_bytes": 128
+        }
+      ],
+      "settings": [
+        {
+          "type": "text",
+          "label": "Variable",
+          "attribute": "name",
+          "placeholder": "environment"
+        }
+      ],
+      "preview": {
+        "kind": "reference",
+        "reference": {
+          "class": "visual-variable-reference",
+          "prefix": "Variable",
+          "value_attribute": "name",
+          "default_value": "name"
+        }
+      }
+    }
+  ]
+}

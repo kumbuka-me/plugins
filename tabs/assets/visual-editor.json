@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "tabs",
+      "name": "Tabs",
+      "inline": false,
+      "syntax": {
+        "kind": "tabs"
+      },
+      "attributes": [
+        {
+          "name": "titles",
+          "type": "list",
+          "required": true,
+          "max_bytes": 256,
+          "max_items": 32,
+          "separator": "\u001f"
+        },
+        {
+          "name": "bodies",
+          "type": "list",
+          "required": true,
+          "max_bytes": 32768,
+          "max_items": 32,
+          "separator": "\u001f"
+        }
+      ],
+      "settings": [
+        {
+          "type": "table",
+          "label": "Tabs",
+          "attributes": [
+            "titles",
+            "bodies"
+          ],
+          "columns": [
+            {
+              "label": "Title",
+              "type": "text"
+            },
+            {
+              "label": "Content",
+              "type": "textarea"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "same-length",
+          "attributes": [
+            "titles",
+            "bodies"
+          ]
+        }
+      ],
+      "preview": {
+        "kind": "tabs",
+        "tabs": {
+          "class": "markdown-tabs",
+          "list_class": "markdown-tab-list",
+          "tab_class": "markdown-tab",
+          "active_class": "active",
+          "panels_class": "markdown-tab-panels",
+          "panel_class": "markdown-tab-panel",
+          "hidden_class": "markdown-tab-panel-hidden",
+          "titles_attribute": "titles",
+          "bodies_attribute": "bodies"
+        }
+      }
+    }
+  ]
+}

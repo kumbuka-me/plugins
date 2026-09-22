@@ -113,6 +113,10 @@ Kumbuka's generic plugin HTTP client honors conventional deployment networking s
 
 Proxy configuration belongs to the Kumbuka process, not to this plugin. Proxy TLS verification is never disabled by a plugin source's **Skip TLS certificate verification** setting.
 
+## Visual editor
+
+In Visual mode, external-file macros render as file cards showing the configured source, path, line range, and presentation options without fetching repository content. Select the card to edit the embed settings or its Markdown source.
+
 ## Build
 
 Build the package with the repository tooling:

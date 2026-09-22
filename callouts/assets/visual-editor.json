@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "callout",
+      "name": "Callout",
+      "inline": false,
+      "syntax": {
+        "kind": "callout"
+      },
+      "attributes": [
+        {
+          "name": "kind",
+          "type": "enum",
+          "required": true,
+          "values": [
+            "note",
+            "info",
+            "tip",
+            "success",
+            "warning",
+            "danger",
+            "error"
+          ]
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "required": true,
+          "max_bytes": 16384
+        }
+      ],
+      "settings": [
+        {
+          "type": "select",
+          "label": "Type",
+          "attribute": "kind"
+        },
+        {
+          "type": "textarea",
+          "label": "Content",
+          "attribute": "body",
+          "placeholder": "Important information."
+        }
+      ],
+      "preview": {
+        "kind": "callout",
+        "callout": {
+          "class": "callout",
+          "body_class": "callout-body",
+          "kind_attribute": "kind",
+          "body_attribute": "body"
+        }
+      }
+    }
+  ]
+}

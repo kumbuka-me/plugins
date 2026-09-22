@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "include",
+      "name": "Include",
+      "inline": true,
+      "syntax": {
+        "kind": "substitution",
+        "name": "include"
+      },
+      "attributes": [
+        {
+          "name": "target",
+          "type": "string",
+          "required": true,
+          "max_bytes": 1024
+        }
+      ],
+      "settings": [
+        {
+          "type": "text",
+          "label": "Page or heading",
+          "attribute": "target",
+          "placeholder": "operations/shared-warning"
+        }
+      ],
+      "preview": {
+        "kind": "reference",
+        "reference": {
+          "class": "visual-include-reference",
+          "prefix": "Include",
+          "value_attribute": "target",
+          "default_value": "page/path"
+        }
+      }
+    }
+  ]
+}

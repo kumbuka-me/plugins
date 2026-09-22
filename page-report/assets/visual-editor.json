@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "pages",
+      "name": "Page report",
+      "inline": false,
+      "syntax": {
+        "kind": "macro",
+        "name": "pages"
+      },
+      "attributes": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true,
+          "max_bytes": 4096
+        },
+        {
+          "name": "columns",
+          "type": "list",
+          "default": "title,status,owner,updated",
+          "max_bytes": 128,
+          "max_items": 32,
+          "separator": ","
+        },
+        {
+          "name": "view",
+          "type": "enum",
+          "default": "table",
+          "values": [
+            "table",
+            "list",
+            "cards"
+          ]
+        },
+        {
+          "name": "sort",
+          "type": "enum",
+          "default": "relevance",
+          "values": [
+            "relevance",
+            "updated",
+            "title",
+            "path"
+          ]
+        },
+        {
+          "name": "limit",
+          "type": "string",
+          "default": "20",
+          "max_bytes": 3
+        }
+      ],
+      "settings": [
+        {
+          "type": "text",
+          "label": "Query",
+          "attribute": "query",
+          "placeholder": "tag:service status:verified"
+        },
+        {
+          "type": "table",
+          "label": "Columns",
+          "attributes": [
+            "columns"
+          ],
+          "columns": [
+            {
+              "label": "Column",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "label": "View",
+          "attribute": "view"
+        },
+        {
+          "type": "select",
+          "label": "Sort",
+          "attribute": "sort"
+        },
+        {
+          "type": "text",
+          "label": "Limit",
+          "attribute": "limit",
+          "placeholder": "20"
+        }
+      ],
+      "preview": {
+        "kind": "card",
+        "card": {
+          "class": "kumbuka-page-report",
+          "title": "Page report",
+          "subtitle_attribute": "query",
+          "metadata_attributes": [
+            "view",
+            "sort",
+            "limit"
+          ],
+          "body_text": "Matching pages are resolved when the page is rendered."
+        }
+      }
+    }
+  ]
+}

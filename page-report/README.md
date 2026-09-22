@@ -16,6 +16,10 @@ A more detailed report can select columns, presentation, sorting, and a result l
 
 `query` is required. `columns` defaults to `title,status,owner,updated`; supported columns are `title`, `path`, `status`, `owner`, `updated`, `author`, `tags`, `views`, and `property:<key>`. `view` supports `table`, `list`, and `cards`. `sort` supports `relevance`, `updated`, `title`, and `path`. `limit` defaults to 20 and accepts values from 1 to 100.
 
+## Visual editor
+
+In Visual mode, page-report macros render as report cards showing the query, view, sort, and limit. Select the card to edit report settings; live results are still resolved when the page is rendered.
+
 ## Permissions
 
 This plugin requests `pages:read` to search pages and load the metadata needed for report results.

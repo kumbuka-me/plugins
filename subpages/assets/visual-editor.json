@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "subpages",
+      "name": "Subpages",
+      "inline": false,
+      "syntax": {
+        "kind": "macro",
+        "name": "subpages"
+      },
+      "attributes": [
+        {
+          "name": "title",
+          "type": "string",
+          "default": "Pages in this section",
+          "max_bytes": 256,
+          "emit_empty": true
+        }
+      ],
+      "settings": [
+        {
+          "type": "text",
+          "label": "Heading",
+          "attribute": "title",
+          "placeholder": "Pages in this section"
+        }
+      ],
+      "preview": {
+        "kind": "card",
+        "card": {
+          "class": "subpage-toc",
+          "title": "Subpages",
+          "subtitle_attribute": "title",
+          "body_text": "Child pages are resolved from navigation when the page is rendered."
+        }
+      }
+    }
+  ]
+}

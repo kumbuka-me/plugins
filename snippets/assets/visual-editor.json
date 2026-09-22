@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "snippet",
+      "name": "Snippet",
+      "inline": true,
+      "syntax": {
+        "kind": "substitution",
+        "name": "snippet"
+      },
+      "attributes": [
+        {
+          "name": "name",
+          "type": "identifier",
+          "required": true,
+          "max_bytes": 128
+        }
+      ],
+      "settings": [
+        {
+          "type": "text",
+          "label": "Snippet",
+          "attribute": "name",
+          "placeholder": "deployment-warning"
+        }
+      ],
+      "preview": {
+        "kind": "reference",
+        "reference": {
+          "class": "visual-snippet-reference",
+          "prefix": "Snippet",
+          "value_attribute": "name",
+          "default_value": "name"
+        }
+      }
+    }
+  ]
+}

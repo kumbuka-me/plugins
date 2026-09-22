@@ -15,3 +15,7 @@ The editor includes stored snippets in `{{` completion and slash-command results
 Snippet content is inserted once and is not recursively evaluated as more plugin macros. This keeps reusable content predictable and prevents a stored snippet from unexpectedly invoking Variables, Includes, or another content plugin.
 
 Fenced code blocks keep snippet syntax literal.
+
+## Visual editor
+
+In Visual mode, snippet macros render as compact Snippet references. Select a reference to edit the snippet name while preserving the underlying macro.

@@ -20,6 +20,10 @@ Use `???+` to start the section open:
 
 The declaration must start at the beginning of a line. Body content is indented by four spaces or one tab. Detail declarations inside fenced code blocks remain literal.
 
+## Visual editor
+
+In Visual mode, details blocks render as native collapsible details with their current title, open state, and content. Select the block to edit those settings or its Markdown source.
+
 ## Permissions
 
 This plugin requests no Kumbuka capabilities. Body Markdown is rendered by Kumbuka through the normal plugin pipeline and sanitizer.
