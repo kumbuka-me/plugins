@@ -7,6 +7,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.1.0",
+          "api_version": 1,
+          "released_at": "2026-09-22T18:28:19Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/autolinks/v1.1.0/autolinks-1.1.0.kumbukaplugin",
+          "sha256": "a16aac3db500a4a8cc5ee75b7fa9f36e2c10a1f0e0c0a7077e5fcadd9781470c"
+        },
+        {
           "version": "1.0.7",
           "api_version": 1,
           "released_at": "2026-09-21T11:04:19Z",
@@ -41,6 +48,13 @@
       "name": "Callouts",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.0",
+          "api_version": 1,
+          "released_at": "2026-09-22T18:28:14Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/callouts/v1.2.0/callouts-1.2.0.kumbukaplugin",
+          "sha256": "bff3abf74b655f0a3aa17031a2b2b5f9840c6aff5162cf37e90817f9897068c0"
+        },
         {
           "version": "1.0.10",
           "api_version": 1,
@@ -84,6 +98,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.1.0",
+          "api_version": 1,
+          "released_at": "2026-09-22T18:28:13Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/coding-ligatures/v1.1.0/coding-ligatures-1.1.0.kumbukaplugin",
+          "sha256": "e3a3965b0adb71d45deba7f30ab74a403c0ab45af0c6e9653bffd07a7041347f"
+        },
+        {
           "version": "1.0.8",
           "api_version": 1,
           "released_at": "2026-09-21T11:04:17Z",
@@ -125,6 +146,13 @@
       "name": "Continue Working",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.1.0",
+          "api_version": 1,
+          "released_at": "2026-09-22T18:28:23Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/continue-working/v1.1.0/continue-working-1.1.0.kumbukaplugin",
+          "sha256": "c0999ae73691546b208cc59e620697fb5b9aaed7cf2a5a1923c54a31fb272415"
+        },
         {
           "version": "1.0.9",
           "api_version": 1,
@@ -168,6 +196,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.1.0",
+          "api_version": 1,
+          "released_at": "2026-09-22T18:28:21Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/definition-lists/v1.1.0/definition-lists-1.1.0.kumbukaplugin",
+          "sha256": "3a918d4571211cd5a9c4a2259621c5d3e2c8a6b06870956c1176dc5b781e3a4b"
+        },
+        {
           "version": "1.0.7",
           "api_version": 1,
           "released_at": "2026-09-21T11:04:25Z",
@@ -202,6 +237,13 @@
       "name": "Collapsible Details",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.0",
+          "api_version": 1,
+          "released_at": "2026-09-22T18:28:18Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/details/v1.2.0/details-1.2.0.kumbukaplugin",
+          "sha256": "000fcfdb14a15bee26a69380376b9f6e102576dfb2257a9c92366f4e678e383e"
+        },
         {
           "version": "1.0.11",
           "api_version": 1,
@@ -1279,6 +1321,13 @@
           "released_at": "2026-09-20T17:54:08Z",
           "package_url": "https://github.com/kumbuka-me/plugins/releases/download/wiki-links/v1.1.6/wiki-links-1.1.6.kumbukaplugin",
           "sha256": "e3db8dbb502a7172b5908b5ea15e6ccc1b832b4ef71e492d905c374a38a031b6"
+        },
+        {
+          "version": "1.1.3",
+          "api_version": 1,
+          "released_at": "2026-09-17T15:05:38Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/wiki-links/v1.1.3/wiki-links-1.1.3.kumbukaplugin",
+          "sha256": "25716731b61dffe7819f69075efddcb7291f18b1f7f143da97002a3051155e36"
         },
         {
           "version": "1.1.3",
