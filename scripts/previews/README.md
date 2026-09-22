@@ -33,3 +33,5 @@ To verify generated previews are current:
 ```sh
 make previews-check
 ```
+
+The Python package helper uses the standard library ZIP tools and PyYAML to filter temporary preview manifests while preserving other archive entries. Make installs the pinned Python dependency in `bin/python-env` automatically; Python 3.9 or newer is required. The Makefile installs the pinned CLI through dev-tools `github-release-install`.

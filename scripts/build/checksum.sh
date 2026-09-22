@@ -14,4 +14,4 @@ else
   exit 1
 fi
 
-printf '%s  %s\n' "$hash" "$name" > "$output"
+printf '%s  %s\n' "$hash" "$name" >"$output"

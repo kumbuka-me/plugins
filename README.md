@@ -27,7 +27,7 @@ GH_TOKEN=$(gh auth token) make catalog
 
 Each plugin owns its documentation in `README.md`, its metadata in `plugin.yaml`, and its canonical preview in `assets/preview.png`. Edit those sources rather than their generated copies in the documentation repository.
 
-The Bash generator requires Mike Farah `yq` v4 and `jq` (on macOS: `brew install yq jq`). Generate the catalog, detail pages, and copied previews locally:
+The Python generator requires Python 3.9 or newer. Make creates an isolated environment under `bin/python-env` and installs the pinned PyYAML dependency automatically. Generate the catalog, detail pages, and copied previews locally:
 
 ```sh
 make docs DOCS_DIR=../docs
@@ -87,10 +87,10 @@ Repository automation is grouped by responsibility under `scripts/`:
 
 - `build/`: browser compilation, plugin packaging, and checksums.
 - `catalog/`: release catalog generation.
-- `docs/`: Bash documentation generation and README link processing.
+- `docs/`: Python documentation generation and README link processing.
 - `previews/`: preview rendering and capture.
 - `release/`: Bash release wizard, tags, and release recovery.
-- `validation/`: plugin validation and shell integration tests.
+- `validation/`: plugin manifest validation.
 - `version/`: reading and bumping plugin versions.
 
 The release wizard supports the macOS system Bash (3.2) and Linux Bash. It restores selected manifests if validation fails before commits begin; once commits begin, it preserves commits and tags for recovery.

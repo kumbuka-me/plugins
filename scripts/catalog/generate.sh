@@ -8,8 +8,7 @@ output=${1:-catalog.json}
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/kumbuka-plugin-catalog.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT INT TERM
 entries="$tmp/entries.ndjson"
-: > "$entries"
-
+: >"$entries"
 
 decode_base64() {
   if printf '' | base64 --decode >/dev/null 2>&1; then
@@ -106,7 +105,7 @@ while IFS= read -r encoded; do
       released_at: $released_at,
       package_url: $package_url,
       sha256: $sha256
-    }' >> "$entries"
+    }' >>"$entries"
 done < <(
   gh api --paginate "repos/$repository/releases?per_page=100" --jq '.[] | @base64'
 )
@@ -127,7 +126,7 @@ jq -s '
         )
       })
     }
-' "$entries" > "$tmp/catalog.json"
+' "$entries" >"$tmp/catalog.json"
 
 mkdir -p "$(dirname "$output")"
 mv "$tmp/catalog.json" "$output"

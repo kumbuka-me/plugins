@@ -36,7 +36,7 @@ done
 # temporary preview packages to that subset without changing release manifests.
 set -- "$dist"/*.kumbukaplugin
 if [ -f "$1" ]; then
-  (cd "$repository" && go run ./scripts/previews/package "$@")
+  "${SCRIPT_PYTHON:-$repository/bin/python-env/bin/python3}" "$repository/scripts/previews/package.py" "$@"
 fi
 
 HOME="$cli_home" \

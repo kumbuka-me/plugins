@@ -23,4 +23,3 @@ version=$(
 }
 
 printf '%s\n' "$version"
-

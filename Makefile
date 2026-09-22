@@ -5,6 +5,11 @@ NPM ?= npm
 NPX ?= npx
 NODE_MODULES := node_modules/.package-lock.json
 
+## Python helpers
+PYTHON ?= python3
+SCRIPT_PYTHON := $(abspath bin/python-env/bin/python3)
+SCRIPT_REQUIREMENTS := bin/python-env/.requirements
+
 ## Tool Versions
 # renovate: datasource=github-releases depName=golangci/golangci-lint
 GOLANGCI_LINT_VERSION ?= v2.13.2
@@ -23,6 +28,7 @@ include $(call dev-tools-module,help)
 ## Project-local tools
 GOLANGCI_LINT := bin/golangci-lint
 KUMBUKA_CLI ?= bin/kumbuka-cli-$(KUMBUKA_CLI_VERSION)
+KUMBUKA_CLI_ASSET ?= kumbuka-cli_{version}_{os}_{arch}.tar.gz
 
 ## GitHub
 GH ?= gh
@@ -61,7 +67,7 @@ PRETTIER_SOURCES := \
 ##@ Development
 
 .PHONY: download
-download: $(NODE_MODULES) dev-tools ## Download Go, Node, and development dependencies.
+download: $(NODE_MODULES) $(SCRIPT_REQUIREMENTS) dev-tools ## Download Go, Node, Python, and development dependencies.
 	go mod download
 
 .PHONY: check-plugins
@@ -90,13 +96,14 @@ build-plugin: $(NODE_MODULES) check-plugins ## Build PLUGIN=<name> as a versione
 	./scripts/build/plugin.sh "$(PLUGIN)" "$(DIST)"
 
 .PHONY: docs
-docs: $(NODE_MODULES) ## Generate plugin pages and previews into DOCS_DIR.
-	./scripts/docs/generate.sh --docs "$(DOCS_DIR)"
+docs: $(NODE_MODULES) $(SCRIPT_REQUIREMENTS) ## Generate plugin pages and previews into DOCS_DIR.
+	$(SCRIPT_PYTHON) scripts/docs/generate.py --docs "$(DOCS_DIR)"
 	$(NPX) prettier --write "$(DOCS_DIR)/content/plugins/catalog.md" "$(DOCS_DIR)/content/plugins/packages/*.md"
 
 .PHONY: previews
-previews: $(NODE_MODULES) $(KUMBUKA_CLI) ## Rebuild every plugin preview from its preview.md.
-	@PREVIEW_BROWSER_CHANNEL="$(PREVIEW_BROWSER_CHANNEL)" \
+previews: $(NODE_MODULES) $(KUMBUKA_CLI) $(SCRIPT_REQUIREMENTS) ## Rebuild every plugin preview from its preview.md.
+	@SCRIPT_PYTHON="$(SCRIPT_PYTHON)" \
+		PREVIEW_BROWSER_CHANNEL="$(PREVIEW_BROWSER_CHANNEL)" \
 		PREVIEW_SKIP_BROWSER_INSTALL="$(PREVIEW_SKIP_BROWSER_INSTALL)" \
 		KUMBUKA_CLI="$(abspath $(KUMBUKA_CLI))" \
 		./scripts/previews/run.sh
@@ -110,12 +117,8 @@ vet: ## Run Go static analysis.
 	go vet ./...
 
 .PHONY: test
-test: check-plugins test-scripts vet ## Run executable plugin tests.
+test: check-plugins vet ## Run executable plugin tests.
 	go test -covermode=set -timeout=3m ./...
-
-.PHONY: test-scripts
-test-scripts: ## Check shell automation with disposable documentation and Git fixtures.
-	./scripts/validation/scripts.sh
 
 .PHONY: test-fresh
 test-fresh: check-plugins vet ## Run executable plugin tests without the Go test cache.
@@ -229,9 +232,16 @@ golangci-lint: $(GO_INSTALL_TOOL) ## Download golangci-lint locally if necessary
 		--package github.com/golangci/golangci-lint/v2/cmd/golangci-lint \
 		--tool-version "$(GOLANGCI_LINT_VERSION)"
 
-$(KUMBUKA_CLI): scripts/previews/install-cli.sh
-	./scripts/previews/install-cli.sh "$(KUMBUKA_CLI_VERSION)" "$@"
+$(KUMBUKA_CLI): $(GITHUB_RELEASE_INSTALL)
+	@$(GITHUB_RELEASE_INSTALL) \
+		--repo kumbuka-me/cli \
+		--tag "v$(patsubst v%,%,$(KUMBUKA_CLI_VERSION))" \
+		--asset "$(KUMBUKA_CLI_ASSET)" \
+		--binary kumbuka-cli \
+		--target "$@"
 
 
-
-
+$(SCRIPT_REQUIREMENTS): scripts/requirements.txt
+	$(PYTHON) -m venv bin/python-env
+	$(SCRIPT_PYTHON) -m pip install -r scripts/requirements.txt
+	@touch "$@"

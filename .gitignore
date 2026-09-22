@@ -19,3 +19,6 @@ coverage.out
 /simple-icons/assets/icons.json
 
 
+
+# Python helper bytecode
+__pycache__/
