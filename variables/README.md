@@ -14,7 +14,9 @@ Variable names are case-insensitive when referenced. The stored name remains the
 
 ## Editor integration
 
-Type `{{` to search variables, use **Insert → Variable**, or select a variable from slash commands. The editor inserts the canonical `{{var:name}}` macro.
+Type `{{` in Source mode to search variables, use **Insert → Variable**, or select a variable from slash commands. The editor inserts the canonical `{{var:name}}` macro.
+
+In Visual mode, **Insert → Variable** opens a searchable picker with the existing variables. Typing filters the list by name and description. Administrators can use **New Variable** in the same dialog to create a variable without leaving the page; an empty variable collection is shown as an empty picker instead of inserting a bare `{{` trigger.
 
 Macros inside fenced code blocks remain literal.
 
