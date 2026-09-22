@@ -1218,13 +1218,6 @@
           "sha256": "2343eabc3d0e3ad5056e4a568915b0087ad0b2db86a053b8f4dfc9c9204da7b2"
         },
         {
-          "version": "1.0.5",
-          "api_version": 1,
-          "released_at": "2026-09-19T12:34:27Z",
-          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tables/v1.0.5/tables-1.0.5.kumbukaplugin",
-          "sha256": "2343eabc3d0e3ad5056e4a568915b0087ad0b2db86a053b8f4dfc9c9204da7b2"
-        },
-        {
           "version": "1.0.4",
           "api_version": 1,
           "released_at": "2026-09-17T15:05:38Z",
@@ -1371,6 +1364,13 @@
       "name": "Typographer",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.1.0",
+          "api_version": 1,
+          "released_at": "2026-09-22T18:29:43Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/typographer/v1.1.0/typographer-1.1.0.kumbukaplugin",
+          "sha256": "70e56877d28b4f25a30d90eb7b4e8bf8801bb3bfec1f7a174f2ae72523b56efc"
+        },
         {
           "version": "1.0.9",
           "api_version": 1,
