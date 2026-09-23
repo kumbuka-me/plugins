@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.includes
 name: Includes
-version: 1.3.0
+version: 1.3.1
 description: Transclude complete pages or heading sections into Markdown.
 default_enabled: true
 modules:
@@ -17,6 +17,7 @@ modules:
     id: include
     name: Include page
     description: Transclude another page or heading section.
+    icon: file-input-lucide
     markdown: "{{include:page/path}}"
     inline: true
     group: insert

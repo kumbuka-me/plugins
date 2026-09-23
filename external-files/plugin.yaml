@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.external-files
 name: External Files
 icon: file-code-2-lucide
-version: 1.7.0
+version: 1.7.1
 description: Embed GitHub and GitLab files with line ranges, annotations, and revision metadata.
 default_enabled: false
 modules:
@@ -138,6 +138,7 @@ modules:
     id: editor
     name: External file
     description: Display a file from a configured source.
+    icon: file-code-2-lucide
     markdown: '{{external-file source="engineering" path="README.md" lines="1-10" note="3:Explain this line here."}}'
     group: insert
     allowed_groups: [insert, plugins]
