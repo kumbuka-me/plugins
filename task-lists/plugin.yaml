@@ -35,5 +35,7 @@ modules:
     placeholder: task
     mode: prefix-lines
     group: blocks
+    allowed_groups: [blocks, insert]
+    order: 20
     icon: list-checks-lucide
 permissions: []

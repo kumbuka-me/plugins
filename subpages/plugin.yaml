@@ -17,5 +17,7 @@ modules:
     description: Insert child-page navigation.
     markdown: "{{subpages}}"
     group: insert
+    allowed_groups: [insert, blocks, plugins]
+    order: 60
     icon: list-tree-lucide
 permissions: [pages:read]

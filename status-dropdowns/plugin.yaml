@@ -64,6 +64,8 @@ modules:
     markdown: '{{status id="release-readiness" options="To do;In progress;Blocked;Done" prefix="Release"}}'
     inline: true
     group: insert
+    allowed_groups: [insert, plugins]
+    order: 80
     icon: list-checks-lucide
 permissions:
   - browser:render

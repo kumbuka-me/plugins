@@ -17,5 +17,7 @@ modules:
     description: Insert a two-tab content block.
     markdown: "=== \"Tab 1\"\n\n    First tab content.\n\n=== \"Tab 2\"\n\n    Second tab content."
     group: insert
+    allowed_groups: [insert, blocks, plugins]
+    order: 40
     icon: panels-top-left-lucide
 permissions: []

@@ -140,6 +140,8 @@ modules:
     description: Display a file from a configured source.
     markdown: '{{external-file source="engineering" path="README.md" lines="1-10" note="3:Explain this line here."}}'
     group: insert
+    allowed_groups: [insert, plugins]
+    order: 90
 permissions:
   - settings:read
   - network:http

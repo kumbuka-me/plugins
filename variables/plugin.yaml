@@ -49,4 +49,7 @@ modules:
     description: Insert a reusable variable.
     markdown: "{{"
     inline: true
+    group: insert
+    allowed_groups: [insert, plugins]
+    order: 20
 permissions: []

@@ -19,5 +19,8 @@ modules:
     description: Transclude another page or heading section.
     markdown: "{{include:page/path}}"
     inline: true
+    group: insert
+    allowed_groups: [insert, plugins]
+    order: 50
 permissions:
   - pages:content

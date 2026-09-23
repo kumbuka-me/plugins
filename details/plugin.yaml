@@ -17,5 +17,7 @@ modules:
     description: Insert a collapsible details block.
     markdown: "??? \"Details\"\n\n    Hidden details."
     group: insert
+    allowed_groups: [insert, blocks, plugins]
+    order: 70
     icon: list-collapse-lucide
 permissions: []

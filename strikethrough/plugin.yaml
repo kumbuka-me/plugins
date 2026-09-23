@@ -20,5 +20,7 @@ modules:
     placeholder: strikethrough text
     mode: wrap
     group: text
+    allowed_groups: [text]
+    order: 20
     icon: strikethrough-lucide
 permissions: []
