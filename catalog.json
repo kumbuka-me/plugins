@@ -49,6 +49,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.3.1",
+          "api_version": 1,
+          "released_at": "2026-09-23T17:39:59Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/callouts/v1.3.1/callouts-1.3.1.kumbukaplugin",
+          "sha256": "6a4141548cd4935db9d56948abf3ed10c984645c1dfbc7ee42dba1743b04959e"
+        },
+        {
           "version": "1.3.0",
           "api_version": 1,
           "released_at": "2026-09-23T13:14:45Z",
@@ -307,6 +314,13 @@
       "name": "External Files",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.7.3",
+          "api_version": 1,
+          "released_at": "2026-09-23T17:40:02Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/external-files/v1.7.3/external-files-1.7.3.kumbukaplugin",
+          "sha256": "1f5979063f5ec9f2260d3106473e30b6cc919a05c4c450eb83e0419e058c57bc"
+        },
         {
           "version": "1.7.2",
           "api_version": 1,
@@ -608,6 +622,13 @@
       "name": "Page Report",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.1",
+          "api_version": 1,
+          "released_at": "2026-09-23T17:40:09Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/page-report/v1.2.1/page-report-1.2.1.kumbukaplugin",
+          "sha256": "f2c6a15d5568cbc22d8c866981bd22fe0442fdfefcf4b8a57f3a0dc324c8af79"
+        },
         {
           "version": "1.2.0",
           "api_version": 1,
@@ -1007,6 +1028,13 @@
       "name": "Status Dropdowns",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.6.1",
+          "api_version": 1,
+          "released_at": "2026-09-23T17:40:06Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/status-dropdowns/v1.6.1/status-dropdowns-1.6.1.kumbukaplugin",
+          "sha256": "bd3e0e9b76eab64318d41e90f0b4b07052f4d9eb932b5638abbff1994709f5bb"
+        },
         {
           "version": "1.6.0",
           "api_version": 1,
