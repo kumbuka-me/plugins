@@ -61,7 +61,7 @@ func stringInt(value int) string {
 
 // TestInvalidSyntaxNeverFetches verifies malformed matching macros cannot reach plugin resources or HTTP.
 func TestInvalidSyntaxNeverFetches(t *testing.T) {
-	for _, args := range []string{`source="a"`, `source="a" path="b" lines="0"`, `source="a" path="b" lines="4-2"`, `source="a" path="b" url="https://x"`, `source="a" source="b" path="x"`, `source="a" path="b" note="0:no"`, `source="a" path="b" note="2:"`, `source="a"path="b"`, `source="a" path="b" lines="999999999999999999999"`} {
+	for _, args := range []string{`source="a"`, `source="a" path="b" lines="0"`, `source="a" path="b" lines="4-2"`, `source="a" path="b" url="https://x"`, `source="a" source="b" path="x"`, `source="a" path="b" note="0:no"`, `source="a" path="b" note="2:"`, `source="a"path="b"`, `source="a" path="b" lines="999999999999999999999"`, `source="\xff" path="b"`} {
 		t.Run(args, func(t *testing.T) {
 			value, matched := parse("{{external-file " + args + "}}")
 			require.True(t, matched, "accepted %+v", value)

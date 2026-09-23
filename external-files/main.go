@@ -4,6 +4,7 @@ package main
 import (
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -94,7 +95,10 @@ func parse(line string) (options, bool) {
 	seen := make(map[string]bool)
 	for strings.TrimSpace(body) != "" {
 		name, argument, remaining, parsed := parseAttribute(body)
-		if !parsed || seen[name] && name != "note" {
+		if !parsed {
+			return invalidOptions(), true
+		}
+		if duplicateExternalFileOption(name, seen) {
 			return invalidOptions(), true
 		}
 		seen[name] = true
@@ -104,11 +108,21 @@ func parse(line string) (options, bool) {
 			return invalidOptions(), true
 		}
 	}
-	if result.Source == "" || result.Path == "" || len(result.Source) > 128 || len(result.Path) > 1024 {
+	if !validExternalFileTarget(result) {
 		return invalidOptions(), true
 	}
 
 	return result, true
+}
+
+// duplicateExternalFileOption reports whether a single-value option has already appeared.
+func duplicateExternalFileOption(name string, seen map[string]bool) bool {
+	return name != "note" && seen[name]
+}
+
+// validExternalFileTarget validates the required bounded source and repository path.
+func validExternalFileTarget(value options) bool {
+	return value.Source != "" && value.Path != "" && len(value.Source) <= 128 && len(value.Path) <= 1024
 }
 
 // parseAttribute consumes one name="value" attribute from a macro body.
@@ -141,7 +155,7 @@ func parseAttribute(body string) (name, value, remaining string, ok bool) {
 	}
 
 	argument, err := strconv.Unquote(rest[:end+1])
-	if err != nil {
+	if err != nil || !utf8.ValidString(argument) {
 		return "", "", "", false
 	}
 	remaining = rest[end+1:]
