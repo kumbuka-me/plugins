@@ -49,28 +49,37 @@ type svgPath struct {
 
 // main generates the bounded Simple Icons resource consumed by the plugin package.
 func main() {
+	if err := run(); err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, "generate simple icons:", err)
+		os.Exit(1)
+	}
+}
+
+// run builds and writes the generated Simple Icons resource.
+func run() error {
 	icons := make([]icon, 0, len(simpleicons.Names()))
 	for _, name := range simpleicons.Names() {
 		parsed, err := parse(name, simpleicons.Icon(name))
 		if err != nil {
-			panic(err)
+			return err
 		}
 		icons = append(icons, parsed)
 	}
 
 	data, err := json.MarshalIndent(resource{Format: 1, Icons: icons}, "", "  ")
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("marshal icon catalog: %w", err)
 	}
 	data = append(data, '\n')
 
 	filename := filepath.Join("simple-icons", "assets", "icons.json")
 	if err := os.MkdirAll(filepath.Dir(filename), 0o755); err != nil {
-		panic(err)
+		return fmt.Errorf("create icon directory: %w", err)
 	}
 	if err := os.WriteFile(filename, data, 0o644); err != nil {
-		panic(err)
+		return fmt.Errorf("write icon catalog: %w", err)
 	}
+	return nil
 }
 
 // parse converts one upstream Simple Icons SVG document into a Kumbuka icon record.
