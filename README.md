@@ -77,10 +77,6 @@ make check-releases
 
 `release-missing` dispatches release workflows for latest remote plugin tags that do not have a release yet. `check-releases` reports releases that are still pending or missing.
 
-## License
-
-Licensed under the [Apache License, Version 2.0](LICENSE).
-
 ## Script layout
 
 Repository automation is grouped by responsibility under `scripts/`:
