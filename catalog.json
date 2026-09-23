@@ -1484,6 +1484,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.4.2",
+          "api_version": 1,
+          "released_at": "2026-09-23T14:35:56Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/variables/v1.4.2/variables-1.4.2.kumbukaplugin",
+          "sha256": "f6e798f90edc02a4d3c5c1994cef1f17897185d5faaa5bc1f8c8425b65af5503"
+        },
+        {
           "version": "1.4.0",
           "api_version": 1,
           "released_at": "2026-09-23T13:14:25Z",
