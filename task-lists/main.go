@@ -28,8 +28,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	return sdk.RenderResult{Parts: []sdk.RenderPart{{Text: output}}}
 }
 
-// presentTaskLists replaces Goldmark's disabled checkbox controls with inert,
-// accessible text markers owned entirely by this plugin.
+// presentTaskLists replaces Goldmark's disabled checkbox controls with inert accessible text markers.
 func presentTaskLists(source string) (string, error) {
 	root, err := htmlutil.ParseFragment(source)
 	if err != nil {

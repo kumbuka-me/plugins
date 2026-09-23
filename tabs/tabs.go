@@ -17,9 +17,7 @@ type tabSection struct {
 	body string
 }
 
-// transformTabs replaces top-level tab groups while keeping each panel body as
-// host-rendered Markdown. This preserves nested Kumbuka syntax without giving the
-// plugin direct access to the renderer.
+// transformTabs replaces top-level tab groups while preserving panel bodies as host-rendered Markdown.
 func transformTabs(source string) []sdk.RenderPart {
 	lines := strings.Split(source, "\n")
 	plain := make([]string, 0, len(lines))

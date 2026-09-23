@@ -34,9 +34,7 @@ func init() {
 	sdk.RegisterModule("chroma", transform)
 }
 
-// transform highlights one fenced code block using its explicit Markdown
-// fence language. Chroma's global registry provides the complete maintained
-// lexer set; Kumbuka does not auto-detect a language from the source text.
+// transform highlights an explicitly labeled fenced code block with Chroma without language auto-detection.
 func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Module != "chroma" || request.Stage != "highlight" {
 		return sdk.RenderResult{Error: "unsupported syntax-highlighting request"}

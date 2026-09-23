@@ -9,8 +9,7 @@ import (
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
 
-// transformDetails replaces top-level ??? blocks while keeping each body as
-// host-rendered Markdown so nested Kumbuka syntax follows the normal pipeline.
+// transformDetails replaces top-level ??? blocks while preserving bodies as host-rendered Markdown.
 func transformDetails(source string) []sdk.RenderPart {
 	lines := strings.Split(source, "\n")
 	plain := make([]string, 0, len(lines))
