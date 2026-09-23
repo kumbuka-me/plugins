@@ -10,7 +10,6 @@ source="$plugin/browser.ts"
 output="$plugin/assets/plugin.js"
 
 if [ ! -f "$source" ]; then
-  rm -f "$output"
   exit 0
 fi
 

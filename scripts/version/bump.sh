@@ -65,6 +65,9 @@ write_version() {
   tmp=$(mktemp "${TMPDIR:-/tmp}/kumbuka-plugin-version.XXXXXX")
   trap 'rm -f "$tmp"' EXIT INT TERM
 
+  # Preserve the manifest mode while keeping the replacement atomic.
+  cp -p "$manifest" "$tmp"
+
   awk -v version="$version" '
     $1 == "version:" && !updated {
       print "version: " version
