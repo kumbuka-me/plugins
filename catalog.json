@@ -224,13 +224,6 @@
           "sha256": "3d62be0227c2879a3522b14a24e69878b7df9335eb728077b6bd58e43d422d62"
         },
         {
-          "version": "1.0.5",
-          "api_version": 1,
-          "released_at": "2026-09-20T17:53:18Z",
-          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/definition-lists/v1.0.5/definition-lists-1.0.5.kumbukaplugin",
-          "sha256": "3d62be0227c2879a3522b14a24e69878b7df9335eb728077b6bd58e43d422d62"
-        },
-        {
           "version": "1.0.2",
           "api_version": 1,
           "released_at": "2026-09-17T15:04:58Z",
@@ -251,6 +244,13 @@
       "name": "Collapsible Details",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:15:00Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/details/v1.3.0/details-1.3.0.kumbukaplugin",
+          "sha256": "6f67b44b058736694ea9f70d5ead0257710de087067e3065f21abe2456497e1c"
+        },
         {
           "version": "1.2.0",
           "api_version": 1,
@@ -994,6 +994,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.6.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:15:01Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/status-dropdowns/v1.6.0/status-dropdowns-1.6.0.kumbukaplugin",
+          "sha256": "9c3fd04b1604cb19fd97fa66044cc13b3fa173b3c92d68a9e7fe3276bca55750"
+        },
+        {
           "version": "1.5.0",
           "api_version": 1,
           "released_at": "2026-09-22T18:28:57Z",
@@ -1042,6 +1049,13 @@
       "name": "Strikethrough",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:14:54Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/strikethrough/v1.2.0/strikethrough-1.2.0.kumbukaplugin",
+          "sha256": "2594f5fa89da8fd5af4693974e142dadf513cac295e26cf3c2aaa9d10962413f"
+        },
         {
           "version": "1.1.0",
           "api_version": 1,
@@ -1336,6 +1350,13 @@
       "name": "Task Lists",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:15:05Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/task-lists/v1.2.0/task-lists-1.2.0.kumbukaplugin",
+          "sha256": "74fea1afc652d06bfd44da79d371e33b74fcd13e47ae2e2415dc673212102e88"
+        },
         {
           "version": "1.1.0",
           "api_version": 1,
