@@ -308,6 +308,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.7.2",
+          "api_version": 1,
+          "released_at": "2026-09-23T14:35:41Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/external-files/v1.7.2/external-files-1.7.2.kumbukaplugin",
+          "sha256": "dec40ed7314cd346408de4995a2c503c5c1b21f8053e5e967621140d1d50e178"
+        },
+        {
           "version": "1.7.0",
           "api_version": 1,
           "released_at": "2026-09-22T18:28:27Z",
@@ -489,6 +496,13 @@
       "name": "Includes",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.3.2",
+          "api_version": 1,
+          "released_at": "2026-09-23T14:35:38Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/includes/v1.3.2/includes-1.3.2.kumbukaplugin",
+          "sha256": "0b5699ea0e17d3fa428107b26c3217841dbb6124edcea5528edaca003c717629"
+        },
         {
           "version": "1.3.0",
           "api_version": 1,
