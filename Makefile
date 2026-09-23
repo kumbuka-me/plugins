@@ -18,7 +18,7 @@ GOLANGCI_LINT_VERSION ?= v2.13.2
 DEV_TOOLS_VERSION ?= v0.9.0
 
 # renovate: datasource=github-releases depName=kumbuka-me/cli
-KUMBUKA_CLI_VERSION ?= 0.4.0
+KUMBUKA_CLI_VERSION ?= 0.5.0
 
 ## Shared development tools
 include bin/dev-tools.mk
