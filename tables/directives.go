@@ -25,7 +25,9 @@ type tableOptions struct {
 
 // tableStyle describes trusted presentation classes applied to one rendered table.
 type tableStyle struct {
-	widths  []int
+	// widths contains per-column pixel widths; zero leaves a column automatic.
+	widths []int
+	// heights contains per-row pixel heights; zero leaves a row automatic.
 	heights []int
 	// header is the optional header-row tone.
 	header string
@@ -252,7 +254,7 @@ func tableDirectiveActive(
 	directive tableStyle,
 	options tableOptions,
 ) bool {
-	return (directive.hasColors() && options.TableStyles) ||
+	return (directive.hasStyling() && options.TableStyles) ||
 		(directive.sortable && options.TableSorting) ||
 		(directive.filterable && options.TableFiltering)
 }
@@ -357,7 +359,7 @@ func applyTableDirective(table *xhtml.Node, directive tableStyle, options tableO
 	if options.TableFiltering && directive.filterable {
 		htmlutil.AddClass(table, "kumbuka-table-filterable")
 	}
-	if !options.TableStyles || !directive.hasColors() {
+	if !options.TableStyles || !directive.hasStyling() {
 		return
 	}
 
@@ -366,16 +368,8 @@ func applyTableDirective(table *xhtml.Node, directive tableStyle, options tableO
 		return
 	}
 
-	if len(directive.widths) > 0 {
-		total := 0
-		for _, width := range directive.widths {
-			if width == 0 {
-				total += 100
-			} else {
-				total += width
-			}
-		}
-		table.Attr = append(table.Attr, xhtml.Attribute{Key: "style", Val: "table-layout:fixed;width:" + strconv.Itoa(total) + "px"})
+	if width, fixed := fixedTableWidth(directive.widths); fixed {
+		table.Attr = append(table.Attr, xhtml.Attribute{Key: "style", Val: "table-layout:fixed;width:" + strconv.Itoa(width) + "px"})
 	}
 	for index, row := range rows {
 		if index < len(directive.heights) && directive.heights[index] > 0 {
@@ -395,8 +389,23 @@ func applyTableDirective(table *xhtml.Node, directive tableStyle, options tableO
 	applyCellTones(bodyRows, directive.cells)
 }
 
-// hasColors reports whether a directive contains any style tone assignments.
-func (s tableStyle) hasColors() bool {
+// fixedTableWidth returns a fixed table width only when every configured column has an explicit size.
+func fixedTableWidth(widths []int) (int, bool) {
+	if len(widths) == 0 {
+		return 0, false
+	}
+	total := 0
+	for _, width := range widths {
+		if width == 0 {
+			return 0, false
+		}
+		total += width
+	}
+	return total, true
+}
+
+// hasStyling reports whether a directive contains dimensions or tone assignments.
+func (s tableStyle) hasStyling() bool {
 	return len(s.widths) != 0 || len(s.heights) != 0 || s.header != "" || len(s.rows) != 0 || len(s.columns) != 0 || len(s.cells) != 0
 }
 
@@ -519,7 +528,6 @@ func hasAncestorSection(
 	return false
 }
 
-// addHTMLClass adds a class to one rendered HTML element when it is not already present.
 // setTableTone replaces a previously applied tone with the requested theme-aware class.
 func setTableTone(
 	node *xhtml.Node,
@@ -549,6 +557,3 @@ func setTableTone(
 		strings.Join(classes, " "),
 	)
 }
-
-// setHTMLAttribute sets or appends one HTML node attribute.
-// htmlAttribute returns one HTML node attribute by key.
