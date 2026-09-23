@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	sdk "github.com/kumbuka-me/sdk"
+	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
 
 const maxControlledStatuses = 8
@@ -18,23 +19,20 @@ func discoverStatuses(source string) []statusOptions {
 	lines := strings.Split(source, "\n")
 	seen := make(map[string]bool)
 	result := make([]statusOptions, 0)
-	var fence byte
-	var fenceLength int
+	fence := ""
 
 	for _, line := range lines {
 		if len(result) >= maxControlledStatuses {
 			break
 		}
-		if fence != 0 {
-			if closesFence(line, fence, fenceLength) {
-				fence = 0
-				fenceLength = 0
+		if fence != "" {
+			if pluginmarkdown.Closes(line, fence) {
+				fence = ""
 			}
 			continue
 		}
-		if marker, length := openingFence(line); marker != 0 {
+		if marker := pluginmarkdown.Fence(line); marker != "" {
 			fence = marker
-			fenceLength = length
 			continue
 		}
 

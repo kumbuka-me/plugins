@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	sdk "github.com/kumbuka-me/sdk"
+	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
 
 const (
@@ -89,8 +90,7 @@ func transformSource(source string, readResource resourceReader, readStorage sto
 	lines := strings.Split(source, "\n")
 	sets := make(map[string]statusSet)
 	var output strings.Builder
-	var fence byte
-	var fenceLength int
+	fence := ""
 	count := 0
 
 	for index, line := range lines {
@@ -98,18 +98,16 @@ func transformSource(source string, readResource resourceReader, readStorage sto
 			output.WriteByte('\n')
 		}
 
-		if fence != 0 {
+		if fence != "" {
 			output.WriteString(line)
-			if closesFence(line, fence, fenceLength) {
-				fence = 0
-				fenceLength = 0
+			if pluginmarkdown.Closes(line, fence) {
+				fence = ""
 			}
 			continue
 		}
 
-		if marker, length := openingFence(line); marker != 0 {
+		if marker := pluginmarkdown.Fence(line); marker != "" {
 			fence = marker
-			fenceLength = length
 			output.WriteString(line)
 			continue
 		}
@@ -627,27 +625,4 @@ func repeatedByte(value string, target byte) int {
 		count++
 	}
 	return count
-}
-
-// openingFence recognizes a top-level CommonMark-style backtick or tilde fence.
-func openingFence(line string) (byte, int) {
-	trimmed := strings.TrimLeft(line, " ")
-	if len(line)-len(trimmed) > 3 || trimmed == "" || trimmed[0] != '`' && trimmed[0] != '~' {
-		return 0, 0
-	}
-	run := repeatedByte(trimmed, trimmed[0])
-	if run < 3 {
-		return 0, 0
-	}
-	return trimmed[0], run
-}
-
-// closesFence reports whether a line closes the active top-level fence.
-func closesFence(line string, marker byte, minimum int) bool {
-	trimmed := strings.TrimLeft(line, " ")
-	if len(line)-len(trimmed) > 3 || trimmed == "" || trimmed[0] != marker {
-		return false
-	}
-	run := repeatedByte(trimmed, marker)
-	return run >= minimum && strings.TrimSpace(trimmed[run:]) == ""
 }
