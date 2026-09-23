@@ -1246,6 +1246,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:14:17Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tabs/v1.3.0/tabs-1.3.0.kumbukaplugin",
+          "sha256": "69359486c353c2e8bd8af8105a43522a0c249aca979c479778b40558ccb70a95"
+        },
+        {
           "version": "1.2.0",
           "api_version": 1,
           "released_at": "2026-09-22T18:29:15Z",
@@ -1413,6 +1420,20 @@
       "name": "Variables",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.4.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:14:25Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/variables/v1.4.0/variables-1.4.0.kumbukaplugin",
+          "sha256": "7e59b1d2991bc10705d31ae95d35da4776dc5b87a6ed700c82d87a9ee976071d"
+        },
+        {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T08:33:51Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/variables/v1.3.0/variables-1.3.0.kumbukaplugin",
+          "sha256": "20b1afbee3ab79bb429ec694d2f4a7ddeef9d49bc2cbff838756542d092f4fcc"
+        },
         {
           "version": "1.2.0",
           "api_version": 1,
