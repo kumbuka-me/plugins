@@ -26,3 +26,19 @@ func TestCodeAndOrdinaryMarkdownRemainLiteral(t *testing.T) {
 		require.Equal(t, source, result.Parts[0].Text, "changed literal Markdown: %+v", result)
 	}
 }
+
+func TestCalloutBodyPreservesMarkdownIndentation(t *testing.T) {
+	t.Parallel()
+
+	result := transform(sdk.RenderRequest{
+		APIVersion: 1,
+		Module:     "callouts",
+		Stage:      "preprocess",
+		Source:     "!!! note\n- Parent\n  - Nested\n\n",
+	})
+
+	require.Empty(t, result.Error)
+	require.Len(t, result.Parts, 3, "unexpected fragments: %+v", result.Parts)
+	require.NotNil(t, result.Parts[1].Markdown, "unexpected fragments: %+v", result.Parts)
+	require.Equal(t, "- Parent\n  - Nested", *result.Parts[1].Markdown)
+}

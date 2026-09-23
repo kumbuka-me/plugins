@@ -41,7 +41,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 		}
 		var body []string
 		for index++; index < len(lines) && strings.TrimSpace(lines[index]) != ""; index++ {
-			body = append(body, strings.TrimSpace(lines[index]))
+			body = append(body, lines[index])
 		}
 		label := strings.ToUpper(kind[:1]) + kind[1:]
 		output.line(`<aside class="callout ` + kind + `"><strong>` + html.EscapeString(label) + `</strong><div class="callout-body">`)
@@ -103,7 +103,3 @@ func (f *fragments) flush() {
 	f.parts = append(f.parts, sdk.RenderPart{Text: f.pending.String()})
 	f.pending.Reset()
 }
-
-// openingFence recognizes an opening Markdown fence and returns its marker.
-// validFenceInfo validates the optional info string on a fenced code block.
-// closesFence reports whether a line closes the active Markdown fence.
