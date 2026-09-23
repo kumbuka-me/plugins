@@ -27,7 +27,9 @@ GH_TOKEN=$(gh auth token) make catalog
 
 Each plugin owns its documentation in `README.md`, its metadata in `plugin.yaml`, and its canonical preview in `assets/preview.png`. Edit those sources rather than their generated copies in the documentation repository.
 
-The Python generator requires Python 3.9 or newer. Make creates an isolated environment under `bin/python-env` and installs the pinned PyYAML dependency automatically. Generate the catalog, detail pages, and copied previews locally:
+Plugin READMEs are user-facing documentation: they are packaged with plugins, displayed in Kumbuka, and published as extension pages. Keep contributor-only build and maintenance instructions in this repository's root documentation or a plugin-specific `DEVELOPMENT.md`. The documentation generator removes the README title, adds manifest-derived metadata and preview links, and rewrites relative README links to the source repository.
+
+The Python generator requires Python 3.9 or newer. Make creates an isolated environment under `bin/python-env` and installs the pinned PyYAML dependency automatically. Generate the extension landing page, detail pages, and copied previews locally:
 
 ```sh
 make docs DOCS_DIR=../docs
@@ -35,11 +37,11 @@ make docs DOCS_DIR=../docs
 
 The documentation workflow synchronizes changes on `main` into `kumbuka-me/docs`, using the same `DOCS_REPOSITORY_TOKEN` secret as the release catalog publisher. The token must have contents write access to that repository. Preview generation explicitly calls the documentation workflow after committing previews; bot commits do not trigger push workflows. The documentation repository's normal Pages workflow deploys the resulting commit.
 
-Generated pages live in `content/plugins/packages/`, the overview in `content/plugins/catalog.md`, and previews in `assets/plugins/<plugin>/`. Stale generated pages and their previews are removed when a plugin disappears; manually maintained guides are preserved. Documentation follows `main` and labels manifest versions as source versions; release availability remains governed by `catalog.json`.
+Generated pages live directly in `content/extensions/`, with `content/extensions/index.md` as the extension landing page and previews in `assets/plugins/<plugin>/`. Stale generated extension pages and their previews are removed when a plugin disappears. Plugin-development guides remain hand-written in the documentation repository under `content/development/plugins/`. The machine-readable release catalog remains `content/plugins/catalog.json` because Kumbuka uses `/plugins/catalog.json` as its update endpoint. Documentation follows `main` and labels manifest versions as source versions; release availability remains governed by `catalog.json`.
 
 ## Build a plugin
 
-See the [Kumbuka plugin development guide](https://kumbuka.me/plugins/).
+See the [Kumbuka plugin development guide](https://kumbuka.me/development/plugins/).
 
 ## Release plugins
 

@@ -44,14 +44,14 @@ jobs:
         working-directory: .plugin-docs
         run: |
           set -euo pipefail
-          git add -A -- content/plugins/catalog.md content/plugins/packages assets/plugins
+          git add -A -- content/extensions content/plugins assets/plugins
           if git diff --cached --quiet; then
             echo "Plugin documentation is unchanged."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "docs: sync plugin documentation and previews"
+          git commit -m "docs: sync extension documentation and previews"
           # The release catalog publisher may have updated this repository meanwhile.
           for attempt in 1 2 3; do
             git pull --rebase origin main

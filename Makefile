@@ -53,6 +53,7 @@ PREVIEW_SKIP_BROWSER_INSTALL ?= 0
 PRETTIER_SOURCES := \
 	README.md \
 	catalog.json \
+	"*/DEVELOPMENT.md" \
 	"*/README.md" \
 	"*/preview.md" \
 	"*/plugin.yaml" \
@@ -98,7 +99,7 @@ build-plugin: $(NODE_MODULES) check-plugins ## Build PLUGIN=<name> as a versione
 .PHONY: docs
 docs: $(NODE_MODULES) $(SCRIPT_REQUIREMENTS) ## Generate plugin pages and previews into DOCS_DIR.
 	$(SCRIPT_PYTHON) scripts/docs/generate.py --docs "$(DOCS_DIR)"
-	$(NPX) prettier --write "$(DOCS_DIR)/content/plugins/catalog.md" "$(DOCS_DIR)/content/plugins/packages/*.md"
+	$(NPX) prettier --write "$(DOCS_DIR)/content/extensions/*.md"
 
 .PHONY: previews
 previews: $(NODE_MODULES) $(KUMBUKA_CLI) $(SCRIPT_REQUIREMENTS) ## Rebuild every plugin preview from its preview.md.

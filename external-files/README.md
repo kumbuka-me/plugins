@@ -117,14 +117,6 @@ Proxy configuration belongs to the Kumbuka process, not to this plugin. Proxy TL
 
 In Visual mode, external-file macros render as file cards showing the configured source, path, line range, and presentation options without fetching repository content. Select the card to edit the embed settings or its Markdown source.
 
-## Build
-
-Build the package with the repository tooling:
-
-```sh
-./scripts/build/plugin.sh external-files dist
-```
-
 ## References
 
 - [GitHub repository contents API](https://docs.github.com/en/rest/repos/contents)
