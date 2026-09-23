@@ -49,6 +49,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:14:45Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/callouts/v1.3.0/callouts-1.3.0.kumbukaplugin",
+          "sha256": "f7b283e749da29e21069cd90a637238daebb7a6385f711e661009bb5cedcb0f3"
+        },
+        {
           "version": "1.2.0",
           "api_version": 1,
           "released_at": "2026-09-22T18:28:14Z",
@@ -208,6 +215,13 @@
           "released_at": "2026-09-21T11:04:25Z",
           "package_url": "https://github.com/kumbuka-me/plugins/releases/download/definition-lists/v1.0.7/definition-lists-1.0.7.kumbukaplugin",
           "sha256": "6c126c44901381dae90d26e7d00fedb2c1ce7c89223299ae3b1b3563b948b759"
+        },
+        {
+          "version": "1.0.5",
+          "api_version": 1,
+          "released_at": "2026-09-20T17:53:18Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/definition-lists/v1.0.5/definition-lists-1.0.5.kumbukaplugin",
+          "sha256": "3d62be0227c2879a3522b14a24e69878b7df9335eb728077b6bd58e43d422d62"
         },
         {
           "version": "1.0.5",
@@ -475,6 +489,13 @@
       "name": "Includes",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:14:47Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/includes/v1.3.0/includes-1.3.0.kumbukaplugin",
+          "sha256": "d4a8815f88cf987d1ed60f77c0fb8cd6814366cc686b7552f80b8d246c671cfa"
+        },
         {
           "version": "1.2.0",
           "api_version": 1,
@@ -1070,6 +1091,13 @@
       "name": "Subpages",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-09-23T13:14:52Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/subpages/v1.3.0/subpages-1.3.0.kumbukaplugin",
+          "sha256": "ff9a29c6da907a376b6f96a9ccf6577f2bc5d24174abda47cf1cc08146261794"
+        },
         {
           "version": "1.2.0",
           "api_version": 1,
