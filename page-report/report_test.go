@@ -42,4 +42,26 @@ func TestParse(t *testing.T) {
 		_, ok := parse(`{{pages query="tag:service" columns="title,secret"}}`)
 		assert.False(t, ok)
 	})
+
+	t.Run("rejects unknown options", func(t *testing.T) {
+		t.Parallel()
+
+		_, ok := parse(`{{pages query="tag:service" srot=title}}`)
+		assert.False(t, ok)
+	})
+
+	t.Run("normalizes property keys", func(t *testing.T) {
+		t.Parallel()
+
+		options, ok := parse(`{{pages query="tag:service" columns="title,property: Version "}}`)
+		require.True(t, ok)
+		assert.Equal(t, []string{"title", "property:Version"}, options.Columns)
+	})
+
+	t.Run("rejects empty column entries", func(t *testing.T) {
+		t.Parallel()
+
+		_, ok := parse(`{{pages query="tag:service" columns="title,,status"}}`)
+		assert.False(t, ok)
+	})
 }

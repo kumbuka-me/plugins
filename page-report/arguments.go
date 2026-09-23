@@ -37,6 +37,10 @@ func pageReportBody(line string) (string, bool) {
 
 // optionsFromArguments normalizes parsed arguments and validates report options.
 func optionsFromArguments(arguments map[string]string) (macroOptions, bool) {
+	if !validArgumentNames(arguments) {
+		return macroOptions{}, false
+	}
+
 	limit, ok := reportLimit(arguments["limit"])
 	if !ok {
 		return macroOptions{}, false
@@ -50,12 +54,28 @@ func optionsFromArguments(arguments map[string]string) (macroOptions, bool) {
 		Limit:   limit,
 	}
 	if value := strings.TrimSpace(arguments["columns"]); value != "" {
-		options.Columns = splitColumns(value)
+		columns, ok := reportColumns(value)
+		if !ok {
+			return macroOptions{}, false
+		}
+		options.Columns = columns
 	}
 	if !validOptions(options) {
 		return macroOptions{}, false
 	}
 	return options, true
+}
+
+// validArgumentNames reports whether every parsed macro argument is supported.
+func validArgumentNames(arguments map[string]string) bool {
+	for name := range arguments {
+		switch name {
+		case "query", "columns", "view", "sort", "limit":
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // reportLimit parses an optional bounded report limit.
@@ -215,15 +235,34 @@ func (p *argumentParser) readQuotedValue() (string, bool) {
 	return "", false
 }
 
-// splitColumns normalizes a comma-separated report column list.
-func splitColumns(value string) []string {
+// reportColumns normalizes a comma-separated report column list and rejects empty entries.
+func reportColumns(value string) ([]string, bool) {
 	columns := make([]string, 0)
 	for column := range strings.SplitSeq(value, ",") {
-		if column = strings.TrimSpace(column); column != "" {
-			columns = append(columns, column)
+		normalized, ok := normalizeReportColumn(column)
+		if !ok {
+			return nil, false
 		}
+		columns = append(columns, normalized)
 	}
-	return columns
+	return columns, len(columns) != 0
+}
+
+// normalizeReportColumn trims one column and canonicalizes property keys.
+func normalizeReportColumn(column string) (string, bool) {
+	column = strings.TrimSpace(column)
+	if column == "" {
+		return "", false
+	}
+	key, property := strings.CutPrefix(column, "property:")
+	if !property {
+		return column, true
+	}
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return "", false
+	}
+	return "property:" + key, true
 }
 
 // validColumn reports whether a report column is supported.
