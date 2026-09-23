@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Publish plugin manifests, READMEs and previews into a docs checkout."""
+"""Generate first-party extension pages and previews into a docs checkout."""
 
 import argparse
 import posixpath
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -14,28 +15,55 @@ LINK = re.compile(r"(!?)\[([^\]]*)\]\(([^\s)]+)\)")
 FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
 
 
-def readme_body(text, slug):
-    """Remove the title and resolve relative links outside fenced code blocks."""
+@dataclass(frozen=True)
+class PluginDocs:
+    """PluginDocs contains validated source material used to generate one extension page."""
+
+    slug: str
+    plugin_id: str
+    name: str
+    version: str
+    description: str
+    permissions: tuple[str, ...]
+    readme: str
+    preview: bytes
+
+
+def readme_body(text: str, slug: str) -> str:
+    """readme_body removes the README title and resolves relative links outside fenced code blocks."""
     lines = text.strip().splitlines()
     if lines and lines[0].startswith("# "):
         lines.pop(0)
 
-    def rewrite(match):
+    def rewrite(match: re.Match[str]) -> str:
         image, label, target = match.groups()
         url = urlsplit(target)
         if url.scheme or target.startswith(("/", "#")):
             return match.group(0)
-        base = "https://raw.githubusercontent.com/kumbuka-me/plugins/main/" if image else "https://github.com/kumbuka-me/plugins/blob/main/"
-        return f"{image}[{label}]({base}{posixpath.normpath(slug + '/' + target)})"
+        base = (
+            "https://raw.githubusercontent.com/kumbuka-me/plugins/main/"
+            if image
+            else "https://github.com/kumbuka-me/plugins/blob/main/"
+        )
+        resolved = posixpath.normpath(f"{slug}/{target}")
+        return f"{image}[{label}]({base}{resolved})"
 
     fence = ""
     output = []
     for line in lines:
         marker = FENCE.match(line)
         if fence:
-            if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
+            if (
+                marker
+                and marker[1][0] == fence[0]
+                and len(marker[1]) >= len(fence)
+                and not marker[2].strip()
+            ):
                 fence = ""
-        elif marker:
+            output.append(line)
+            continue
+
+        if marker:
             fence = marker[1]
         else:
             line = LINK.sub(rewrite, line)
@@ -43,59 +71,131 @@ def readme_body(text, slug):
     return "\n".join(output).strip() + "\n"
 
 
-def generate(root, docs):
-    # Build and validate all outputs before modifying the documentation checkout.
-    outputs = {}
+def load_plugin(manifest: Path) -> PluginDocs:
+    """load_plugin validates one plugin manifest, README, and canonical preview."""
+    plugin = manifest.parent
+    data = yaml.safe_load(manifest.read_text())
+    required = ("id", "name", "version", "description")
+    if not isinstance(data, dict) or any(
+        not isinstance(data.get(key), str) or not data[key].strip() for key in required
+    ):
+        raise ValueError(f"{manifest}: missing or invalid plugin metadata")
+
+    permissions = data.get("permissions") or []
+    if not isinstance(permissions, list) or any(
+        not isinstance(permission, str) for permission in permissions
+    ):
+        raise ValueError(f"{manifest}: permissions must be a list of strings")
+
+    readme = (plugin / "README.md").read_text()
+    preview = (plugin / "assets/preview.png").read_bytes()
+    if not readme.strip() or not preview:
+        raise ValueError(f"{plugin}: empty README or preview")
+
+    return PluginDocs(
+        slug=plugin.name,
+        plugin_id=data["id"],
+        name=data["name"],
+        version=data["version"],
+        description=data["description"],
+        permissions=tuple(permissions),
+        readme=readme,
+        preview=preview,
+    )
+
+
+def extension_page(plugin: PluginDocs) -> str:
+    """extension_page renders one generated extension detail page."""
+    permission_text = ", ".join(f"`{value}`" for value in plugin.permissions) or "None"
+    return (
+        HEADER
+        + f"# {plugin.name}\n\n{plugin.description}\n\n"
+        + f"![{plugin.name} preview](/assets/plugins/{plugin.slug}/preview.png)\n\n"
+        + f"- Plugin ID: `{plugin.plugin_id}`\n"
+        + f"- Source version: `{plugin.version}`\n"
+        + f"- Permissions: {permission_text}\n\n"
+        + f"[Source](https://github.com/kumbuka-me/plugins/tree/main/{plugin.slug}) · "
+        + f"[Releases](https://github.com/kumbuka-me/plugins/releases?q={plugin.slug}%2Fv) · "
+        + "[Installation](../administration/plugins.md)\n\n"
+        + readme_body(plugin.readme, plugin.slug)
+    )
+
+
+def extensions_index(plugins: list[PluginDocs]) -> str:
+    """extensions_index renders the generated first-party extension landing page."""
+    output = (
+        HEADER
+        + "# Extensions\n\n"
+        + "Extend Kumbuka with first-party extensions for Markdown, editing, navigation, integrations, and other optional behavior. "
+        + "These pages follow the plugins repository's `main` branch; available releases are listed on each extension's release page.\n\n"
+        + "See [Plugin administration](../administration/plugins.md) for installation and updates, or [Plugin development](../development/plugins/index.md) to build your own extension.\n"
+    )
+    for plugin in plugins:
+        output += (
+            f"\n## [{plugin.name}]({plugin.slug}.md)\n\n"
+            + f"{plugin.description}\n\n"
+            + f"![{plugin.name} preview](/assets/plugins/{plugin.slug}/preview.png)\n"
+        )
+    return output
+
+
+def remove_generated_file(path: Path) -> None:
+    """remove_generated_file removes a legacy generated file without touching hand-written documentation."""
+    if path.is_file() and path.read_text().startswith(HEADER):
+        path.unlink()
+
+
+def remove_stale_outputs(docs: Path, outputs: dict[Path, bytes]) -> None:
+    """remove_stale_outputs deletes obsolete generated extension pages and legacy generated plugin pages."""
+    extensions = docs / "content/extensions"
+    if extensions.is_dir():
+        for page in extensions.glob("*.md"):
+            relative = page.relative_to(docs)
+            if relative not in outputs and page.read_text().startswith(HEADER):
+                page.unlink()
+                preview = docs / f"assets/plugins/{page.stem}/preview.png"
+                preview.unlink(missing_ok=True)
+
+    remove_generated_file(docs / "content/plugins/catalog.md")
+    legacy_packages = docs / "content/plugins/packages"
+    if legacy_packages.is_dir():
+        for page in legacy_packages.glob("*.md"):
+            remove_generated_file(page)
+        try:
+            legacy_packages.rmdir()
+        except OSError:
+            pass
+
+
+def generate(root: Path, docs: Path) -> None:
+    """generate builds and writes all generated extension documentation outputs."""
     manifests = sorted(root.glob("*/plugin.yaml"))
     if not manifests:
         raise ValueError(f"No plugin manifests in {root}")
-    index = HEADER + \
-        "# Plugin catalog\n\nBrowse the first-party Kumbuka plugins. These pages follow the plugins repository's main branch; available releases are listed on each plugin's release page.\n\nSee [Plugin administration](../administration/plugins.md) for installation and updates.\n"
-    for manifest in manifests:
-        plugin = manifest.parent
-        slug = plugin.name
-        data = yaml.safe_load(manifest.read_text())
-        if not isinstance(data, dict) or any(not isinstance(data.get(key), str) or not data[key].strip() for key in ("id", "name", "version", "description")):
-            raise ValueError(f"{manifest}: missing or invalid plugin metadata")
-        permissions = data.get("permissions") or []
-        if not isinstance(permissions, list) or any(not isinstance(p, str) for p in permissions):
-            raise ValueError(
-                f"{manifest}: permissions must be a list of strings")
-        readme = (plugin / "README.md").read_text()
-        preview = (plugin / "assets/preview.png").read_bytes()
-        if not readme.strip() or not preview:
-            raise ValueError(f"{plugin}: empty README or preview")
-        name, description = data["name"], data["description"]
-        permission_text = ", ".join(f"`{p}`" for p in permissions) or "None"
-        page = (
-            HEADER + f"# {name}\n\n{description}\n\n"
-            f"![{name} preview](/assets/plugins/{slug}/preview.png)\n\n"
-            f"- Plugin ID: `{data['id']}`\n- Source version: `{data['version']}`\n- Permissions: {permission_text}\n\n"
-            f"[Source](https://github.com/kumbuka-me/plugins/tree/main/{slug}) · "
-            f"[Releases](https://github.com/kumbuka-me/plugins/releases?q={slug}%2Fv) · "
-            "[Installation](../../administration/plugins.md)\n\n"
-            + readme_body(readme, slug)
-        )
-        outputs[Path(f"content/plugins/packages/{slug}.md")] = page.encode()
-        outputs[Path(f"assets/plugins/{slug}/preview.png")] = preview
-        index += f"\n## [{name}](packages/{slug}.md)\n\n{description}\n\n![{name} preview](/assets/plugins/{slug}/preview.png)\n"
-    outputs[Path("content/plugins/catalog.md")] = index.encode()
-    for page in (docs / "content/plugins/packages").glob("*.md"):
-        if page.relative_to(docs) not in outputs and page.read_text().startswith(HEADER):
-            page.unlink()
-            (docs /
-             f"assets/plugins/{page.stem}/preview.png").unlink(missing_ok=True)
+
+    plugins = [load_plugin(manifest) for manifest in manifests]
+    plugins.sort(key=lambda plugin: (plugin.name.casefold(), plugin.name, plugin.slug))
+
+    outputs: dict[Path, bytes] = {}
+    for plugin in plugins:
+        outputs[Path(f"content/extensions/{plugin.slug}.md")] = extension_page(plugin).encode()
+        outputs[Path(f"assets/plugins/{plugin.slug}/preview.png")] = plugin.preview
+    outputs[Path("content/extensions/index.md")] = extensions_index(plugins).encode()
+
+    remove_stale_outputs(docs, outputs)
     for path, content in outputs.items():
         target = docs / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(content)
-    print(f"Generated {len(manifests)} plugin pages and previews in {docs}")
+
+    print(f"Generated {len(plugins)} extension pages and previews in {docs}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--plugins", type=Path,
-                        default=Path(__file__).resolve().parents[2])
+    parser.add_argument(
+        "--plugins", type=Path, default=Path(__file__).resolve().parents[2]
+    )
     parser.add_argument("--docs", type=Path, default=Path("../docs"))
     args = parser.parse_args()
     try:
