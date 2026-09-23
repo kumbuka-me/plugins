@@ -19,10 +19,11 @@
       ],
       "settings": [
         {
-          "type": "text",
+          "type": "resource",
           "label": "Variable",
           "attribute": "name",
-          "placeholder": "environment"
+          "placeholder": "Search variables…",
+          "completion_module_id": "completion"
         }
       ],
       "preview": {

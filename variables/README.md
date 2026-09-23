@@ -16,7 +16,7 @@ Variable names are case-insensitive when referenced. The stored name remains the
 
 Type `{{` in Source mode to search variables, use **Insert → Variable**, or select a variable from slash commands. The editor inserts the canonical `{{var:name}}` macro.
 
-In Visual mode, **Insert → Variable** opens a searchable picker with the existing variables. Typing filters the list by name and description. Administrators can use **New Variable** in the same dialog to create a variable without leaving the page; an empty variable collection is shown as an empty picker instead of inserting a bare `{{` trigger.
+In Visual mode, typing `{{` opens an anchored searchable picker with the existing variables. Editing an existing Variable reference opens the same resource-backed choices in its settings popover, and typing filters the list by name and description. **Insert → Variable** remains available from the toolbar. Administrators can use **New Variable** from the picker to create a variable without leaving the page; an empty variable collection shows the creation action instead of leaving a bare `{{` trigger.
 
 Macros inside fenced code blocks remain literal.
 
@@ -32,4 +32,4 @@ Inserted values are not recursively evaluated as new Kumbuka macros.
 
 ## Visual editor
 
-In Visual mode, variable macros render as compact Variable references. Select a reference to edit the variable name while preserving the underlying macro.
+In Visual mode, variable macros render as compact Variable references. Select a reference to choose another existing variable from the searchable dropdown, or create a new variable without leaving the editor.
