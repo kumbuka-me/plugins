@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.page-report
 name: Page Report
 description: Build filtered page reports from Kumbuka content.
-version: 1.2.0
+version: 1.2.1
 default_enabled: true
 modules:
   - type: macro
