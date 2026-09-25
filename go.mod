@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/alecthomas/chroma/v2 v2.27.0
 	github.com/go-icons/simple-icons v0.1.0
-	github.com/kumbuka-me/sdk v0.16.0
+	github.com/kumbuka-me/sdk v0.17.0
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/net v0.59.0
 )
@@ -17,5 +17,3 @@ require (
 )
 
 tool github.com/kumbuka-me/sdk/cmd/kumbuka-plugin
-
-replace github.com/kumbuka-me/sdk => ../sdk
