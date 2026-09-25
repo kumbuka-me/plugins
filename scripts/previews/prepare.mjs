@@ -181,4 +181,3 @@ robots = "none"
 
 await writeFile(join(work, "plugins.txt"), `${plugins.join("\n")}\n`);
 console.log(`Prepared ${plugins.length} plugin preview pages.`);
-
