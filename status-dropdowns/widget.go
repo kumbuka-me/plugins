@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"html"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -162,13 +161,4 @@ func resolveAction(source, action string, readResource resourceReader) (string, 
 func actionID(statusID string, choice int) string {
 	sum := sha256.Sum256([]byte(statusID))
 	return "set-" + hex.EncodeToString(sum[:12]) + "-" + strconv.Itoa(choice)
-}
-
-// pagePath escapes each canonical page slug segment for use in a local application URL.
-func pagePath(slug string) string {
-	parts := strings.Split(slug, "/")
-	for index := range parts {
-		parts[index] = url.PathEscape(parts[index])
-	}
-	return strings.Join(parts, "/")
 }

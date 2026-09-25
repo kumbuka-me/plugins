@@ -59,5 +59,5 @@ func commandWidget(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult, e
 		return sdk.WidgetCommandResult{}, err
 	}
 
-	return sdk.WidgetCommandResult{Redirect: "/pages/" + pagePath(context.Page.Slug)}, nil
+	return sdk.WidgetCommandResult{}, nil
 }

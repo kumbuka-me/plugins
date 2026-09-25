@@ -66,7 +66,7 @@ func commandWidget(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult, e
 	}); err != nil {
 		return sdk.WidgetCommandResult{}, err
 	}
-	return sdk.WidgetCommandResult{Redirect: "/pages/" + pagePath(context.Page.Slug)}, nil
+	return sdk.WidgetCommandResult{}, nil
 }
 
 // contentChanged notifies users whose task assignment was added or changed by a committed page edit.
