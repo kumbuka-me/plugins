@@ -980,13 +980,6 @@
           "sha256": "e3e40cbe024580d01574b8f0b5d9f016f14a5d5d6776052213caf883d53d29fd"
         },
         {
-          "version": "1.0.9",
-          "api_version": 1,
-          "released_at": "2026-09-21T11:04:40Z",
-          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/related-pages/v1.0.9/related-pages-1.0.9.kumbukaplugin",
-          "sha256": "e3e40cbe024580d01574b8f0b5d9f016f14a5d5d6776052213caf883d53d29fd"
-        },
-        {
           "version": "1.0.7",
           "api_version": 1,
           "released_at": "2026-09-20T17:53:38Z",
@@ -1609,6 +1602,13 @@
       "name": "Task Lists",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.1",
+          "api_version": 1,
+          "released_at": "2026-09-25T15:03:16Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/task-lists/v1.2.1/task-lists-1.2.1.kumbukaplugin",
+          "sha256": "5e8dc70ceff448eb4823e7fae026902da31130f3fdfcc9e059189c68a8e076ca"
+        },
         {
           "version": "1.2.0",
           "api_version": 1,
