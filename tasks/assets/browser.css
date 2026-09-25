@@ -1,0 +1,68 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+body,
+#plugin-root,
+.task-root {
+  display: block;
+  width: 100%;
+}
+
+.task-shell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 0.55rem;
+  font-family: inherit;
+}
+
+.task-checkbox {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0.16rem 0 0;
+  flex: 0 0 auto;
+  accent-color: var(--accent, #2563eb);
+  cursor: pointer;
+}
+
+.kumbuka-task-content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.kumbuka-task-text {
+  line-height: 1.45;
+}
+
+.kumbuka-task-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.78rem;
+}
+
+.task-shell-done .kumbuka-task-text {
+  opacity: 0.62;
+  text-decoration: line-through;
+}
+
+.task-command {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

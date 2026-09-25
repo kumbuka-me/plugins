@@ -1,0 +1,65 @@
+.prose .kumbuka-task-browser {
+  display: block;
+  margin: 0.45rem 0;
+}
+
+.prose .kumbuka-task-fallback {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 0.55rem;
+}
+
+.prose .kumbuka-task-meta {
+  display: none;
+}
+
+.prose .kumbuka-task-box {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.16rem;
+  border: 1.5px solid currentColor;
+  border-radius: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.prose .kumbuka-task-content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.prose .kumbuka-task-text {
+  line-height: 1.45;
+}
+
+.prose .kumbuka-task-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.78rem;
+}
+
+.prose .kumbuka-task-done .kumbuka-task-text {
+  opacity: 0.62;
+  text-decoration: line-through;
+}
+
+.prose .kumbuka-task-error {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid #dc2626;
+  border-radius: 0.35rem;
+  color: #dc2626;
+}

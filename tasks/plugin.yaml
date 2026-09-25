@@ -1,0 +1,42 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.tasks
+name: Tasks
+icon: square-check-big-lucide
+version: 1.0.0
+description: Add persistent actionable tasks with assignees and due dates to Kumbuka pages.
+default_enabled: true
+modules:
+  - type: renderer-extension
+    id: task
+    stage: preprocess
+    usage:
+      - contains: "{{task"
+  - type: content-style
+    id: style
+    css: plugin.css
+    usage:
+      - contains: "{{task"
+  - type: browser-module
+    id: task-ui
+    javascript: plugin.js
+    css: browser.css
+  - type: widget
+    id: page-details
+    surface: page.details
+    order: 35
+  - type: editor-insert
+    id: task-insert
+    name: Task
+    description: Insert a persistent actionable task.
+    markdown: '{{task id="task-id" text="Describe the task"}}'
+    inline: false
+    group: insert
+    allowed_groups: [insert, blocks, plugins]
+    order: 85
+    icon: square-check-big-lucide
+permissions:
+  - browser:render
+  - storage:read
+  - storage:write
+  - pages:content

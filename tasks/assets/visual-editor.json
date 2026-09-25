@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "task",
+      "name": "Task",
+      "inline": false,
+      "syntax": {
+        "kind": "macro",
+        "name": "task"
+      },
+      "attributes": [
+        {
+          "name": "id",
+          "type": "identifier",
+          "required": true,
+          "max_bytes": 128
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "max_bytes": 512
+        },
+        {
+          "name": "assignee",
+          "type": "string",
+          "max_bytes": 128
+        },
+        {
+          "name": "due",
+          "type": "string",
+          "max_bytes": 10
+        },
+        {
+          "name": "initial",
+          "type": "enum",
+          "default": "open",
+          "values": ["open", "done"]
+        }
+      ],
+      "settings": [
+        {"type": "text", "label": "Task", "attribute": "text", "placeholder": "Describe the task"},
+        {"type": "text", "label": "ID", "attribute": "id", "placeholder": "task-id"},
+        {"type": "text", "label": "Assignee", "attribute": "assignee", "placeholder": "Platform"},
+        {"type": "text", "label": "Due", "attribute": "due", "placeholder": "YYYY-MM-DD"},
+        {"type": "select", "label": "Initial state", "attribute": "initial"}
+      ],
+      "preview": {
+        "kind": "card",
+        "card": {
+          "class": "kumbuka-task",
+          "title": "Task",
+          "subtitle_attribute": "text",
+          "metadata_attributes": ["assignee", "due", "initial"],
+          "body_text": "Completion state is stored when the rendered task is changed."
+        }
+      }
+    }
+  ]
+}
