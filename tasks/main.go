@@ -10,10 +10,11 @@ import (
 // main provides the WASI plugin entry point.
 func main() {}
 
-// init registers task rendering and page-details task controls.
+// init registers task rendering, page-details controls, and committed assignment notifications.
 func init() {
 	sdk.RegisterModule("task", transform)
 	sdk.RegisterWidgetWithCommands("page-details", renderWidget, commandWidget)
+	sdk.RegisterContentChange("assignments", contentChanged)
 }
 
 // transform replaces task declarations outside Markdown code with rendered task controls.
@@ -21,7 +22,11 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Stage != "preprocess" {
 		return sdk.RenderResult{Error: "unsupported stage"}
 	}
-	return sdk.Text(transformSource(request.Source, sdk.Storage().Get))
+	workflow, err := loadTaskWorkflow(sdk.Settings().Get)
+	if err != nil {
+		return sdk.RenderResult{Error: err.Error()}
+	}
+	return sdk.Text(transformSource(request.Source, sdk.Storage().Get, workflow))
 }
 
 // renderWidget renders task controls for declarations on the current page.
@@ -33,7 +38,11 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return renderControls(content.Markdown, sdk.Storage().Get), nil
+	workflow, err := loadTaskWorkflow(sdk.Settings().Get)
+	if err != nil {
+		return sdk.Result{}, err
+	}
+	return renderControls(content.Markdown, sdk.Storage().Get, workflow), nil
 }
 
 // commandWidget validates a page-scoped task action before persisting the new state.
@@ -45,7 +54,11 @@ func commandWidget(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult, e
 	if err != nil {
 		return sdk.WidgetCommandResult{}, err
 	}
-	if err := applyTaskAction(*context.Page, content.Markdown, context.Action, taskMutationServices{
+	workflow, err := loadTaskWorkflow(sdk.Settings().Get)
+	if err != nil {
+		return sdk.WidgetCommandResult{}, err
+	}
+	if err := applyTaskAction(*context.Page, content.Markdown, context.Action, workflow, taskMutationServices{
 		Read:             sdk.Storage().Get,
 		Write:            sdk.Storage().Set,
 		ResolveMention:   sdk.Users().ResolveMention,
@@ -54,4 +67,12 @@ func commandWidget(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult, e
 		return sdk.WidgetCommandResult{}, err
 	}
 	return sdk.WidgetCommandResult{Redirect: "/pages/" + pagePath(context.Page.Slug)}, nil
+}
+
+// contentChanged notifies users whose task assignment was added or changed by a committed page edit.
+func contentChanged(context sdk.ContentChangeContext) error {
+	return notifyTaskAssignments(context, taskAssignmentServices{
+		ResolveMention:   sdk.Users().ResolveMention,
+		SendNotification: sdk.Notifications().Send,
+	})
 }

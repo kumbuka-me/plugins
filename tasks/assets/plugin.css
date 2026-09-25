@@ -12,7 +12,8 @@
   border-radius: 0.55rem;
 }
 
-.prose .kumbuka-task-meta {
+.prose .kumbuka-task-meta,
+.prose .kumbuka-task-choices {
   display: none;
 }
 
@@ -51,7 +52,11 @@
   font-size: 0.78rem;
 }
 
-.prose .kumbuka-task-done .kumbuka-task-text {
+.prose .kumbuka-task-state-label {
+  font-weight: 600;
+}
+
+.prose .kumbuka-task-completed .kumbuka-task-text {
   opacity: 0.62;
   text-decoration: line-through;
 }

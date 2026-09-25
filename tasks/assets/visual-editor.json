@@ -34,9 +34,8 @@
         },
         {
           "name": "initial",
-          "type": "enum",
-          "default": "open",
-          "values": ["open", "done"]
+          "type": "string",
+          "max_bytes": 64
         }
       ],
       "settings": [
@@ -59,7 +58,13 @@
           "placeholder": "@alice"
         },
         { "type": "date", "label": "Due", "attribute": "due" },
-        { "type": "select", "label": "Initial state", "attribute": "initial" }
+        {
+          "type": "text",
+          "label": "Initial state ID",
+          "attribute": "initial",
+          "placeholder": "open",
+          "suggestions": ["open", "done"]
+        }
       ],
       "preview": {
         "kind": "card",
@@ -68,7 +73,7 @@
           "title": "Task",
           "subtitle_attribute": "text",
           "metadata_attributes": ["assignee", "due", "initial"],
-          "body_text": "Completion state is stored when the rendered task is changed."
+          "body_text": "The current workflow state is stored separately when the rendered task is changed."
         }
       }
     }

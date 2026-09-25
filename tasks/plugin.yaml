@@ -3,10 +3,44 @@ provider: Kumbuka
 id: me.kumbuka.tasks
 name: Tasks
 icon: square-check-big-lucide
-version: 1.0.0
-description: Add persistent actionable tasks with assignees and due dates to Kumbuka pages.
+version: 1.2.0
+description: Add persistent actionable tasks with assignees, due dates, configurable states, and notifications to Kumbuka pages.
 default_enabled: true
 modules:
+  - type: settings
+    id: workflow
+    name: Workflow
+    description: Configure the ordered states available to tasks. Leave empty to use Open and Done.
+    fields:
+      - id: states
+        name: States
+        type: list
+        max_bytes: 8192
+        max_items: 16
+        columns:
+          - id: id
+            name: ID
+            type: text
+            required: true
+            max_bytes: 64
+          - id: label
+            name: Label
+            type: text
+            required: true
+            max_bytes: 64
+          - id: color
+            name: Color
+            type: color
+            required: true
+            default: "#64748b"
+          - id: completed
+            name: Completed
+            type: select
+            required: true
+            default: "false"
+            options:
+              - "false"
+              - "true"
   - type: renderer-extension
     id: task
     stage: preprocess
@@ -25,6 +59,8 @@ modules:
     id: page-details
     surface: page.details
     order: 35
+  - type: content-change
+    id: assignments
   - type: editor-insert
     id: task-insert
     name: Task
@@ -37,6 +73,7 @@ modules:
     icon: square-check-big-lucide
 permissions:
   - browser:render
+  - settings:read
   - storage:read
   - storage:write
   - pages:content

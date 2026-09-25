@@ -29,12 +29,12 @@ type taskOptions struct {
 	ID string
 	// Text is the visible task description.
 	Text string
-	// Assignee optionally names the person, team, or role responsible.
+	// Assignee optionally names the Kumbuka user responsible for the task.
 	Assignee string
 	// Due optionally contains a validated ISO calendar date.
 	Due string
-	// InitialDone is the fallback completion state before persisted state exists.
-	InitialDone bool
+	// InitialState optionally selects a configured workflow state for a new task.
+	InitialState string
 }
 
 // storageReader reads one plugin-owned persisted task value.
@@ -42,16 +42,20 @@ type storageReader func(key string) (sdk.StoredValue, error)
 
 // taskState contains one persisted task state transition.
 type taskState struct {
-	// Done reports whether the task is complete.
-	Done bool `json:"done"`
+	// State is the configured workflow state ID currently assigned to the task.
+	State string `json:"state,omitempty"`
 	// Version increments for each state transition and scopes notification idempotency.
 	Version uint64 `json:"version"`
 	// NotificationSent reports whether the current transition notification completed.
 	NotificationSent bool `json:"notification_sent"`
+	// PreviousState preserves the transition origin until its notification is durably acknowledged.
+	PreviousState string `json:"previous_state,omitempty"`
+	// LegacyDone decodes the pre-workflow boolean state representation.
+	LegacyDone *bool `json:"done,omitempty"`
 }
 
 // transformSource renders task declarations outside fenced and inline code.
-func transformSource(source string, readStorage storageReader) string {
+func transformSource(source string, readStorage storageReader, workflow taskWorkflow) string {
 	lines := strings.Split(source, "\n")
 	var output strings.Builder
 	fence := ""
@@ -73,7 +77,7 @@ func transformSource(source string, readStorage storageReader) string {
 			output.WriteString(line)
 			continue
 		}
-		transformed, used := transformLine(line, maxTaskDeclarations-count, readStorage)
+		transformed, used := transformLine(line, maxTaskDeclarations-count, readStorage, workflow)
 		count += used
 		output.WriteString(transformed)
 	}
@@ -81,7 +85,7 @@ func transformSource(source string, readStorage storageReader) string {
 }
 
 // transformLine renders task declarations on one non-fenced line while preserving inline code spans.
-func transformLine(line string, remaining int, readStorage storageReader) (string, int) {
+func transformLine(line string, remaining int, readStorage storageReader, workflow taskWorkflow) (string, int) {
 	if remaining <= 0 || !strings.Contains(line, "{{task") {
 		return line, 0
 	}
@@ -113,8 +117,10 @@ func transformLine(line string, remaining int, readStorage storageReader) (strin
 				output.WriteString(taskErrorHTML("task declaration is too long"))
 			} else if options, err := parseTaskToken(token); err != nil {
 				output.WriteString(taskErrorHTML(err.Error()))
+			} else if _, err := workflow.initialState(options.InitialState); err != nil {
+				output.WriteString(taskErrorHTML(err.Error()))
 			} else {
-				output.WriteString(renderTask(options, readStorage))
+				output.WriteString(renderTask(options, readStorage, workflow))
 			}
 			used++
 			index = end
@@ -150,10 +156,11 @@ func parseTaskToken(token string) (taskOptions, error) {
 	}
 
 	options := taskOptions{
-		ID:       strings.TrimSpace(arguments["id"]),
-		Text:     strings.TrimSpace(arguments["text"]),
-		Assignee: strings.TrimSpace(arguments["assignee"]),
-		Due:      strings.TrimSpace(arguments["due"]),
+		ID:           strings.TrimSpace(arguments["id"]),
+		Text:         strings.TrimSpace(arguments["text"]),
+		Assignee:     strings.TrimSpace(arguments["assignee"]),
+		Due:          strings.TrimSpace(arguments["due"]),
+		InitialState: strings.TrimSpace(arguments["initial"]),
 	}
 	if !validName(options.ID, maxTaskIDBytes) {
 		return taskOptions{}, fmt.Errorf("task id must be 1-%d bytes and contain only letters, numbers, dots, underscores, hyphens, slashes, or colons", maxTaskIDBytes)
@@ -170,12 +177,8 @@ func parseTaskToken(token string) (taskOptions, error) {
 	if options.Due != "" && !validDueDate(options.Due) {
 		return taskOptions{}, fmt.Errorf("task due date must use YYYY-MM-DD")
 	}
-	switch strings.TrimSpace(arguments["initial"]) {
-	case "", "open":
-	case "done":
-		options.InitialDone = true
-	default:
-		return taskOptions{}, fmt.Errorf("task initial state must be open or done")
+	if options.InitialState != "" && !validTaskStateID(options.InitialState) {
+		return taskOptions{}, fmt.Errorf("task initial state must be a valid workflow state ID")
 	}
 	return options, nil
 }
@@ -186,14 +189,16 @@ func validMention(value string) bool {
 		return false
 	}
 	for index := 1; index < len(value); index++ {
-		char := value[index]
-		if char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char >= '0' && char <= '9' ||
-			char == '-' || char == '_' || char == '.' {
-			continue
+		if !mentionNameByte(value[index]) {
+			return false
 		}
-		return false
 	}
 	return true
+}
+
+// mentionNameByte reports whether character is allowed in a Kumbuka username.
+func mentionNameByte(character byte) bool {
+	return asciiLetterOrDigit(character) || character == '-' || character == '_' || character == '.'
 }
 
 // validDueDate reports whether value is a canonical YYYY-MM-DD calendar date.
@@ -211,24 +216,30 @@ func validName(value string, maxBytes int) bool {
 		return false
 	}
 	for index := 0; index < len(value); index++ {
-		char := value[index]
-		if char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char >= '0' && char <= '9' ||
-			char == '-' || char == '_' || char == '.' || char == '/' || char == ':' {
-			continue
+		if !taskNameByte(value[index]) {
+			return false
 		}
-		return false
 	}
 	return true
 }
 
-// taskDone resolves persisted state and falls back to the declaration's initial state.
-func taskDone(options taskOptions, read storageReader) bool {
-	return readTaskState(options, read).Done
+// taskNameByte reports whether character is allowed in a stable task identifier.
+func taskNameByte(character byte) bool {
+	return asciiLetterOrDigit(character) || character == '-' || character == '_' || character == '.' || character == '/' || character == ':'
 }
 
-// readTaskState resolves persisted state while accepting the original open/done format.
-func readTaskState(options taskOptions, read storageReader) taskState {
-	fallback := taskState{Done: options.InitialDone, NotificationSent: true}
+// asciiLetterOrDigit reports whether character is an ASCII letter or decimal digit.
+func asciiLetterOrDigit(character byte) bool {
+	return character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' || character >= '0' && character <= '9'
+}
+
+// readTaskState resolves persisted state while accepting the original open/done storage formats.
+func readTaskState(options taskOptions, read storageReader, workflow taskWorkflow) taskState {
+	initial, err := workflow.initialState(options.InitialState)
+	if err != nil {
+		initial = workflow.legacyState(false)
+	}
+	fallback := taskState{State: initial.ID, NotificationSent: true}
 	if read == nil {
 		return fallback
 	}
@@ -236,63 +247,86 @@ func readTaskState(options taskOptions, read storageReader) taskState {
 	if err != nil {
 		return fallback
 	}
-	return decodeTaskState(options, stored)
+	return decodeTaskState(options, stored, workflow)
 }
 
 // decodeTaskState decodes current and legacy persisted task state values.
-func decodeTaskState(options taskOptions, stored sdk.StoredValue) taskState {
-	fallback := taskState{Done: options.InitialDone, NotificationSent: true}
+func decodeTaskState(options taskOptions, stored sdk.StoredValue, workflow taskWorkflow) taskState {
+	initial, err := workflow.initialState(options.InitialState)
+	if err != nil {
+		initial = workflow.legacyState(false)
+	}
+	fallback := taskState{State: initial.ID, NotificationSent: true}
 	if !stored.Found {
 		return fallback
 	}
-	switch string(stored.Value) {
-	case "done":
-		return taskState{Done: true, NotificationSent: true}
-	case "open":
-		return taskState{NotificationSent: true}
+	if string(stored.Value) == "done" {
+		legacy := workflow.legacyState(true)
+		return taskState{State: legacy.ID, NotificationSent: true}
 	}
+	if string(stored.Value) == "open" {
+		legacy := workflow.legacyState(false)
+		return taskState{State: legacy.ID, NotificationSent: true}
+	}
+
 	var state taskState
 	if json.Unmarshal(stored.Value, &state) != nil || state.Version == 0 {
 		return fallback
 	}
+	if state.State == "" && state.LegacyDone != nil {
+		state.State = workflow.legacyState(*state.LegacyDone).ID
+	}
+	if _, ok := workflow.state(state.State); !ok {
+		return fallback
+	}
+	state.LegacyDone = nil
 	return state
 }
 
 // renderTask renders one task declaration into safe fallback HTML and browser-module metadata.
-func renderTask(options taskOptions, read storageReader) string {
-	done := taskDone(options, read)
-	action := actionID(options.ID, !done)
-	state := "open"
-	checked := ""
-	if done {
-		state = "done"
-		checked = " kumbuka-task-done"
+func renderTask(options taskOptions, read storageReader, workflow taskWorkflow) string {
+	state := readTaskState(options, read, workflow)
+	definition, ok := workflow.state(state.State)
+	if !ok {
+		return taskErrorHTML("task state is not configured")
+	}
+
+	completedClass := ""
+	mark := ""
+	if definition.Completed {
+		completedClass = " kumbuka-task-completed"
+		mark = "✓"
 	}
 
 	var output strings.Builder
 	output.WriteString(`<span class="kumbuka-task-browser" data-kumbuka-plugin="me.kumbuka.tasks" data-kumbuka-module="task-ui" data-kumbuka-input="html">`)
-	output.WriteString(`<span class="kumbuka-task-fallback` + checked + `" data-kumbuka-fallback>`)
-	output.WriteString(`<span class="kumbuka-task-meta kumbuka-task-action__`)
-	output.WriteString(action)
-	output.WriteString(` kumbuka-task-state__` + state + `"></span>`)
-	output.WriteString(`<span class="kumbuka-task-box" aria-hidden="true">`)
-	if done {
-		output.WriteString(`✓`)
+	output.WriteString(`<span class="kumbuka-task-fallback` + completedClass + `" data-kumbuka-fallback>`)
+	output.WriteString(`<span class="kumbuka-task-meta kumbuka-task-state__` + definition.ID + `"></span>`)
+	output.WriteString(`<span class="kumbuka-task-choices" hidden>`)
+	for _, choice := range workflow.States {
+		output.WriteString(`<span class="kumbuka-task-choice kumbuka-task-choice-id__` + choice.ID)
+		output.WriteString(` kumbuka-task-choice-action__` + actionID(options.ID, choice.ID))
+		output.WriteString(` kumbuka-task-choice-color__` + strings.TrimPrefix(choice.Color, "#"))
+		if choice.Completed {
+			output.WriteString(` kumbuka-task-choice-completed__true`)
+		} else {
+			output.WriteString(` kumbuka-task-choice-completed__false`)
+		}
+		output.WriteString(`">` + html.EscapeString(choice.Label) + `</span>`)
 	}
-	output.WriteString(`</span><span class="kumbuka-task-content"><span class="kumbuka-task-text">`)
-	output.WriteString(html.EscapeString(options.Text))
 	output.WriteString(`</span>`)
-	if options.Assignee != "" || options.Due != "" {
-		output.WriteString(`<span class="kumbuka-task-details">`)
-		if options.Assignee != "" {
-			output.WriteString(`<span class="kumbuka-task-assignee">` + html.EscapeString(options.Assignee) + `</span>`)
-		}
-		if options.Due != "" {
-			output.WriteString(`<span class="kumbuka-task-due">Due ` + html.EscapeString(options.Due) + `</span>`)
-		}
-		output.WriteString(`</span>`)
+	output.WriteString(`<span class="kumbuka-task-box" aria-hidden="true">` + mark + `</span>`)
+	output.WriteString(`<span class="kumbuka-task-content"><span class="kumbuka-task-text">`)
+	output.WriteString(html.EscapeString(options.Text))
+	output.WriteString(`</span><span class="kumbuka-task-details">`)
+	output.WriteString(`<span class="kumbuka-task-state-label">` + html.EscapeString(definition.Label) + `</span>`)
+	if options.Assignee != "" {
+		output.WriteString(`<span class="kumbuka-task-assignee">` + html.EscapeString(options.Assignee) + `</span>`)
 	}
-	output.WriteString(`</span></span></span>`)
+	if options.Due != "" {
+		output.WriteString(`<span class="kumbuka-task-due">Due ` + html.EscapeString(options.Due) + `</span>`)
+	}
+	output.WriteString(`</span></span></span></span>`)
 	return output.String()
 }
 
@@ -309,13 +343,9 @@ func storageKey(id string) string {
 }
 
 // actionID creates a host-valid opaque action identifier for one task state transition.
-func actionID(taskID string, done bool) string {
-	sum := sha256.Sum256([]byte(taskID))
-	state := "open"
-	if done {
-		state = "done"
-	}
-	return "task-" + hex.EncodeToString(sum[:12]) + "-" + state
+func actionID(taskID, stateID string) string {
+	sum := sha256.Sum256([]byte(taskID + "\x00" + stateID))
+	return "task-" + hex.EncodeToString(sum[:12])
 }
 
 // repeatedByte returns the length of the leading run of the requested byte.
