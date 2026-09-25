@@ -7,6 +7,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.1.1",
+          "api_version": 1,
+          "released_at": "2026-09-25T15:01:51Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/autolinks/v1.1.1/autolinks-1.1.1.kumbukaplugin",
+          "sha256": "ba4a355c7753e0fa0a1de571bb6fb9bee4f13a8ce3129aabd495d16b5ade1902"
+        },
+        {
           "version": "1.1.0",
           "api_version": 1,
           "released_at": "2026-09-22T18:28:19Z",
@@ -48,6 +55,13 @@
       "name": "Callouts",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.3.2",
+          "api_version": 1,
+          "released_at": "2026-09-25T15:01:41Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/callouts/v1.3.2/callouts-1.3.2.kumbukaplugin",
+          "sha256": "3b8ca34dc04b363876f8f911e72dbd3ac5c52ac4498a8bc8056ec80b21b609b6"
+        },
         {
           "version": "1.3.1",
           "api_version": 1,
@@ -111,6 +125,13 @@
       "name": "Coding Ligatures",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.1.1",
+          "api_version": 1,
+          "released_at": "2026-09-25T15:01:54Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/coding-ligatures/v1.1.1/coding-ligatures-1.1.1.kumbukaplugin",
+          "sha256": "ea6560920059c9deecb90d78060db18858ba4fecd33507c3f24cb9a9a12b4b25"
+        },
         {
           "version": "1.1.0",
           "api_version": 1,
@@ -209,6 +230,13 @@
       "name": "Definition Lists",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.1.1",
+          "api_version": 1,
+          "released_at": "2026-09-25T15:01:45Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/definition-lists/v1.1.1/definition-lists-1.1.1.kumbukaplugin",
+          "sha256": "c18a368812aa1cca5208a88edc69d0a17bb7c502ae6cdb6cac4abfc76419dd43"
+        },
         {
           "version": "1.1.0",
           "api_version": 1,
@@ -1258,6 +1286,13 @@
           "released_at": "2026-09-21T11:04:59Z",
           "package_url": "https://github.com/kumbuka-me/plugins/releases/download/syntax-highlighting/v1.4.10/syntax-highlighting-1.4.10.kumbukaplugin",
           "sha256": "e4598ab1672be36a5502db2ad5714a9b14033d0ece086dda497224be3497bff3"
+        },
+        {
+          "version": "1.4.8",
+          "api_version": 1,
+          "released_at": "2026-09-20T17:53:53Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/syntax-highlighting/v1.4.8/syntax-highlighting-1.4.8.kumbukaplugin",
+          "sha256": "aa380979749cb2f7cc2ea952f8fde8a272fdd49d8c7f0084ad3ff1c583e1b170"
         },
         {
           "version": "1.4.8",
