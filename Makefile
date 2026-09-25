@@ -56,6 +56,7 @@ PRETTIER_SOURCES := \
 	"*/DEVELOPMENT.md" \
 	"*/README.md" \
 	"*/preview.md" \
+	"*/preview.static.md" \
 	"*/plugin.yaml" \
 	"*/browser.ts" \
 	".github/workflows/*.yml" \
@@ -256,4 +257,5 @@ $(SCRIPT_REQUIREMENTS): scripts/requirements.txt
 	$(PYTHON) -m venv bin/python-env
 	$(SCRIPT_PYTHON) -m pip install -r scripts/requirements.txt
 	@touch "$@"
+
 

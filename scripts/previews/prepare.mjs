@@ -60,22 +60,28 @@ async function pluginDirectories() {
   return result.sort();
 }
 
-async function writeSupportPages(plugin, sourceDir) {
-  if (plugin === "includes") {
-    const operations = join(sourceDir, "operations");
-    await mkdir(operations, { recursive: true });
-    await writeFile(
-      join(operations, "shared-warning.md"),
-      `# Shared content
-
-## Warning
-
-!!! warning
-Back up the database before changing production.
-`,
-    );
+async function previewSource(plugin, pluginDir) {
+  const previewPath = join(pluginDir, "preview.md");
+  const preview = await readFile(previewPath, "utf8");
+  if (preview.trim() === "") {
+    throw new Error(`${plugin}/preview.md must not be empty.`);
   }
 
+  const staticPath = join(pluginDir, "preview.static.md");
+  try {
+    const staticPreview = await readFile(staticPath, "utf8");
+    if (staticPreview.trim() === "") {
+      throw new Error(`${plugin}/preview.static.md must not be empty.`);
+    }
+    return staticPreview;
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+
+  return preview;
+}
+
+async function writeSupportPages(plugin, sourceDir) {
   if (plugin === "subpages") {
     await writeFile(
       join(sourceDir, "getting-started.md"),
@@ -118,12 +124,7 @@ await mkdir(sitesDir, { recursive: true });
 for (const plugin of plugins) {
   const pluginDir = join(repository, plugin);
   const manifest = await readFile(join(pluginDir, "plugin.yaml"), "utf8");
-  const previewPath = join(pluginDir, "preview.md");
-  const preview = await readFile(previewPath, "utf8");
-
-  if (preview.trim() === "") {
-    throw new Error(`${plugin}/preview.md must not be empty.`);
-  }
+  const preview = await previewSource(plugin, pluginDir);
 
   const id = topLevelValue(manifest, "id");
   const version = topLevelValue(manifest, "version");
@@ -180,3 +181,4 @@ robots = "none"
 
 await writeFile(join(work, "plugins.txt"), `${plugins.join("\n")}\n`);
 console.log(`Prepared ${plugins.length} plugin preview pages.`);
+
