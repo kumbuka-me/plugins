@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -10,12 +13,19 @@ import (
 // TestParseTaskToken verifies required, optional, and invalid task attributes.
 func TestParseTaskToken(t *testing.T) {
 	t.Run("complete", func(t *testing.T) {
-		task, err := parseTaskToken(`{{task id="deploy/api" text="Deploy API" assignee="Platform" due="2026-10-01" initial="done"}}`)
+		task, err := parseTaskToken(`{{task id="deploy/api" text="Deploy API" assignee="@alice" due="2026-10-01" initial="done"}}`)
 		if err != nil {
 			t.Fatalf("parseTaskToken() error = %v", err)
 		}
-		if task.ID != "deploy/api" || task.Text != "Deploy API" || task.Assignee != "Platform" || task.Due != "2026-10-01" || !task.InitialDone {
+		if task.ID != "deploy/api" || task.Text != "Deploy API" || task.Assignee != "@alice" || task.Due != "2026-10-01" || !task.InitialDone {
 			t.Fatalf("unexpected task: %+v", task)
+		}
+	})
+
+	t.Run("invalid assignee", func(t *testing.T) {
+		_, err := parseTaskToken(`{{task id="docs" text="Write docs" assignee="Alice"}}`)
+		if err == nil || !strings.Contains(err.Error(), "@mention") {
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
@@ -51,7 +61,7 @@ func TestTransformSource(t *testing.T) {
 	}
 
 	t.Run("renders stored done task", func(t *testing.T) {
-		output := transformSource(`{{task id="deploy" text="Deploy API" assignee="Platform" due="2026-10-01"}}`, read)
+		output := transformSource(`{{task id="deploy" text="Deploy API" assignee="@alice" due="2026-10-01"}}`, read)
 		if !strings.Contains(output, "kumbuka-task-done") || !strings.Contains(output, "Deploy API") || !strings.Contains(output, "Due 2026-10-01") {
 			t.Fatalf("task was not rendered: %s", output)
 		}
@@ -87,12 +97,91 @@ func TestDiscoverTasks(t *testing.T) {
 // TestResolveAction verifies that only actions for currently declared tasks are accepted.
 func TestResolveAction(t *testing.T) {
 	source := `{{task id="deploy" text="Deploy"}}`
-	id, done, ok := resolveAction(source, actionID("deploy", true))
-	if !ok || id != "deploy" || !done {
-		t.Fatalf("unexpected resolved action: id=%q done=%v ok=%v", id, done, ok)
+	task, done, ok := resolveAction(source, actionID("deploy", true))
+	if !ok || task.ID != "deploy" || !done {
+		t.Fatalf("unexpected resolved action: task=%+v done=%v ok=%v", task, done, ok)
 	}
 	if _, _, ok := resolveAction(source, actionID("missing", true)); ok {
 		t.Fatal("unexpected action acceptance")
+	}
+}
+
+// TestApplyTaskAction verifies versioned persistence, user resolution, and notification retries.
+func TestApplyTaskAction(t *testing.T) {
+	page := sdk.Page{Slug: "release/checklist", Title: "Release checklist"}
+	source := `{{task id="deploy" text="Deploy API" assignee="@alice"}}`
+	values := make(map[string][]byte)
+	var sent []sdk.NotificationInput
+	finalWriteFailure := true
+	services := taskMutationServices{
+		Read: func(key string) (sdk.StoredValue, error) {
+			value, found := values[key]
+			return sdk.StoredValue{Value: value, Found: found}, nil
+		},
+		Write: func(key string, value []byte) error {
+			var state taskState
+			if err := json.Unmarshal(value, &state); err != nil {
+				return err
+			}
+			if state.NotificationSent && finalWriteFailure {
+				finalWriteFailure = false
+				return errors.New("write failed")
+			}
+			values[key] = append([]byte(nil), value...)
+			return nil
+		},
+		ResolveMention: func(mention string) (sdk.User, error) {
+			if mention != "@alice" {
+				t.Fatalf("unexpected mention: %s", mention)
+			}
+			return sdk.User{ID: 42, Mention: mention, DisplayName: "Alice"}, nil
+		},
+		SendNotification: func(input sdk.NotificationInput) (sdk.Notification, error) {
+			sent = append(sent, input)
+			return sdk.Notification{ID: 7, RecipientUserID: input.RecipientUserID}, nil
+		},
+	}
+
+	action := actionID("deploy", true)
+	if err := applyTaskAction(page, source, action, services); err == nil {
+		t.Fatal("expected final state write failure")
+	}
+	if err := applyTaskAction(page, source, action, services); err != nil {
+		t.Fatalf("retry task action: %v", err)
+	}
+	if len(sent) != 2 {
+		t.Fatalf("notifications sent = %d, want 2 idempotent attempts", len(sent))
+	}
+	if sent[0].IdempotencyKey == "" || sent[0].IdempotencyKey != sent[1].IdempotencyKey {
+		t.Fatalf("idempotency keys differ: %+v", sent)
+	}
+	if sent[0].RecipientUserID != 42 || sent[0].URL != "/pages/release/checklist" {
+		t.Fatalf("unexpected notification: %+v", sent[0])
+	}
+	state := readTaskState(taskOptions{ID: "deploy"}, services.Read)
+	if !state.Done || !state.NotificationSent || state.Version != 1 {
+		t.Fatalf("unexpected final state: %+v", state)
+	}
+}
+
+// TestApplyTaskActionPropagatesReadFailure verifies mutations never overwrite unknown state.
+func TestApplyTaskActionPropagatesReadFailure(t *testing.T) {
+	failure := errors.New("read failed")
+	written := false
+	err := applyTaskAction(
+		sdk.Page{Slug: "release"},
+		`{{task id="deploy" text="Deploy"}}`,
+		actionID("deploy", true),
+		taskMutationServices{
+			Read: func(string) (sdk.StoredValue, error) { return sdk.StoredValue{}, failure },
+			Write: func(string, []byte) error {
+				written = true
+				return nil
+			},
+		},
+	)
+	if !errors.Is(err, failure) || written {
+		t.Fatalf("unexpected mutation result: err=%v written=%v", err, written)
 	}
 }
 
@@ -104,5 +193,13 @@ func TestTaskDone(t *testing.T) {
 	}
 	if taskDone(options, read) {
 		t.Fatal("stored open state did not override initial done")
+	}
+}
+
+// TestTaskNotificationTitle verifies notification headings respect core byte bounds.
+func TestTaskNotificationTitle(t *testing.T) {
+	title := taskNotificationTitle(true, strings.Repeat("é", 200))
+	if len(title) > maxTaskNotificationTitleBytes || !utf8.ValidString(title) {
+		t.Fatalf("invalid bounded title: %q (%d bytes)", title, len(title))
 	}
 }

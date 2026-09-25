@@ -45,15 +45,12 @@ func commandWidget(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult, e
 	if err != nil {
 		return sdk.WidgetCommandResult{}, err
 	}
-	taskID, done, ok := resolveAction(content.Markdown, context.Action)
-	if !ok {
-		return sdk.WidgetCommandResult{}, fmt.Errorf("task action is no longer available")
-	}
-	value := []byte("open")
-	if done {
-		value = []byte("done")
-	}
-	if err := sdk.Storage().Set(storageKey(taskID), value); err != nil {
+	if err := applyTaskAction(*context.Page, content.Markdown, context.Action, taskMutationServices{
+		Read:             sdk.Storage().Get,
+		Write:            sdk.Storage().Set,
+		ResolveMention:   sdk.Users().ResolveMention,
+		SendNotification: sdk.Notifications().Send,
+	}); err != nil {
 		return sdk.WidgetCommandResult{}, err
 	}
 	return sdk.WidgetCommandResult{Redirect: "/pages/" + pagePath(context.Page.Slug)}, nil

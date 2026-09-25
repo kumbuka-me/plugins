@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"html"
 	"strconv"
@@ -38,6 +39,16 @@ type taskOptions struct {
 
 // storageReader reads one plugin-owned persisted task value.
 type storageReader func(key string) (sdk.StoredValue, error)
+
+// taskState contains one persisted task state transition.
+type taskState struct {
+	// Done reports whether the task is complete.
+	Done bool `json:"done"`
+	// Version increments for each state transition and scopes notification idempotency.
+	Version uint64 `json:"version"`
+	// NotificationSent reports whether the current transition notification completed.
+	NotificationSent bool `json:"notification_sent"`
+}
 
 // transformSource renders task declarations outside fenced and inline code.
 func transformSource(source string, readStorage storageReader) string {
@@ -145,13 +156,16 @@ func parseTaskToken(token string) (taskOptions, error) {
 		Due:      strings.TrimSpace(arguments["due"]),
 	}
 	if !validName(options.ID, maxTaskIDBytes) {
-		return taskOptions{}, fmt.Errorf("task id must be 1-%d bytes and contain only letters, numbers, ., _, -, /, or :", maxTaskIDBytes)
+		return taskOptions{}, fmt.Errorf("task id must be 1-%d bytes and contain only letters, numbers, dots, underscores, hyphens, slashes, or colons", maxTaskIDBytes)
 	}
 	if options.Text == "" || len(options.Text) > maxTaskTextBytes || !utf8.ValidString(options.Text) {
 		return taskOptions{}, fmt.Errorf("task text must be 1-%d bytes of valid UTF-8", maxTaskTextBytes)
 	}
 	if len(options.Assignee) > maxAssigneeBytes || !utf8.ValidString(options.Assignee) {
 		return taskOptions{}, fmt.Errorf("task assignee must be at most %d bytes of valid UTF-8", maxAssigneeBytes)
+	}
+	if options.Assignee != "" && !validMention(options.Assignee) {
+		return taskOptions{}, fmt.Errorf("task assignee must be a canonical @mention")
 	}
 	if options.Due != "" && !validDueDate(options.Due) {
 		return taskOptions{}, fmt.Errorf("task due date must use YYYY-MM-DD")
@@ -164,6 +178,22 @@ func parseTaskToken(token string) (taskOptions, error) {
 		return taskOptions{}, fmt.Errorf("task initial state must be open or done")
 	}
 	return options, nil
+}
+
+// validMention reports whether value is a bounded canonical Kumbuka mention.
+func validMention(value string) bool {
+	if len(value) < 2 || len(value) > maxAssigneeBytes || value[0] != '@' {
+		return false
+	}
+	for index := 1; index < len(value); index++ {
+		char := value[index]
+		if char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char >= '0' && char <= '9' ||
+			char == '-' || char == '_' || char == '.' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // validDueDate reports whether value is a canonical YYYY-MM-DD calendar date.
@@ -193,21 +223,39 @@ func validName(value string, maxBytes int) bool {
 
 // taskDone resolves persisted state and falls back to the declaration's initial state.
 func taskDone(options taskOptions, read storageReader) bool {
+	return readTaskState(options, read).Done
+}
+
+// readTaskState resolves persisted state while accepting the original open/done format.
+func readTaskState(options taskOptions, read storageReader) taskState {
+	fallback := taskState{Done: options.InitialDone, NotificationSent: true}
 	if read == nil {
-		return options.InitialDone
+		return fallback
 	}
 	stored, err := read(storageKey(options.ID))
-	if err != nil || !stored.Found {
-		return options.InitialDone
+	if err != nil {
+		return fallback
+	}
+	return decodeTaskState(options, stored)
+}
+
+// decodeTaskState decodes current and legacy persisted task state values.
+func decodeTaskState(options taskOptions, stored sdk.StoredValue) taskState {
+	fallback := taskState{Done: options.InitialDone, NotificationSent: true}
+	if !stored.Found {
+		return fallback
 	}
 	switch string(stored.Value) {
 	case "done":
-		return true
+		return taskState{Done: true, NotificationSent: true}
 	case "open":
-		return false
-	default:
-		return options.InitialDone
+		return taskState{NotificationSent: true}
 	}
+	var state taskState
+	if json.Unmarshal(stored.Value, &state) != nil || state.Version == 0 {
+		return fallback
+	}
+	return state
 }
 
 // renderTask renders one task declaration into safe fallback HTML and browser-module metadata.

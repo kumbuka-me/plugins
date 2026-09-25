@@ -40,3 +40,5 @@ permissions:
   - storage:read
   - storage:write
   - pages:content
+  - users:read
+  - notifications:send

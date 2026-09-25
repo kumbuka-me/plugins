@@ -40,11 +40,26 @@
         }
       ],
       "settings": [
-        {"type": "text", "label": "Task", "attribute": "text", "placeholder": "Describe the task"},
-        {"type": "text", "label": "ID", "attribute": "id", "placeholder": "task-id"},
-        {"type": "text", "label": "Assignee", "attribute": "assignee", "placeholder": "Platform"},
-        {"type": "text", "label": "Due", "attribute": "due", "placeholder": "YYYY-MM-DD"},
-        {"type": "select", "label": "Initial state", "attribute": "initial"}
+        {
+          "type": "text",
+          "label": "Task",
+          "attribute": "text",
+          "placeholder": "Describe the task"
+        },
+        {
+          "type": "text",
+          "label": "ID",
+          "attribute": "id",
+          "placeholder": "task-id"
+        },
+        {
+          "type": "mention",
+          "label": "Assignee",
+          "attribute": "assignee",
+          "placeholder": "@alice"
+        },
+        { "type": "date", "label": "Due", "attribute": "due" },
+        { "type": "select", "label": "Initial state", "attribute": "initial" }
       ],
       "preview": {
         "kind": "card",
