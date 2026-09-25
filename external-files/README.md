@@ -30,6 +30,8 @@ The source setting **Skip TLS certificate verification** is off by default. Pref
 
 ## Usage
 
+Use **Insert → External file** in the editor to choose one of the sources configured under **Administration → Plugin settings → External Files → Sources**. In Visual mode, editing an existing External file also presents the configured sources instead of requiring the source name to be typed manually. After choosing a source, set the repository path and any optional line range or annotations.
+
 Place each macro on its own line, outside a code fence.
 
 Whole file:

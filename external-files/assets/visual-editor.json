@@ -92,10 +92,11 @@
       ],
       "settings": [
         {
-          "type": "text",
+          "type": "resource",
           "label": "Source",
           "attribute": "source",
-          "placeholder": "engineering"
+          "placeholder": "Choose a configured source…",
+          "completion_module_id": "source-completion"
         },
         {
           "type": "text",
@@ -169,3 +170,5 @@
     }
   ]
 }
+
+

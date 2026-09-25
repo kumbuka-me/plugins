@@ -124,6 +124,13 @@ modules:
         name: Enabled
         type: boolean
         default: "true"
+  - type: editor-completion
+    id: source-completion
+    resource: sources
+    trigger: "{{external-file "
+    replacement: '{{external-file source="${name}" path="README.md"}}'
+    label_field: name
+    detail_field: repository
   - type: macro
     id: external-files
     name: external-file
@@ -139,7 +146,7 @@ modules:
     name: External file
     description: Display a file from a configured source.
     icon: file-code-2-lucide
-    markdown: '{{external-file source="engineering" path="README.md" lines="1-10" note="3:Explain this line here."}}'
+    markdown: "{{external-file "
     group: insert
     allowed_groups: [insert, plugins]
     order: 90
