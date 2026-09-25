@@ -1029,6 +1029,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.6.2",
+          "api_version": 1,
+          "released_at": "2026-09-25T08:57:59Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/status-dropdowns/v1.6.2/status-dropdowns-1.6.2.kumbukaplugin",
+          "sha256": "4fbb7ade05175391f52ebb5e257393915a7549b7c928a2fe719edd6cea1a48d2"
+        },
+        {
           "version": "1.6.1",
           "api_version": 1,
           "released_at": "2026-09-23T17:40:06Z",
