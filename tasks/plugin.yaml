@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.tasks
 name: Tasks
 icon: square-check-big-lucide
-version: 1.2.0
+version: 1.2.1
 description: Add persistent actionable tasks with assignees, due dates, configurable states, and notifications to Kumbuka pages.
 default_enabled: true
 modules:
