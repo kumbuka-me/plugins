@@ -95,6 +95,29 @@ func TestWholeAndSingleLine(t *testing.T) {
 	}
 }
 
+// TestAnnotationRanges verifies notes accept inclusive ranges while preserving single-line syntax.
+func TestAnnotationRanges(t *testing.T) {
+	value, ok := parse(`{{external-file source="docs" path="README.md" lines="10-20" note="12-15:Explain this block." note="18:Explain this line."}}`)
+	require.True(t, ok, "parse: %+v", value)
+	require.False(t, value.Invalid, "parse: %+v", value)
+	require.Equal(t, []annotation{
+		{Start: 12, End: 15, Text: "Explain this block."},
+		{Start: 18, End: 18, Text: "Explain this line."},
+	}, value.Notes)
+
+	file := selectedFile{Start: 10, Content: strings.Join([]string{
+		"10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+	}, "\n")}
+	require.True(t, annotationsWithinSelection(value.Notes, file))
+	output := renderExternalFile(value, source{}, file, defaultPresentation())
+	require.Equal(t, 5, strings.Count(output, "external-file-line-annotated"), output)
+	require.Contains(t, output, "<strong>Lines 12–15:</strong>")
+	require.Contains(t, output, "<strong>Line 18:</strong>")
+
+	value.Notes[0].End = 21
+	require.False(t, annotationsWithinSelection(value.Notes, file))
+}
+
 // TestSourceNetworkSettings verifies provider, private-network, and TLS settings shape generic HTTP requests.
 func TestSourceNetworkSettings(t *testing.T) {
 	resources := func(string, string) (sdk.PluginResourceRecord, error) {
@@ -117,7 +140,7 @@ func TestSourceNetworkSettings(t *testing.T) {
 
 // TestErrorsAndOutOfRangeNotes verifies provider errors stay opaque and annotation bounds are enforced.
 func TestErrorsAndOutOfRangeNotes(t *testing.T) {
-	value := options{Source: "error-source", Path: "b", Notes: []annotation{{Line: 4, Text: "note"}}}
+	value := options{Source: "error-source", Path: "b", Notes: []annotation{{Start: 4, End: 4, Text: "note"}}}
 	resources := func(string, string) (sdk.PluginResourceRecord, error) {
 		return sdk.PluginResourceRecord{}, errors.New("secret token")
 	}
@@ -173,7 +196,7 @@ func TestPresentationSettingsAndOverrides(t *testing.T) {
 
 // TestPresentationMarkupUsesSeparateReferenceGutter verifies annotations are not inserted before the source text.
 func TestPresentationMarkupUsesSeparateReferenceGutter(t *testing.T) {
-	value := options{Path: "README.md", Notes: []annotation{{Line: 2, Text: "Explain this line."}}}
+	value := options{Path: "README.md", Notes: []annotation{{Start: 2, End: 2, Text: "Explain this line."}}}
 	source := source{Provider: "gitlab", Repository: "platform/docs", Ref: "main"}
 	file := selectedFile{Start: 1, Content: "first\nsecond"}
 	appearance := defaultPresentation()
@@ -200,7 +223,8 @@ func TestPresentationMarkupUsesSeparateReferenceGutter(t *testing.T) {
 	output = renderExternalFile(value, source, file, left)
 	require.Contains(t, output, `class="external-file-gutter"><span class="external-file-marker"`, "left gutter not rendered before source: %s", output)
 	require.Contains(t, output, `</span><span class="external-file-source">second</span>`, "left gutter not rendered before source: %s", output)
-	for _, absent := range []string{"external-file-number", ">GitLab<", `class="external-file-ref"`} {
+	require.Contains(t, output, "external-file-hide-line-numbers")
+	for _, absent := range []string{">GitLab<", `class="external-file-ref"`} {
 		require.NotContains(t, output, absent, "output unexpectedly contains %q: %s", absent, output)
 	}
 }

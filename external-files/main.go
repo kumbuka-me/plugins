@@ -23,10 +23,12 @@ func init() {
 	})
 }
 
-// annotation describes one numbered note attached to an original source line.
+// annotation describes one numbered note attached to an inclusive original source range.
 type annotation struct {
-	// Line is the one-based original source line receiving the note.
-	Line int
+	// Start is the first one-based original source line receiving the note.
+	Start int
+	// End is the final one-based original source line receiving the note.
+	End int
 	// Text is the plain-text annotation shown below the source block.
 	Text string
 }
@@ -243,17 +245,17 @@ func parseLineRange(value string) (int, int, bool) {
 	return first, last, true
 }
 
-// parseAnnotation parses one line:description note declaration.
+// parseAnnotation parses one line-or-range:description note declaration.
 func parseAnnotation(value string) (annotation, bool) {
-	lineNumber, description, found := strings.Cut(value, ":")
+	selection, description, found := strings.Cut(value, ":")
 	if !found || strings.TrimSpace(description) == "" || len(description) > maxAnnotationBytes {
 		return annotation{}, false
 	}
-	number, err := strconv.Atoi(lineNumber)
-	if err != nil || number < 1 || number > maxLines {
+	start, end, ok := parseLineRange(selection)
+	if !ok {
 		return annotation{}, false
 	}
-	return annotation{Line: number, Text: description}, true
+	return annotation{Start: start, End: end, Text: description}, true
 }
 
 // parseOptionalBool parses one explicit boolean macro override.

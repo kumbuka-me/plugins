@@ -151,11 +151,12 @@ func render(value options, resources resourceReader, settings settingsReader, ht
 	return sdk.Text(renderExternalFile(value, source, file, appearance))
 }
 
-// annotationsWithinSelection reports whether every note targets a displayed original line.
+// annotationsWithinSelection reports whether every note range is contained by the displayed source.
 func annotationsWithinSelection(notes []annotation, file selectedFile) bool {
 	lineCount := len(strings.Split(file.Content, "\n"))
+	lastLine := file.Start + lineCount - 1
 	for _, note := range notes {
-		if note.Line < file.Start || note.Line >= file.Start+lineCount || len(note.Text) > maxAnnotationBytes {
+		if note.Start < file.Start || note.End < note.Start || note.End > lastLine || len(note.Text) > maxAnnotationBytes {
 			return false
 		}
 	}
@@ -165,11 +166,16 @@ func annotationsWithinSelection(notes []annotation, file selectedFile) bool {
 // renderExternalFile builds the provider header, source rows, gutters, and note legend.
 func renderExternalFile(value options, source source, file selectedFile, appearance presentation) string {
 	var output strings.Builder
+	lineNumbersClass := ""
+	if !appearance.ShowLineNumbers {
+		lineNumbersClass = " external-file-hide-line-numbers"
+	}
 	fmt.Fprintf(
 		&output,
-		`<div class="external-file external-file-reference-%s external-file-color-%s">`,
+		`<div class="external-file external-file-reference-%s external-file-color-%s%s">`,
 		appearance.ReferencePosition,
 		appearance.ReferenceColor,
+		lineNumbersClass,
 	)
 	writeHeader(&output, value.Path, source, appearance)
 	writeCode(&output, file, value.Notes, appearance)
@@ -202,8 +208,12 @@ func writeHeader(output *strings.Builder, path string, source source, appearance
 // writeCode appends escaped source lines with a dedicated configurable annotation gutter.
 func writeCode(output *strings.Builder, file selectedFile, notes []annotation, appearance presentation) {
 	markers := make(map[int][]int)
+	annotated := make(map[int]bool)
 	for index, note := range notes {
-		markers[note.Line] = append(markers[note.Line], index+1)
+		markers[note.Start] = append(markers[note.Start], index+1)
+		for line := note.Start; line <= note.End; line++ {
+			annotated[line] = true
+		}
 	}
 
 	output.WriteString(`<pre class="external-file-code"><code>`)
@@ -212,13 +222,11 @@ func writeCode(output *strings.Builder, file selectedFile, notes []annotation, a
 		number := file.Start + index
 		lineMarkers := markers[number]
 		classes := "external-file-line"
-		if appearance.HighlightReferences && len(lineMarkers) != 0 {
+		if appearance.HighlightReferences && annotated[number] {
 			classes += " external-file-line-annotated"
 		}
 		output.WriteString(`<span class="` + classes + `">`)
-		if appearance.ShowLineNumbers {
-			output.WriteString(`<span class="external-file-number">` + strconv.Itoa(number) + `</span>`)
-		}
+		output.WriteString(`<span class="external-file-number">` + strconv.Itoa(number) + `</span>`)
 		if appearance.ReferencePosition == "left" {
 			writeMarkerGutter(output, lineMarkers)
 		}
@@ -254,8 +262,16 @@ func writeNotes(output *strings.Builder, notes []annotation) {
 		}
 		output.WriteString(`<li class="` + className + `"><span class="external-file-note-marker">`)
 		output.WriteString(strconv.Itoa(index + 1))
-		output.WriteString(`</span><span><strong>Line `)
-		output.WriteString(strconv.Itoa(note.Line))
+		output.WriteString(`</span><span><strong>`)
+		if note.Start == note.End {
+			output.WriteString("Line ")
+			output.WriteString(strconv.Itoa(note.Start))
+		} else {
+			output.WriteString("Lines ")
+			output.WriteString(strconv.Itoa(note.Start))
+			output.WriteString("–")
+			output.WriteString(strconv.Itoa(note.End))
+		}
 		output.WriteString(`:</strong> `)
 		output.WriteString(html.EscapeString(note.Text))
 		output.WriteString(`</span></li>`)

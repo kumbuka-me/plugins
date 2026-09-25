@@ -46,13 +46,13 @@ Single original line:
 {{external-file source="engineering" path="src/main.go" lines="12"}}
 ```
 
-Inclusive line range with numbered annotations:
+Inclusive line range with single-line and range annotations:
 
 ```markdown
-{{external-file source="engineering" path="src/main.go" lines="10-25" note="12:Initialize the client." note="19:Handle errors before continuing."}}
+{{external-file source="engineering" path="src/main.go" lines="10-25" note="12-15:Initialize and configure the client." note="19:Handle errors before continuing."}}
 ```
 
-Repeat `note` to annotate more lines, including multiple notes on one line. Descriptions are plain text. Annotation line numbers refer to the original file and must be inside the displayed range. References are rendered in a dedicated gutter instead of being inserted into the source text.
+Repeat `note` to add more annotations, including overlapping ranges or multiple notes on one line. Each target is either one original line (`12`) or an inclusive range (`12-15`), followed by a colon and plain-text description. Every target must be inside the displayed range. References are rendered in a dedicated gutter instead of being inserted into the source text.
 
 ### Presentation overrides
 
@@ -117,7 +117,7 @@ Proxy configuration belongs to the Kumbuka process, not to this plugin. Proxy TL
 
 ## Visual editor
 
-In Visual mode, external-file macros render as file cards showing the configured source, path, line range, and presentation options without fetching repository content. Select the card to edit the embed settings or its Markdown source.
+In Visual mode, external-file macros render their repository content through Kumbuka's authenticated server-side preview. Click a line number and Shift-click another line, or select source text across lines, then choose **Add note** to open the annotation editor with that range preselected. The settings dialog presents annotations as separate **Line(s)** and **Note** columns; select the card outside a line number to edit the remaining embed settings or its Markdown source.
 
 ## References
 

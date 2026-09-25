@@ -109,6 +109,10 @@
   user-select: none;
 }
 
+.prose .external-file.external-file-hide-line-numbers .external-file-number {
+  display: none;
+}
+
 .prose .external-file .external-file-source {
   flex: 1 1 auto;
   min-width: 0;

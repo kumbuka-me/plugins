@@ -38,10 +38,7 @@
         {
           "name": "reference-position",
           "type": "enum",
-          "values": [
-            "right",
-            "left"
-          ]
+          "values": ["right", "left"]
         },
         {
           "name": "reference-color",
@@ -60,34 +57,22 @@
         {
           "name": "highlight-references",
           "type": "enum",
-          "values": [
-            "true",
-            "false"
-          ]
+          "values": ["true", "false"]
         },
         {
           "name": "line-numbers",
           "type": "enum",
-          "values": [
-            "true",
-            "false"
-          ]
+          "values": ["true", "false"]
         },
         {
           "name": "show-provider",
           "type": "enum",
-          "values": [
-            "true",
-            "false"
-          ]
+          "values": ["true", "false"]
         },
         {
           "name": "show-branch",
           "type": "enum",
-          "values": [
-            "true",
-            "false"
-          ]
+          "values": ["true", "false"]
         }
       ],
       "settings": [
@@ -113,12 +98,15 @@
         {
           "type": "table",
           "label": "Annotations",
-          "attributes": [
-            "note"
-          ],
+          "attributes": ["note"],
+          "row_separator": ":",
           "columns": [
             {
-              "label": "Line: note",
+              "label": "Line(s)",
+              "type": "text"
+            },
+            {
+              "label": "Note",
               "type": "textarea"
             }
           ]
@@ -160,15 +148,16 @@
           "class": "external-file",
           "title": "External file",
           "subtitle_attribute": "path",
-          "metadata_attributes": [
-            "source",
-            "lines"
-          ],
-          "body_text": "Repository content is loaded when the page is rendered."
+          "metadata_attributes": ["source", "lines"],
+          "body_text": "Repository content is loaded when the page is rendered.",
+          "rendered": true,
+          "line_annotations": {
+            "attribute": "note",
+            "line_class": "external-file-line",
+            "line_number_class": "external-file-number"
+          }
         }
       }
     }
   ]
 }
-
-
