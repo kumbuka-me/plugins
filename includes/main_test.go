@@ -32,6 +32,29 @@ func TestExpandIncludesNestedSections(t *testing.T) {
 	require.NotContains(t, got, "## Verify", "unexpected sibling section in output: %q", got)
 }
 
+func TestExpandIncludesAddsSourceBreadcrumb(t *testing.T) {
+	load := pageFixture(map[string]string{
+		"operations/runbook": "# Runbook\n\n## Restore <safe>\n\nDo the thing.",
+	})
+
+	got, err := expandIncludes("{{include:operations/runbook#Restore <safe>}}", load, nil, 0)
+	require.NoError(t, err)
+	require.Contains(t, got, `<p class="breadcrumbs include-breadcrumbs">Included from · Pages / operations/runbook / Restore &lt;safe&gt;</p>`)
+	require.Contains(t, got, "## Restore <safe>")
+}
+
+func TestNestedIncludesKeepTheirOwnSourceBreadcrumbs(t *testing.T) {
+	load := pageFixture(map[string]string{
+		"operations/runbook": "# Runbook\n\n{{include:shared-warning}}",
+		"shared-warning":     "# Shared warning\n\nBack up first.",
+	})
+
+	got, err := expandIncludes("{{include:operations/runbook}}", load, nil, 0)
+	require.NoError(t, err)
+	require.Contains(t, got, "Included from · Pages / operations/runbook")
+	require.Contains(t, got, "Included from · Pages / shared-warning")
+}
+
 func TestExpandIncludesRejectsRecursion(t *testing.T) {
 	load := pageFixture(map[string]string{"loop": "{{include:loop}}"})
 

@@ -25,10 +25,21 @@ cli_home="$work/home"
 cli_cache="$work/cache"
 mkdir -p "$dist" "$cli_home" "$cli_cache"
 
+selected_plugin() {
+  plugin=$1
+  [ -z "${PREVIEW_PLUGINS:-}" ] && return 0
+
+  for selected in $(printf '%s' "$PREVIEW_PLUGINS" | tr ',' ' '); do
+    [ "$selected" = "$plugin" ] && return 0
+  done
+  return 1
+}
+
 printf '%s\n' "Building plugin packages from the current checkout..."
 for manifest in "$repository"/*/plugin.yaml; do
   [ -f "$manifest" ] || continue
   plugin=$(basename "$(dirname "$manifest")")
+  selected_plugin "$plugin" || continue
   "$repository/scripts/build/plugin.sh" "$plugin" "$dist" >/dev/null
 done
 
@@ -44,6 +55,7 @@ XDG_CACHE_HOME="$cli_cache" \
 PREVIEW_REPOSITORY="$repository" \
 PREVIEW_DIST="$dist" \
 PREVIEW_WORK="$work" \
+PREVIEW_PLUGINS="${PREVIEW_PLUGINS:-}" \
   node "$repository/scripts/previews/prepare.mjs"
 
 printf '%s\n' "Rendering plugin previews with kumbuka-cli..."
@@ -65,4 +77,7 @@ fi
 PREVIEW_REPOSITORY="$repository" \
 PREVIEW_SITE="$work/sites" \
 PREVIEW_BROWSER_CHANNEL="${PREVIEW_BROWSER_CHANNEL:-}" \
+PREVIEW_PLUGINS="${PREVIEW_PLUGINS:-}" \
+PREVIEW_ASSERT_ONLY="${PREVIEW_ASSERT_ONLY:-0}" \
   node "$repository/scripts/previews/capture.mjs"
+

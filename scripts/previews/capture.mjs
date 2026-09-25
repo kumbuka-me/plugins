@@ -14,6 +14,13 @@ import { chromium } from "playwright";
 const repository = process.env.PREVIEW_REPOSITORY;
 const site = process.env.PREVIEW_SITE;
 const browserChannel = (process.env.PREVIEW_BROWSER_CHANNEL || "").trim();
+const assertOnly = process.env.PREVIEW_ASSERT_ONLY === "1";
+const selectedPlugins = new Set(
+  (process.env.PREVIEW_PLUGINS || "")
+    .split(/[\s,]+/)
+    .map((value) => value.trim())
+    .filter(Boolean),
+);
 
 if (!repository || !site) {
   throw new Error("Missing preview capture environment.");
@@ -75,7 +82,9 @@ async function pluginDirectories() {
 
     try {
       await stat(join(repository, entry.name, "plugin.yaml"));
-      result.push(entry.name);
+      if (selectedPlugins.size === 0 || selectedPlugins.has(entry.name)) {
+        result.push(entry.name);
+      }
     } catch {
       // Ordinary repository directories are not plugins.
     }
@@ -184,6 +193,24 @@ async function settle(page) {
   await page.waitForTimeout(150);
 }
 
+async function assertIncludes(page) {
+  const breadcrumb = page.locator(".prose .include-breadcrumbs").first();
+  await breadcrumb.waitFor({ state: "visible" });
+
+  const text = (await breadcrumb.textContent())?.trim().replace(/\s+/g, " ");
+  const expected =
+    "Included from · Pages / operations/shared-warning / Warning";
+
+  if (text !== expected) {
+    throw new Error(
+      `Includes breadcrumb mismatch: got ${JSON.stringify(text)}, want ${JSON.stringify(expected)}.`,
+    );
+  }
+
+  const warning = page.getByRole("heading", { name: "Warning", level: 2 });
+  await warning.waitFor({ state: "visible" });
+}
+
 async function capturePreview(page, plugin) {
   const path = `/${plugin}/`;
   const response = await page.goto(new URL(path, baseURL).toString(), {
@@ -196,6 +223,12 @@ async function capturePreview(page, plugin) {
   }
 
   await settle(page);
+
+  if (plugin === "includes") {
+    await assertIncludes(page);
+  }
+  if (assertOnly) return;
+
   await page.addStyleTag({ content: previewCSS });
 
   const preview = page.locator(".prose").first();
@@ -227,7 +260,13 @@ try {
   }
 
   await context.close();
-  console.log(`Generated ${plugins.length} cropped plugin previews.`);
+  if (assertOnly) {
+    console.log(
+      `Verified ${plugins.length} plugin browser preview${plugins.length === 1 ? "" : "s"}.`,
+    );
+  } else {
+    console.log(`Generated ${plugins.length} cropped plugin previews.`);
+  }
 } finally {
   await browser?.close();
   await new Promise((resolveServer) => server.close(resolveServer));

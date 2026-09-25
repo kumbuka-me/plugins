@@ -129,6 +129,16 @@ test-fresh: check-plugins vet ## Run executable plugin tests without the Go test
 test-race: check-plugins vet ## Run executable plugin tests with the race detector.
 	go test -race -count=1 -timeout=3m ./...
 
+.PHONY: test-browser
+test-browser: $(NODE_MODULES) $(KUMBUKA_CLI) $(SCRIPT_REQUIREMENTS) ## Run focused Playwright plugin behavior tests.
+	@SCRIPT_PYTHON="$(SCRIPT_PYTHON)" \
+		PREVIEW_BROWSER_CHANNEL="$(PREVIEW_BROWSER_CHANNEL)" \
+		PREVIEW_SKIP_BROWSER_INSTALL="$(PREVIEW_SKIP_BROWSER_INSTALL)" \
+		PREVIEW_PLUGINS="includes" \
+		PREVIEW_ASSERT_ONLY=1 \
+		KUMBUKA_CLI="$(abspath $(KUMBUKA_CLI))" \
+		./scripts/previews/run.sh
+
 .PHONY: cover
 cover: ## Display Go test coverage.
 	go test -coverprofile=coverage.out -covermode=set -count=1 -timeout=3m ./...
@@ -246,3 +256,4 @@ $(SCRIPT_REQUIREMENTS): scripts/requirements.txt
 	$(PYTHON) -m venv bin/python-env
 	$(SCRIPT_PYTHON) -m pip install -r scripts/requirements.txt
 	@touch "$@"
+

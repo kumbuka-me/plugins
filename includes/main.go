@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html"
 	"maps"
 	"strings"
 	"unicode"
@@ -155,7 +156,19 @@ func expandInclude(target string, load pageLoader, seen map[string]bool, depth i
 	if err != nil {
 		return "", fmt.Errorf("expand include %s: %w", slug, err)
 	}
-	return expanded, nil
+	return includeBreadcrumb(slug, heading) + expanded, nil
+}
+
+// includeBreadcrumb identifies the source of transcluded content using Kumbuka's page breadcrumb convention.
+func includeBreadcrumb(slug, heading string) string {
+	parts := []string{"Pages", slug}
+	if heading != "" {
+		parts = append(parts, heading)
+	}
+	for index := range parts {
+		parts[index] = html.EscapeString(parts[index])
+	}
+	return `<p class="breadcrumbs include-breadcrumbs">Included from · ` + strings.Join(parts, " / ") + "</p>\n\n"
 }
 
 // splitHeadingTarget separates a page path from an optional heading fragment.

@@ -6,6 +6,12 @@ import { dirname, isAbsolute, join } from "node:path";
 const repository = process.env.PREVIEW_REPOSITORY;
 const dist = process.env.PREVIEW_DIST;
 const work = process.env.PREVIEW_WORK;
+const selectedPlugins = new Set(
+  (process.env.PREVIEW_PLUGINS || "")
+    .split(/[\s,]+/)
+    .map((value) => value.trim())
+    .filter(Boolean),
+);
 
 if (!repository || !dist || !work) {
   throw new Error("Missing preview preparation environment.");
@@ -43,7 +49,9 @@ async function pluginDirectories() {
 
     try {
       await readFile(join(repository, entry.name, "plugin.yaml"), "utf8");
-      result.push(entry.name);
+      if (selectedPlugins.size === 0 || selectedPlugins.has(entry.name)) {
+        result.push(entry.name);
+      }
     } catch {
       // Ordinary repository directories are not plugins.
     }
@@ -54,8 +62,10 @@ async function pluginDirectories() {
 
 async function writeSupportPages(plugin, sourceDir) {
   if (plugin === "includes") {
+    const operations = join(sourceDir, "operations");
+    await mkdir(operations, { recursive: true });
     await writeFile(
-      join(sourceDir, "shared-warning.md"),
+      join(operations, "shared-warning.md"),
       `# Shared content
 
 ## Warning
