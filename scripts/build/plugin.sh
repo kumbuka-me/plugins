@@ -8,20 +8,21 @@ cd "$root"
 
 plugin=${plugin%/}
 manifest="$plugin/plugin.yaml"
+kumbuka_plugin="$root/bin/kumbuka-plugin"
 
 if [ ! -f "$manifest" ]; then
   echo "unknown plugin: $plugin" >&2
   exit 1
 fi
 
-name=$(basename "$plugin")
-version=$(./scripts/version/read.sh "$plugin")
-sdk_version=$(go list -m -f '{{.Version}}' github.com/kumbuka-me/sdk)
-
-if [ -z "$sdk_version" ]; then
-  echo "unable to determine Kumbuka SDK version" >&2
+if [ ! -x "$kumbuka_plugin" ]; then
+  echo "kumbuka-plugin is not installed: $kumbuka_plugin" >&2
+  echo "run make download" >&2
   exit 1
 fi
+
+name=$(basename "$plugin")
+version=$(./scripts/version/read.sh "$plugin")
 
 if [ -x "$plugin/generate.sh" ]; then
   "$plugin/generate.sh"
@@ -32,7 +33,7 @@ rm -rf "$plugin/dist"
 
 (
   cd "$plugin"
-  go run "github.com/kumbuka-me/sdk/cmd/kumbuka-plugin@$sdk_version" build
+  "$kumbuka_plugin" build
 )
 
 source="$plugin/dist/$name.kumbukaplugin"

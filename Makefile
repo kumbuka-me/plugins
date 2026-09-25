@@ -27,6 +27,7 @@ include $(call dev-tools-module,help)
 
 ## Project-local tools
 GOLANGCI_LINT := bin/golangci-lint
+KUMBUKA_PLUGIN := bin/kumbuka-plugin
 KUMBUKA_CLI ?= bin/kumbuka-cli-$(KUMBUKA_CLI_VERSION)
 KUMBUKA_CLI_ASSET ?= kumbuka-cli_{version}_{os}_{arch}.tar.gz
 
@@ -69,7 +70,7 @@ PRETTIER_SOURCES := \
 ##@ Development
 
 .PHONY: download
-download: $(NODE_MODULES) $(SCRIPT_REQUIREMENTS) dev-tools ## Download Go, Node, Python, and development dependencies.
+download: $(NODE_MODULES) $(SCRIPT_REQUIREMENTS) dev-tools $(KUMBUKA_PLUGIN) ## Download Go, Node, Python, and development dependencies.
 	go mod download
 
 .PHONY: check-plugins
@@ -84,7 +85,7 @@ browser: $(NODE_MODULES) ## Build browser TypeScript assets.
 	done
 
 .PHONY: build
-build: $(NODE_MODULES) check-plugins ## Build all versioned plugin packages.
+build: $(NODE_MODULES) $(KUMBUKA_PLUGIN) check-plugins ## Build all versioned plugin packages.
 	rm -rf "$(DIST)"
 	@mkdir -p "$(DIST)"
 	@set -eu; \
@@ -93,7 +94,7 @@ build: $(NODE_MODULES) check-plugins ## Build all versioned plugin packages.
 	done
 
 .PHONY: build-plugin
-build-plugin: $(NODE_MODULES) check-plugins ## Build PLUGIN=<name> as a versioned package.
+build-plugin: $(NODE_MODULES) $(KUMBUKA_PLUGIN) check-plugins ## Build PLUGIN=<name> as a versioned package.
 	@test -n "$(PLUGIN)" || { echo "PLUGIN is required" >&2; exit 1; }
 	./scripts/build/plugin.sh "$(PLUGIN)" "$(DIST)"
 
@@ -103,7 +104,7 @@ docs: $(NODE_MODULES) $(SCRIPT_REQUIREMENTS) ## Generate plugin pages and previe
 	$(NPX) prettier --write "$(DOCS_DIR)/content/extensions/*.md"
 
 .PHONY: previews
-previews: $(NODE_MODULES) $(KUMBUKA_CLI) $(SCRIPT_REQUIREMENTS) ## Rebuild every plugin preview from its preview.md.
+previews: $(NODE_MODULES) $(KUMBUKA_CLI) $(KUMBUKA_PLUGIN) $(SCRIPT_REQUIREMENTS) ## Rebuild every plugin preview from its preview.md.
 	@SCRIPT_PYTHON="$(SCRIPT_PYTHON)" \
 		PREVIEW_BROWSER_CHANNEL="$(PREVIEW_BROWSER_CHANNEL)" \
 		PREVIEW_SKIP_BROWSER_INSTALL="$(PREVIEW_SKIP_BROWSER_INSTALL)" \
@@ -131,7 +132,7 @@ test-race: check-plugins vet ## Run executable plugin tests with the race detect
 	go test -race -count=1 -timeout=3m ./...
 
 .PHONY: test-browser
-test-browser: $(NODE_MODULES) $(KUMBUKA_CLI) $(SCRIPT_REQUIREMENTS) ## Run focused Playwright plugin behavior tests.
+test-browser: $(NODE_MODULES) $(KUMBUKA_CLI) $(KUMBUKA_PLUGIN) $(SCRIPT_REQUIREMENTS) ## Run focused Playwright plugin behavior tests.
 	@SCRIPT_PYTHON="$(SCRIPT_PYTHON)" \
 		PREVIEW_BROWSER_CHANNEL="$(PREVIEW_BROWSER_CHANNEL)" \
 		PREVIEW_SKIP_BROWSER_INSTALL="$(PREVIEW_SKIP_BROWSER_INSTALL)" \
@@ -244,6 +245,18 @@ golangci-lint: $(GO_INSTALL_TOOL) ## Download golangci-lint locally if necessary
 		--package github.com/golangci/golangci-lint/v2/cmd/golangci-lint \
 		--tool-version "$(GOLANGCI_LINT_VERSION)"
 
+$(KUMBUKA_PLUGIN): $(GO_INSTALL_TOOL) go.mod
+	@set -eu; \
+	sdk_version="$$(go list -m -f '{{.Version}}' github.com/kumbuka-me/sdk)"; \
+	if [ -z "$$sdk_version" ]; then \
+		echo "unable to determine Kumbuka SDK version" >&2; \
+		exit 1; \
+	fi; \
+	$(GO_INSTALL_TOOL) \
+		--target "$@" \
+		--package github.com/kumbuka-me/sdk/cmd/kumbuka-plugin \
+		--tool-version "$$sdk_version"
+
 $(KUMBUKA_CLI): $(GITHUB_RELEASE_INSTALL)
 	@$(GITHUB_RELEASE_INSTALL) \
 		--repo kumbuka-me/cli \
@@ -257,5 +270,3 @@ $(SCRIPT_REQUIREMENTS): scripts/requirements.txt
 	$(PYTHON) -m venv bin/python-env
 	$(SCRIPT_PYTHON) -m pip install -r scripts/requirements.txt
 	@touch "$@"
-
-
