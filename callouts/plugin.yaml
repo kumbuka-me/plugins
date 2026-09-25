@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.callouts
 name: Callouts
-version: 1.3.1
+version: 1.3.2
 description: Note, warning, and other callout blocks
 default_enabled: true
 modules:
