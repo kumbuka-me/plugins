@@ -1465,6 +1465,20 @@
       ]
     },
     {
+      "id": "me.kumbuka.tasks",
+      "name": "Tasks",
+      "provider": "Kumbuka",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "api_version": 1,
+          "released_at": "2026-09-25T06:28:47Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tasks/v1.0.0/tasks-1.0.0.kumbukaplugin",
+          "sha256": "fb1c3f16223b93873bc8e7f5bbf8e07893818d66b551a1d202cb2e93caa0e7af"
+        }
+      ]
+    },
+    {
       "id": "me.kumbuka.typographer",
       "name": "Typographer",
       "provider": "Kumbuka",
