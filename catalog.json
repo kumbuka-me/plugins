@@ -1680,6 +1680,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-09-26T16:06:24Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tasks/v1.3.0/tasks-1.3.0.kumbukaplugin",
+          "sha256": "6c9aced3311c31b164084fa570a098e13dbb548880754b98d2d7ffe4bd3289c2"
+        },
+        {
           "version": "1.2.1",
           "api_version": 1,
           "released_at": "2026-09-25T15:02:45Z",
