@@ -321,7 +321,7 @@ func renderTask(options taskOptions, read storageReader, workflow taskWorkflow) 
 	output.WriteString(`</span><span class="kumbuka-task-details">`)
 	output.WriteString(`<span class="kumbuka-task-state-label">` + html.EscapeString(definition.Label) + `</span>`)
 	if options.Assignee != "" {
-		output.WriteString(`<span class="kumbuka-task-assignee">` + html.EscapeString(options.Assignee) + `</span>`)
+		output.WriteString(`<span class="kumbuka-task-assignee" data-kumbuka-mention>` + html.EscapeString(options.Assignee) + `</span>`)
 	}
 	if options.Due != "" {
 		output.WriteString(`<span class="kumbuka-task-due">Due ` + html.EscapeString(options.Due) + `</span>`)

@@ -99,6 +99,7 @@ func TestTransformSource(t *testing.T) {
 		assert.Contains(t, output, actionID("deploy", "open"))
 		assert.Contains(t, output, actionID("deploy", "done"))
 		assert.Contains(t, output, "Due 2026-10-01")
+		assert.Contains(t, output, `<span class="kumbuka-task-assignee" data-kumbuka-mention>@alice</span>`)
 	})
 
 	t.Run("renders unknown initial state as error", func(t *testing.T) {
