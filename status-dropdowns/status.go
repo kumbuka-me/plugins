@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
-	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/kumbuka-me/plugins/internal/macroargs"
 
 	sdk "github.com/kumbuka-me/sdk"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
@@ -177,87 +178,122 @@ func transformLine(line string, remaining int, sets map[string]statusSet, readRe
 	return output.String(), used
 }
 
+// parsedStatusAttributes contains declaration attributes before page-local choices are expanded.
+type parsedStatusAttributes struct {
+	// Options contains normalized scalar status options.
+	Options statusOptions
+	// LocalOptions contains page-local labels when no reusable set is selected.
+	LocalOptions string
+	// LocalColors contains optional colors parallel to LocalOptions.
+	LocalColors string
+}
+
 // parseStatusToken parses one complete {{status ...}} declaration and returns a user-facing configuration error.
 func parseStatusToken(token string) (statusOptions, error) {
+	body, err := statusTokenBody(token)
+	if err != nil {
+		return statusOptions{}, err
+	}
+	attributes, err := parseStatusAttributes(body)
+	if err != nil {
+		return statusOptions{}, err
+	}
+	if err := validateStatusAttributes(attributes); err != nil {
+		return statusOptions{}, err
+	}
+
+	if attributes.LocalOptions != "" {
+		choices, err := parseInlineChoices(attributes.LocalOptions, attributes.LocalColors)
+		if err != nil {
+			return statusOptions{}, err
+		}
+		attributes.Options.Choices = choices
+	}
+	return attributes.Options, nil
+}
+
+// statusTokenBody validates the declaration wrapper and returns its attribute body.
+func statusTokenBody(token string) (string, error) {
 	value := strings.TrimSpace(token)
 	body, ok := strings.CutPrefix(value, "{{status")
 	if !ok || len(value) > maxStatusTokenBytes {
-		return statusOptions{}, fmt.Errorf("invalid status declaration")
+		return "", fmt.Errorf("invalid status declaration")
 	}
 	body, ok = strings.CutSuffix(body, "}}")
 	if !ok || body == "" || body[0] != ' ' && body[0] != '\t' {
-		return statusOptions{}, fmt.Errorf("status attributes are required")
+		return "", fmt.Errorf("status attributes are required")
 	}
+	return body, nil
+}
 
-	result := statusOptions{Style: "solid"}
+// parseStatusAttributes consumes unique quoted attributes into their typed destinations.
+func parseStatusAttributes(body string) (parsedStatusAttributes, error) {
+	result := parsedStatusAttributes{Options: statusOptions{Style: "solid"}}
 	seen := make(map[string]bool)
-	var localOptions string
-	var localColors string
 	for strings.TrimSpace(body) != "" {
-		name, argument, remaining, parsed := parseAttribute(body)
+		name, argument, remaining, parsed := macroargs.NextQuoted(body)
 		if !parsed {
-			return statusOptions{}, fmt.Errorf("invalid status attribute syntax")
+			return parsedStatusAttributes{}, fmt.Errorf("invalid status attribute syntax")
 		}
 		if seen[name] {
-			return statusOptions{}, fmt.Errorf("duplicate status attribute %q", name)
+			return parsedStatusAttributes{}, fmt.Errorf("duplicate status attribute %q", name)
 		}
 		seen[name] = true
 		body = remaining
 
-		switch name {
-		case "id":
-			result.ID = argument
-		case "set":
-			result.Set = argument
-		case "options":
-			localOptions = argument
-		case "colors":
-			localColors = argument
-		case "initial":
-			result.Initial = argument
-		case "prefix":
-			result.Prefix = argument
-		case "style":
-			result.Style = argument
-		default:
-			return statusOptions{}, fmt.Errorf("unknown status attribute %q", name)
+		if !applyStatusAttribute(&result, name, argument) {
+			return parsedStatusAttributes{}, fmt.Errorf("unknown status attribute %q", name)
 		}
 	}
-
-	if !validName(result.ID, maxStatusIDBytes) {
-		return statusOptions{}, fmt.Errorf("status id is missing or invalid")
-	}
-	if result.Set != "" && !validName(result.Set, maxSetNameBytes) {
-		return statusOptions{}, fmt.Errorf("status set name is invalid")
-	}
-	if len(result.Initial) > maxStatusLabelBytes {
-		return statusOptions{}, fmt.Errorf("status initial value is too long")
-	}
-	if len(result.Prefix) > maxPrefixBytes {
-		return statusOptions{}, fmt.Errorf("status prefix is too long")
-	}
-	if result.Style != "solid" && result.Style != "outline" {
-		return statusOptions{}, fmt.Errorf("status style must be solid or outline")
-	}
-	if result.Set != "" && localOptions != "" {
-		return statusOptions{}, fmt.Errorf("status must use either set or options, not both")
-	}
-	if result.Set == "" && localOptions == "" {
-		return statusOptions{}, fmt.Errorf("status requires options or a reusable set")
-	}
-	if localColors != "" && localOptions == "" {
-		return statusOptions{}, fmt.Errorf("status colors require page-local options")
-	}
-
-	if localOptions != "" {
-		choices, err := parseInlineChoices(localOptions, localColors)
-		if err != nil {
-			return statusOptions{}, err
-		}
-		result.Choices = choices
-	}
-
 	return result, nil
+}
+
+// applyStatusAttribute assigns one supported status declaration attribute.
+func applyStatusAttribute(result *parsedStatusAttributes, name, argument string) bool {
+	switch name {
+	case "id":
+		result.Options.ID = argument
+	case "set":
+		result.Options.Set = argument
+	case "options":
+		result.LocalOptions = argument
+	case "colors":
+		result.LocalColors = argument
+	case "initial":
+		result.Options.Initial = argument
+	case "prefix":
+		result.Options.Prefix = argument
+	case "style":
+		result.Options.Style = argument
+	default:
+		return false
+	}
+	return true
+}
+
+// validateStatusAttributes checks scalar bounds and mutually exclusive declaration modes.
+func validateStatusAttributes(attributes parsedStatusAttributes) error {
+	options := attributes.Options
+	switch {
+	case !validName(options.ID, maxStatusIDBytes):
+		return fmt.Errorf("status id is missing or invalid")
+	case options.Set != "" && !validName(options.Set, maxSetNameBytes):
+		return fmt.Errorf("status set name is invalid")
+	case len(options.Initial) > maxStatusLabelBytes:
+		return fmt.Errorf("status initial value is too long")
+	case len(options.Prefix) > maxPrefixBytes:
+		return fmt.Errorf("status prefix is too long")
+	case options.Style != "solid" && options.Style != "outline":
+		return fmt.Errorf("status style must be solid or outline")
+	case options.Set != "" && attributes.LocalOptions != "":
+		return fmt.Errorf("status must use either set or options, not both")
+	case options.Set == "" && attributes.LocalOptions == "":
+		return fmt.Errorf("status requires options or a reusable set")
+	case attributes.LocalColors != "" && attributes.LocalOptions == "":
+		return fmt.Errorf("status colors require page-local options")
+	default:
+		return nil
+	}
 }
 
 // parseInlineChoices parses page-local labels and optional parallel colors from a status declaration.
@@ -311,46 +347,6 @@ func splitStatusList(value string) []string {
 		result = append(result, strings.TrimSpace(part))
 	}
 	return result
-}
-
-// parseAttribute consumes one quoted name="value" attribute from a declaration body.
-func parseAttribute(body string) (name, value, remaining string, ok bool) {
-	body = strings.TrimSpace(body)
-	equals := strings.IndexByte(body, '=')
-	if equals <= 0 {
-		return "", "", "", false
-	}
-
-	name = strings.TrimSpace(body[:equals])
-	rest := strings.TrimSpace(body[equals+1:])
-	if name == "" || len(rest) < 2 || rest[0] != '"' {
-		return "", "", "", false
-	}
-
-	end := 1
-	for end < len(rest) {
-		if rest[end] == '\\' {
-			end += 2
-			continue
-		}
-		if rest[end] == '"' {
-			break
-		}
-		end++
-	}
-	if end >= len(rest) {
-		return "", "", "", false
-	}
-
-	argument, err := strconv.Unquote(rest[:end+1])
-	if err != nil || !utf8.ValidString(argument) {
-		return "", "", "", false
-	}
-	remaining = rest[end+1:]
-	if remaining != "" && remaining[0] != ' ' && remaining[0] != '\t' {
-		return "", "", "", false
-	}
-	return name, argument, remaining, true
 }
 
 // validName validates bounded ASCII identifiers used for status IDs and set names.

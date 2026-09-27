@@ -4,7 +4,8 @@ package main
 import (
 	"strconv"
 	"strings"
-	"unicode/utf8"
+
+	"github.com/kumbuka-me/plugins/internal/macroargs"
 
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -96,7 +97,7 @@ func parse(line string) (options, bool) {
 	result := options{}
 	seen := make(map[string]bool)
 	for strings.TrimSpace(body) != "" {
-		name, argument, remaining, parsed := parseAttribute(body)
+		name, argument, remaining, parsed := macroargs.NextQuoted(body)
 		if !parsed {
 			return invalidOptions(), true
 		}
@@ -125,47 +126,6 @@ func duplicateExternalFileOption(name string, seen map[string]bool) bool {
 // validExternalFileTarget validates the required bounded source and repository path.
 func validExternalFileTarget(value options) bool {
 	return value.Source != "" && value.Path != "" && len(value.Source) <= 128 && len(value.Path) <= 1024
-}
-
-// parseAttribute consumes one name="value" attribute from a macro body.
-func parseAttribute(body string) (name, value, remaining string, ok bool) {
-	body = strings.TrimSpace(body)
-	name, rest, found := strings.Cut(body, "=")
-	if !found {
-		return "", "", "", false
-	}
-
-	name = strings.TrimSpace(name)
-	rest = strings.TrimSpace(rest)
-	if name == "" || len(rest) < 2 || rest[0] != '"' {
-		return "", "", "", false
-	}
-
-	end := 1
-	for end < len(rest) {
-		if rest[end] == '\\' {
-			end += 2
-			continue
-		}
-		if rest[end] == '"' {
-			break
-		}
-		end++
-	}
-	if end >= len(rest) {
-		return "", "", "", false
-	}
-
-	argument, err := strconv.Unquote(rest[:end+1])
-	if err != nil || !utf8.ValidString(argument) {
-		return "", "", "", false
-	}
-	remaining = rest[end+1:]
-	if remaining != "" && remaining[0] != ' ' && remaining[0] != '\t' {
-		return "", "", "", false
-	}
-
-	return name, argument, remaining, true
 }
 
 // applyOption validates and stores one parsed external-file macro attribute.

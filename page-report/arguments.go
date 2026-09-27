@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"strconv"
 	"strings"
+
+	"github.com/kumbuka-me/plugins/internal/macroargs"
 )
 
 // parse recognizes one standalone {{pages ...}} invocation.
@@ -13,7 +15,7 @@ func parse(line string) (macroOptions, bool) {
 		return macroOptions{}, false
 	}
 
-	arguments, ok := parseArguments(body)
+	arguments, ok := macroargs.ParseUnique(body)
 	if !ok {
 		return macroOptions{}, false
 	}
@@ -120,119 +122,6 @@ func validSort(sort string) bool {
 	default:
 		return false
 	}
-}
-
-// argumentParser incrementally parses a page-report macro argument list.
-type argumentParser struct {
-	// value is the complete argument string being parsed.
-	value string
-	// index is the next unread byte in value.
-	index int
-}
-
-// parseArguments parses key=value options without using regular expressions.
-func parseArguments(value string) (map[string]string, bool) {
-	parser := argumentParser{value: value}
-	result := map[string]string{}
-	for {
-		name, value, done, ok := parser.next()
-		if !ok {
-			return nil, false
-		}
-		if done {
-			return result, true
-		}
-		if _, exists := result[name]; exists {
-			return nil, false
-		}
-		result[name] = value
-	}
-}
-
-// next parses one name=value argument or reports the end of the input.
-func (p *argumentParser) next() (name, value string, done, ok bool) {
-	p.skipSpace()
-	if p.index == len(p.value) {
-		return "", "", true, true
-	}
-
-	name = p.readName()
-	if name == "" {
-		return "", "", false, false
-	}
-	p.skipSpace()
-	if p.index >= len(p.value) || p.value[p.index] != '=' {
-		return "", "", false, false
-	}
-	p.index++
-	p.skipSpace()
-	value, ok = p.readValue()
-	return name, value, false, ok
-}
-
-// skipSpace advances past spaces and horizontal tabs.
-func (p *argumentParser) skipSpace() {
-	for p.index < len(p.value) && (p.value[p.index] == ' ' || p.value[p.index] == '\t') {
-		p.index++
-	}
-}
-
-// readName consumes one lowercase option name.
-func (p *argumentParser) readName() string {
-	start := p.index
-	for p.index < len(p.value) {
-		character := p.value[p.index]
-		if (character >= 'a' && character <= 'z') || character == '_' {
-			p.index++
-			continue
-		}
-		break
-	}
-	return p.value[start:p.index]
-}
-
-// readValue consumes one quoted or unquoted option value.
-func (p *argumentParser) readValue() (string, bool) {
-	if p.index >= len(p.value) {
-		return "", false
-	}
-	if p.value[p.index] == '"' {
-		return p.readQuotedValue()
-	}
-	return p.readBareValue()
-}
-
-// readBareValue consumes a value up to the next horizontal whitespace.
-func (p *argumentParser) readBareValue() (string, bool) {
-	start := p.index
-	for p.index < len(p.value) && p.value[p.index] != ' ' && p.value[p.index] != '\t' {
-		p.index++
-	}
-	return p.value[start:p.index], p.index > start
-}
-
-// readQuotedValue consumes and unquotes a double-quoted option value.
-func (p *argumentParser) readQuotedValue() (string, bool) {
-	start := p.index
-	p.index++
-	escaped := false
-	for p.index < len(p.value) {
-		character := p.value[p.index]
-		p.index++
-		if escaped {
-			escaped = false
-			continue
-		}
-		if character == '\\' {
-			escaped = true
-			continue
-		}
-		if character == '"' {
-			decoded, err := strconv.Unquote(p.value[start:p.index])
-			return decoded, err == nil
-		}
-	}
-	return "", false
 }
 
 // reportColumns normalizes a comma-separated report column list and rejects empty entries.
