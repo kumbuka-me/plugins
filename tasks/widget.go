@@ -172,44 +172,73 @@ func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow
 		return fmt.Errorf("task storage is unavailable")
 	}
 
-	state, err := loadTaskState(task, services.Read, workflow)
+	state, previous, err := applyTaskTransition(task, target, workflow, services)
 	if err != nil {
 		return err
 	}
-	previous, ok := workflow.state(state.State)
-	if !ok {
-		return fmt.Errorf("task state is no longer configured")
-	}
-	if state.State != target.ID {
-		if state.Version == ^uint64(0) {
-			return fmt.Errorf("task transition limit reached")
-		}
-		state.PreviousState = state.State
-		state.State = target.ID
-		state.Version++
-		state.NotificationSent = task.Assignee == ""
-		if state.NotificationSent {
-			state.PreviousState = ""
-		}
-		if err := writeTaskState(task.ID, state, services.Write); err != nil {
-			return err
-		}
-	} else if state.PreviousState != "" {
-		if transitionOrigin, found := workflow.state(state.PreviousState); found {
-			previous = transitionOrigin
-		}
-	}
 	if task.Assignee == "" {
-		if !state.NotificationSent {
-			state.NotificationSent = true
-			state.PreviousState = ""
-			return writeTaskState(task.ID, state, services.Write)
-		}
-		return nil
+		return acknowledgeUnassignedTask(task.ID, state, services.Write)
 	}
 	if state.NotificationSent {
 		return nil
 	}
+	return notifyTaskTransition(page, task, previous, target, state, services)
+}
+
+// applyTaskTransition loads and persists a requested state change while preserving retry metadata.
+func applyTaskTransition(task taskOptions, target taskWorkflowState, workflow taskWorkflow, services taskMutationServices) (taskState, taskWorkflowState, error) {
+	state, err := loadTaskState(task, services.Read, workflow)
+	if err != nil {
+		return taskState{}, taskWorkflowState{}, err
+	}
+	previous, ok := workflow.state(state.State)
+	if !ok {
+		return taskState{}, taskWorkflowState{}, fmt.Errorf("task state is no longer configured")
+	}
+
+	if state.State == target.ID {
+		return state, retryTransitionOrigin(state, previous, workflow), nil
+	}
+	if state.Version == ^uint64(0) {
+		return taskState{}, taskWorkflowState{}, fmt.Errorf("task transition limit reached")
+	}
+
+	state.PreviousState = state.State
+	state.State = target.ID
+	state.Version++
+	state.NotificationSent = task.Assignee == ""
+	if state.NotificationSent {
+		state.PreviousState = ""
+	}
+	if err := writeTaskState(task.ID, state, services.Write); err != nil {
+		return taskState{}, taskWorkflowState{}, err
+	}
+	return state, previous, nil
+}
+
+// retryTransitionOrigin restores the original state for a pending notification retry.
+func retryTransitionOrigin(state taskState, fallback taskWorkflowState, workflow taskWorkflow) taskWorkflowState {
+	if state.PreviousState == "" {
+		return fallback
+	}
+	if previous, found := workflow.state(state.PreviousState); found {
+		return previous
+	}
+	return fallback
+}
+
+// acknowledgeUnassignedTask clears obsolete pending-notification metadata for an unassigned task.
+func acknowledgeUnassignedTask(taskID string, state taskState, write func(string, []byte) error) error {
+	if state.NotificationSent {
+		return nil
+	}
+	state.NotificationSent = true
+	state.PreviousState = ""
+	return writeTaskState(taskID, state, write)
+}
+
+// notifyTaskTransition delivers one pending assignee notification and acknowledges it durably.
+func notifyTaskTransition(page sdk.Page, task taskOptions, previous, target taskWorkflowState, state taskState, services taskMutationServices) error {
 	if services.ResolveMention == nil || services.SendNotification == nil {
 		return fmt.Errorf("task notification capability is unavailable")
 	}
@@ -229,6 +258,7 @@ func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow
 	if err != nil {
 		return err
 	}
+
 	state.NotificationSent = true
 	state.PreviousState = ""
 	return writeTaskState(task.ID, state, services.Write)
