@@ -178,11 +178,48 @@ func providerFileURL(value source, path string) string {
 	return value.Endpoint + "/repos/" + strings.Join(segments, "/") + "?ref=" + url.QueryEscape(value.Ref)
 }
 
+// githubFileResponse contains the bounded GitHub contents response used by the provider adapter.
+type githubFileResponse struct {
+	// Type distinguishes regular files from directories and links.
+	Type string `json:"type"`
+	// Encoding must identify the supported base64 representation.
+	Encoding string `json:"encoding"`
+	// Content contains the encoded provider file bytes.
+	Content string `json:"content"`
+	// Size is the provider-reported decoded byte count.
+	Size int `json:"size"`
+}
+
 // fetchFile requests one provider file through Kumbuka's generic HTTP capability.
 func fetchFile(value source, path string, do httpDoer) (string, error) {
 	if !validPath(path) {
 		return "", errUnavailable
 	}
+
+	response, err := do(sdk.HTTPRequest{
+		Method:             http.MethodGet,
+		URL:                providerFileURL(value, path),
+		Headers:            providerHeaders(value),
+		AllowedPrivateIPs:  value.PrivateIPs,
+		InsecureSkipVerify: value.InsecureSkipVerify,
+	})
+	if !usableProviderResponse(response, err) {
+		return "", errUnavailable
+	}
+
+	body, err := decodeProviderBody(value.Provider, response.Body)
+	if err != nil {
+		return "", errUnavailable
+	}
+	content := string(body)
+	if !validContent(content) {
+		return "", errUnavailable
+	}
+	return content, nil
+}
+
+// providerHeaders returns provider-specific request headers without exposing credentials elsewhere.
+func providerHeaders(value source) map[string]string {
 	headers := map[string]string{"User-Agent": "Kumbuka-External-Files/1"}
 	if value.Provider == "github" {
 		headers["Accept"] = "application/vnd.github+json"
@@ -190,46 +227,38 @@ func fetchFile(value source, path string, do httpDoer) (string, error) {
 		if value.Token != "" {
 			headers["Authorization"] = "Bearer " + value.Token
 		}
-	} else {
-		headers["Accept"] = "application/octet-stream"
-		if value.Token != "" {
-			headers["PRIVATE-TOKEN"] = value.Token
-		}
+		return headers
 	}
 
-	response, err := do(sdk.HTTPRequest{
-		Method:             http.MethodGet,
-		URL:                providerFileURL(value, path),
-		Headers:            headers,
-		AllowedPrivateIPs:  value.PrivateIPs,
-		InsecureSkipVerify: value.InsecureSkipVerify,
-	})
-	if err != nil || response.StatusCode != http.StatusOK || responseHasContentEncoding(response.Headers) {
-		return "", errUnavailable
+	headers["Accept"] = "application/octet-stream"
+	if value.Token != "" {
+		headers["PRIVATE-TOKEN"] = value.Token
 	}
-	body := response.Body
-	if value.Provider == "github" {
-		var file struct {
-			// Type distinguishes regular files from directories and links.
-			Type string `json:"type"`
-			// Encoding must identify the supported base64 representation.
-			Encoding string `json:"encoding"`
-			// Content contains the encoded provider file bytes.
-			Content string `json:"content"`
-			// Size is the provider-reported decoded byte count.
-			Size int `json:"size"`
-		}
-		if json.Unmarshal(body, &file) != nil || file.Type != "file" || file.Encoding != "base64" || file.Size > maxFileBytes {
-			return "", errUnavailable
-		}
-		body, err = base64.StdEncoding.DecodeString(file.Content)
-		if err != nil {
-			return "", errUnavailable
-		}
+	return headers
+}
+
+// usableProviderResponse reports whether a provider response is successful and safely decoded by the host.
+func usableProviderResponse(response sdk.HTTPResponse, err error) bool {
+	return err == nil && response.StatusCode == http.StatusOK && !responseHasContentEncoding(response.Headers)
+}
+
+// decodeProviderBody decodes provider-specific response envelopes into raw file bytes.
+func decodeProviderBody(provider string, body []byte) ([]byte, error) {
+	if provider != "github" {
+		return body, nil
 	}
-	content := string(body)
-	if !validContent(content) {
-		return "", errUnavailable
+	return decodeGitHubFile(body)
+}
+
+// decodeGitHubFile validates and decodes one GitHub contents API file response.
+func decodeGitHubFile(body []byte) ([]byte, error) {
+	var file githubFileResponse
+	if json.Unmarshal(body, &file) != nil || file.Type != "file" || file.Encoding != "base64" || file.Size > maxFileBytes {
+		return nil, errUnavailable
+	}
+	content, err := base64.StdEncoding.DecodeString(file.Content)
+	if err != nil || len(content) > maxFileBytes {
+		return nil, errUnavailable
 	}
 	return content, nil
 }
