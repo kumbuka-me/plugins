@@ -35,7 +35,7 @@ type htmlReplacement struct {
 // without constructing a DOM for the complete rendered page. Only individual
 // table fragments are parsed; all unrelated HTML is copied directly.
 func processRenderedTables(source string, options tableOptions, wrap bool) (string, error) {
-	tables, markers, err := scanRenderedTables(source)
+	tables, markers, err := scanRenderedTables(source, options)
 	if err != nil {
 		return "", err
 	}
@@ -82,10 +82,10 @@ func processRenderedTables(source string, options tableOptions, wrap bool) (stri
 	return output.String(), nil
 }
 
-// scanRenderedTables records table and directive-marker byte ranges using the
-// streaming HTML tokenizer. Marker directives are associated with the nearest
-// preceding table, matching the previous document-order DOM walk.
-func scanRenderedTables(source string) ([]renderedTableSpan, []htmlSpan, error) {
+// scanRenderedTables records table and directive byte ranges using the streaming
+// HTML tokenizer. Rendered directive paragraphs are consumed only when they
+// immediately follow a table; legacy marker divs remain supported.
+func scanRenderedTables(source string, options tableOptions) ([]renderedTableSpan, []htmlSpan, error) {
 	tokenizer := xhtml.NewTokenizer(strings.NewReader(source))
 	var tables []renderedTableSpan
 	var tableStack []int
@@ -94,6 +94,10 @@ func scanRenderedTables(source string) ([]renderedTableSpan, []htmlSpan, error) 
 	offset := 0
 	activeMarker := -1
 	markerDepth := 0
+	directiveStart := -1
+	directiveTable := -1
+	directiveNested := false
+	var directiveText strings.Builder
 
 	for {
 		tokenType := tokenizer.Next()
@@ -115,6 +119,10 @@ func scanRenderedTables(source string) ([]renderedTableSpan, []htmlSpan, error) 
 
 			if activeMarker >= 0 && token.Data == "div" && !selfClosing {
 				markerDepth++
+			}
+
+			if directiveStart >= 0 {
+				directiveNested = true
 			}
 
 			if token.Data == "table" {
@@ -141,6 +149,18 @@ func scanRenderedTables(source string) ([]renderedTableSpan, []htmlSpan, error) 
 				}
 			}
 
+			if directiveStart < 0 && !selfClosing && token.Data == "p" && tableDirectivesEnabled(options) && lastTable >= 0 && tables[lastTable].end > tables[lastTable].start && strings.TrimSpace(source[tables[lastTable].end:start]) == "" {
+				directiveStart = start
+				directiveTable = lastTable
+				directiveNested = false
+				directiveText.Reset()
+			}
+
+		case xhtml.TextToken:
+			if directiveStart >= 0 && !directiveNested {
+				directiveText.WriteString(tokenizer.Token().Data)
+			}
+
 		case xhtml.EndTagToken:
 			token := tokenizer.Token()
 			if token.Data == "table" && len(tableStack) != 0 {
@@ -154,6 +174,18 @@ func scanRenderedTables(source string) ([]renderedTableSpan, []htmlSpan, error) 
 					markers[activeMarker].end = offset
 					activeMarker = -1
 				}
+			}
+			if directiveStart >= 0 && token.Data == "p" {
+				if !directiveNested {
+					if directive, ok := parseTableDirective(strings.TrimSpace(directiveText.String())); ok && tableDirectiveActive(directive, options) {
+						tables[directiveTable].directives = append(tables[directiveTable].directives, directive)
+						markers = append(markers, htmlSpan{start: directiveStart, end: offset})
+					}
+				}
+				directiveStart = -1
+				directiveTable = -1
+				directiveNested = false
+				directiveText.Reset()
 			}
 		}
 	}

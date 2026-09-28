@@ -50,10 +50,44 @@ func TestPostprocessTablesAppliesDirectivesToNearestPrecedingTables(t *testing.T
 	assert.NotContains(t, got, `kumbuka-table-style-marker`)
 }
 
-func TestPreprocessTableDirectivesPreservesLargePlainSource(t *testing.T) {
+func TestPostprocessTablesConsumesRenderedDirectiveParagraph(t *testing.T) {
 	t.Parallel()
 
-	plain := strings.Repeat("ordinary documentation without a table\n", 25_000)
-	got := preprocessTableDirectives(plain, tableOptions{Tables: true, TableStyles: true})
-	assert.Equal(t, plain, got)
+	source := `<table><thead><tr><th>Service</th><th>Status</th></tr></thead><tbody><tr><td>API</td><td>Healthy</td></tr></tbody></table>` +
+		"\n\n" + `<p>{table header=accent col:2=info sortable filterable}</p>`
+
+	got, err := postprocessTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true})
+
+	require.NoError(t, err)
+	assert.Contains(t, got, `kumbuka-table-styled`)
+	assert.Contains(t, got, `table-tone-accent`)
+	assert.Contains(t, got, `table-tone-info`)
+	assert.Contains(t, got, `kumbuka-table-sortable`)
+	assert.Contains(t, got, `kumbuka-table-filterable`)
+	assert.NotContains(t, got, `{table`)
+}
+
+func TestPostprocessTablesLeavesUnrelatedDirectiveParagraphVisible(t *testing.T) {
+	t.Parallel()
+
+	source := `<table><thead><tr><th>Service</th></tr></thead><tbody><tr><td>API</td></tr></tbody></table>` +
+		`<p>Not part of the table.</p><p>{table header=accent sortable}</p>`
+
+	got, err := postprocessTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true})
+
+	require.NoError(t, err)
+	assert.Contains(t, got, `<p>{table header=accent sortable}</p>`)
+	assert.NotContains(t, got, `kumbuka-table-styled`)
+	assert.NotContains(t, got, `kumbuka-table-sortable`)
+}
+
+func TestPostprocessTablesLeavesInactiveDirectiveParagraphVisible(t *testing.T) {
+	t.Parallel()
+
+	source := `<table><thead><tr><th>Service</th></tr></thead><tbody><tr><td>API</td></tr></tbody></table><p>{table sortable}</p>`
+
+	got, err := postprocessTables(source, tableOptions{Tables: true})
+
+	require.NoError(t, err)
+	assert.Contains(t, got, `<p>{table sortable}</p>`)
 }

@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.tables
 name: Tables
 icon: table-2-lucide
-version: 1.1.4
+version: 1.1.5
 description: Markdown tables with colors, sorting, and filtering.
 default_enabled: true
 modules:
@@ -12,11 +12,6 @@ modules:
     syntax: tables
     usage:
       - contains: "|"
-  - type: renderer-extension
-    id: directives
-    stage: preprocess
-    usage:
-      - contains: "{table"
   - type: renderer-extension
     id: presentation
     stage: postprocess

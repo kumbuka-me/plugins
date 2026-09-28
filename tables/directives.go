@@ -1,13 +1,11 @@
 package main
 
 import (
-	stdhtml "html"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/kumbuka-me/plugins/internal/htmlutil"
-	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 	xhtml "golang.org/x/net/html"
 )
 
@@ -49,48 +47,6 @@ func tableDirectivesEnabled(options tableOptions) bool {
 		(options.TableStyles ||
 			options.TableSorting ||
 			options.TableFiltering)
-}
-
-// preprocessTableDirectives replaces enabled table directives with trusted markers consumed after rendering.
-func preprocessTableDirectives(source string, options tableOptions) string {
-	var output strings.Builder
-	output.Grow(len(source))
-
-	fence := ""
-	previousNonEmptyTableLine := false
-	for offset := 0; ; {
-		rest := source[offset:]
-		line, tail, hasNewline := strings.Cut(rest, "\n")
-		trimmed := strings.TrimSpace(line)
-		rendered := line
-
-		if fence != "" {
-			if pluginmarkdown.Closes(line, fence) {
-				fence = ""
-			}
-		} else if marker := pluginmarkdown.Fence(line); marker != "" {
-			fence = marker
-		} else if previousNonEmptyTableLine {
-			if directive, ok := parseTableDirective(trimmed); ok && tableDirectiveActive(directive, options) {
-				rendered = `<div class="kumbuka-table-style-marker" data-table-style="` + stdhtml.EscapeString(trimmed) + `"></div>`
-			}
-		}
-
-		output.WriteString(rendered)
-		if hasNewline {
-			output.WriteByte('\n')
-		}
-
-		if trimmed != "" {
-			previousNonEmptyTableLine = strings.Contains(line, "|")
-		}
-		if !hasNewline {
-			break
-		}
-		offset = len(source) - len(tail)
-	}
-
-	return output.String()
 }
 
 // parseTableDirective parses trusted table colors and optional browser interactions.

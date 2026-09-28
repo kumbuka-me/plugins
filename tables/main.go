@@ -11,32 +11,20 @@ import (
 // main provides the WASI plugin entry point.
 func main() {}
 
-// init registers the Tables preprocess and postprocess modules.
-func init() {
-	sdk.RegisterModule("directives", transform)
-	sdk.RegisterModule("presentation", transform)
-}
+// init registers the Tables postprocessor.
+func init() { sdk.RegisterModule("presentation", transform) }
 
-// transform applies request-scoped table directives and presentation wrapping for the active stage.
+// transform applies request-scoped table directives and presentation wrapping after Markdown rendering.
 func transform(request sdk.RenderRequest) sdk.RenderResult {
-	options := tableOptionsFromFeatures(request.Features)
-
-	switch request.Stage {
-	case "preprocess":
-		output := request.Source
-		if tableDirectivesEnabled(options) {
-			output = preprocessTableDirectives(output, options)
-		}
-		return sdk.Text(output)
-	case "postprocess":
-		output, err := postprocessTables(request.Source, options)
-		if err != nil {
-			return sdk.Failure(err)
-		}
-		return sdk.Text(output)
-	default:
-		return sdk.RenderResult{Error: "unsupported stage"}
+	if request.Module != "presentation" || request.Stage != "postprocess" {
+		return sdk.RenderResult{Error: "unsupported tables render request"}
 	}
+
+	output, err := postprocessTables(request.Source, tableOptionsFromFeatures(request.Features))
+	if err != nil {
+		return sdk.Failure(err)
+	}
+	return sdk.Text(output)
 }
 
 // tableOptionsFromFeatures resolves the enabled table feature switches for one request.
