@@ -22,51 +22,109 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Module != "callouts" || request.Stage != "preprocess" {
 		return sdk.RenderResult{Error: "unsupported render request"}
 	}
+	if !strings.Contains(request.Source, "!!! ") {
+		return sdk.Text(request.Source)
+	}
+
 	localizer := localize.For(request.Locale)
-	lines := strings.Split(request.Source, "\n")
-	var output fragments
-	for index := 0; index < len(lines); index++ {
-		if marker := pluginmarkdown.Fence(lines[index]); marker != "" {
-			output.line(lines[index])
-			for index++; index < len(lines); index++ {
-				output.line(lines[index])
-				if pluginmarkdown.Closes(lines[index], marker) {
+	output := fragments{parts: make([]sdk.RenderPart, 0, strings.Count(request.Source, "!!! ")*2+1)}
+	for position := 0; position <= len(request.Source); {
+		line, next, done := sourceLine(request.Source, position)
+
+		if possibleFence(line) {
+			if marker := pluginmarkdown.Fence(line); marker != "" {
+				output.line(line)
+				position = next
+				for !done && position <= len(request.Source) {
+					line, next, done = sourceLine(request.Source, position)
+					output.line(line)
+					position = next
+					if pluginmarkdown.Closes(line, marker) {
+						break
+					}
+				}
+				if done {
 					break
 				}
+				continue
+			}
+		}
+
+		kind := calloutKind(line)
+		if kind == "" {
+			output.line(line)
+			position = next
+			if done {
+				break
 			}
 			continue
 		}
-		kind := calloutKind(lines[index])
-		if kind == "" {
-			output.line(lines[index])
-			continue
+
+		bodyStart := min(next, len(request.Source))
+		bodyEnd := bodyStart
+		position = next
+		for !done && position <= len(request.Source) {
+			bodyLine, bodyNext, bodyDone := sourceLine(request.Source, position)
+			if strings.TrimSpace(bodyLine) == "" {
+				position = bodyNext
+				done = bodyDone
+				break
+			}
+			bodyEnd = position + len(bodyLine)
+			position = bodyNext
+			done = bodyDone
 		}
-		var body []string
-		for index++; index < len(lines) && strings.TrimSpace(lines[index]) != ""; index++ {
-			body = append(body, lines[index])
-		}
+
 		label := localizer.Text("callout." + kind)
 		output.line(`<aside class="callout ` + kind + `"><strong>` + html.EscapeString(label) + `</strong><div class="callout-body">`)
-		markdown := strings.Join(body, "\n")
+		markdown := request.Source[bodyStart:bodyEnd]
 		output.flush()
 		output.parts = append(output.parts, sdk.RenderPart{Markdown: &markdown})
 		output.text("</div></aside>\n")
+
+		if done {
+			break
+		}
 	}
 	output.flush()
 	return sdk.RenderResult{Parts: output.parts}
 }
 
+// possibleFence cheaply rejects ordinary lines before invoking the Markdown fence parser.
+func possibleFence(line string) bool {
+	return strings.IndexByte(line, '`') >= 0 || strings.IndexByte(line, '~') >= 0
+}
+
+// sourceLine returns one line without its newline and the start position of the next line.
+// A source ending in a newline exposes the same final empty line as strings.Split(source, "\n").
+func sourceLine(source string, position int) (line string, next int, done bool) {
+	if position > len(source) {
+		return "", position, true
+	}
+	if newline := strings.IndexByte(source[position:], '\n'); newline >= 0 {
+		end := position + newline
+		return source[position:end], end + 1, false
+	}
+	return source[position:], len(source) + 1, true
+}
+
 // calloutKind normalizes and validates a supported callout kind.
 func calloutKind(line string) string {
+	if !strings.Contains(line, "!!! ") {
+		return ""
+	}
 	body, ok := strings.CutPrefix(strings.TrimSpace(line), "!!! ")
 	if !ok {
 		return ""
 	}
-	fields := strings.Fields(body)
-	if len(fields) == 0 {
+	body = strings.TrimSpace(body)
+	if body == "" {
 		return ""
 	}
-	kind := strings.ToLower(fields[0])
+	if end := strings.IndexAny(body, " \t\r\n"); end >= 0 {
+		body = body[:end]
+	}
+	kind := strings.ToLower(body)
 	switch kind {
 	case "note", "info", "tip", "success", "warning", "danger", "error":
 		return kind

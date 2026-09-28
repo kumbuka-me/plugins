@@ -76,14 +76,9 @@ func tableDirectiveBody(line string) (string, bool) {
 	return body, ok && body != ""
 }
 
-// newTableStyle initializes the indexed tone maps used by one table directive.
-func newTableStyle() tableStyle {
-	return tableStyle{
-		rows:    map[int]string{},
-		columns: map[int]string{},
-		cells:   map[[2]int]string{},
-	}
-}
+// newTableStyle returns an empty style. Indexed tone maps are allocated lazily
+// only when their corresponding directives are present.
+func newTableStyle() tableStyle { return tableStyle{} }
 
 // applyToken adds one directive token to the parsed style.
 func (s *tableStyle) applyToken(token string) bool {
@@ -135,18 +130,27 @@ func (s *tableStyle) setTone(key, tone string) bool {
 	case "row":
 		row, ok := parsePositiveInt(target)
 		if ok {
+			if s.rows == nil {
+				s.rows = make(map[int]string)
+			}
 			s.rows[row] = tone
 		}
 		return ok
 	case "col", "column":
 		column, ok := parsePositiveInt(target)
 		if ok {
+			if s.columns == nil {
+				s.columns = make(map[int]string)
+			}
 			s.columns[column] = tone
 		}
 		return ok
 	case "cell":
 		position, ok := parseCellPosition(target)
 		if ok {
+			if s.cells == nil {
+				s.cells = make(map[[2]int]string)
+			}
 			s.cells[position] = tone
 		}
 		return ok
