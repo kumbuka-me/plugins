@@ -1,6 +1,6 @@
 # Tasks
 
-Tasks adds persistent actionable tasks to Kumbuka pages. Tasks support Kumbuka user assignees, due dates, administrator-configurable workflow states, and in-app notifications without rewriting page Markdown when a state changes.
+Tasks adds persistent actionable task lists to Kumbuka pages. Tasks support Kumbuka user assignees, due dates, nested subtasks, administrator-configurable workflow states, and in-app notifications without rewriting page Markdown when a state changes.
 
 ## Usage
 
@@ -15,8 +15,25 @@ Optional attributes are:
 - `assignee` — canonical Kumbuka user mention responsible for the task, such as `@alice`.
 - `due` — due date in `YYYY-MM-DD` form.
 - `initial` — initial workflow state ID. When omitted, Tasks uses the first configured state.
+- `parent` — ID of an earlier task in the same task list. This renders the task as a subtask.
 
-Task declarations inside fenced code blocks or inline code remain literal. Invalid declarations render a visible **Task error** instead of silently disappearing.
+Adjacent standalone task declarations are rendered as one compact task list. Blank lines between declarations are allowed. Use `parent` to create nested subtasks:
+
+```markdown
+{{task id="release" text="Prepare release" assignee="@alice" due="2026-10-02"}}
+
+{{task id="release-notes" parent="release" text="Publish release notes" initial="done"}}
+
+{{task id="production" parent="release" text="Deploy to production"}}
+
+{{task id="verify" parent="production" text="Verify production health"}}
+
+{{task id="announce" text="Announce the release"}}
+```
+
+A parent must appear before its subtask in the same adjacent task list. The task model supports nesting up to 16 levels; the rendered indentation is intentionally capped after four levels to keep deeply nested lists readable on smaller screens.
+
+Task declarations inside fenced code blocks or inline code remain literal. Invalid declarations and invalid parent relationships render a visible **Task error** instead of silently disappearing.
 
 ## Workflow states
 
@@ -24,8 +41,8 @@ Open **Administration → Plugin settings → Tasks → Workflow** to configure 
 
 - a stable lower-case **ID**, such as `todo`, `in-progress`, or `done`;
 - a user-facing **Label**;
-- a **Color** used by the interactive state selector;
-- a **Completed** flag used for completed-task presentation and completion/reopen notifications.
+- a **Color** used by the interactive state control;
+- a **Completed** flag used for completed-task presentation, list progress, and completion/reopen notifications.
 
 When no states are configured, Tasks keeps the backward-compatible `open` and `done` workflow. Existing persisted `open`/`done` values and the previous boolean JSON state format are migrated in memory to the closest configured incomplete/completed state.
 
@@ -37,7 +54,11 @@ For a task that should start in a non-default state:
 
 ## Interaction
 
-On rendered pages, the browser module shows the configured workflow states in a selector. State changes are sent through Kumbuka's host-mediated page-details command handler. Before persisting a change, Tasks rereads the current page and verifies that both the task and requested state are still valid.
+Rendered task lists use compact rows. The task text is primary; assignee and due date are secondary metadata. The state control is a small colored circle instead of a full-width selector. Selecting it opens the configured workflow choices. Completed tasks are muted and struck through, and multi-task lists show a completed/total counter.
+
+Changing a subtask does not automatically complete its parent. Parent and child tasks have independent persisted states.
+
+State changes are sent through Kumbuka's host-mediated page-details command handler. Before persisting a change, Tasks rereads the current page and verifies that both the task and requested state are still valid.
 
 The **Tasks** section in page details shows the current state and provides one non-JavaScript **Move to …** action per task that advances to the next configured state.
 
@@ -47,11 +68,11 @@ Notification keys are deterministic, so retries do not create duplicate in-app n
 
 ## Visual editor
 
-In Visual mode, tasks render as task cards. The assignee uses Kumbuka's mention picker and the due date uses the native date picker. `Initial state ID` accepts configured state IDs; `open` and `done` remain suggested for the default workflow.
+In Visual mode, tasks render as task cards. The assignee uses Kumbuka's mention picker and the due date uses the native date picker. `Initial state ID` accepts configured state IDs; `open` and `done` remain suggested for the default workflow. `Parent task ID` can reference an earlier adjacent task to create a subtask.
 
 ## Permissions
 
-- `browser:render` renders the interactive state selector in Kumbuka's isolated browser-module frame.
+- `browser:render` renders the interactive state controls in Kumbuka's isolated browser-module frame.
 - `settings:read` reads the administrator-configured task workflow.
 - `storage:read` reads persisted task state.
 - `storage:write` persists validated task changes.
