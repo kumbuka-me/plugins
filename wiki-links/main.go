@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	"github.com/kumbuka-me/plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -26,16 +27,16 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return sdk.Text(renderLinks(links)), nil
+	return sdk.Text(renderLinks(links, localize.For(context.Locale))), nil
 }
 
 // renderLinks renders backlink and outgoing-link sections, including missing destinations.
-func renderLinks(links sdk.PageLinks) string {
+func renderLinks(links sdk.PageLinks, localizer sdk.Localizer) string {
 	var output strings.Builder
-	output.WriteString("<h2>Referenced by</h2>")
+	output.WriteString("<h2>" + localizer.Text("wiki.referenced_by") + "</h2>")
 	output.WriteString(`<div class="widget-list">`)
 	if len(links.Backlinks) == 0 {
-		output.WriteString(`<p class="muted">No pages link here yet.</p>`)
+		output.WriteString(`<p class="muted">` + localizer.Text("wiki.no_backlinks") + `</p>`)
 	} else {
 		for _, page := range links.Backlinks {
 			writePageRow(&output, page)
@@ -43,10 +44,10 @@ func renderLinks(links sdk.PageLinks) string {
 	}
 	output.WriteString("</div>")
 
-	output.WriteString("<h2>Links from this page</h2>")
+	output.WriteString("<h2>" + localizer.Text("wiki.links_from") + "</h2>")
 	output.WriteString(`<div class="widget-list">`)
 	if len(links.Outgoing) == 0 {
-		output.WriteString(`<p class="muted">No wiki links on this page.</p>`)
+		output.WriteString(`<p class="muted">` + localizer.Text("wiki.no_links") + `</p>`)
 	} else {
 		for _, link := range links.Outgoing {
 			if link.Exists {
@@ -67,7 +68,7 @@ func renderLinks(links sdk.PageLinks) string {
 			output.WriteString(url.QueryEscape(link.TargetSlug))
 			output.WriteString(`"><strong>`)
 			output.WriteString(html.EscapeString(link.TargetSlug))
-			output.WriteString(`</strong><span class="widget-meta">Missing page</span></a>`)
+			output.WriteString(`</strong><span class="widget-meta">` + localizer.Text("wiki.missing") + `</span></a>`)
 		}
 	}
 	output.WriteString("</div>")

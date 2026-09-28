@@ -14,13 +14,15 @@ type macroOptions struct {
 	Title string
 	// ShowTitle controls whether the visible navigation heading is rendered.
 	ShowTitle bool
+	// DefaultTitle reports whether Title should be localized at render time.
+	DefaultTitle bool
 }
 
 // parse recognizes one standalone {{subpages}} invocation.
 func parse(line string) (macroOptions, bool) {
 	value := strings.TrimSpace(line)
 	if value == "{{subpages}}" {
-		return macroOptions{Title: defaultTitle, ShowTitle: true}, true
+		return macroOptions{Title: defaultTitle, ShowTitle: true, DefaultTitle: true}, true
 	}
 	argument, ok := strings.CutPrefix(value, "{{subpages ")
 	if !ok {

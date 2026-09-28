@@ -25,7 +25,7 @@
       {{ else }}
         <tr>
           <td colspan="{{ len .Columns }}">
-            <span class="muted">No pages match this query.</span>
+            <span class="muted">{{ .EmptyMessage }}</span>
           </td>
         </tr>
       {{ end }}
@@ -47,7 +47,7 @@
         {{ end }}
       </li>
     {{ else }}
-      <li class="muted">No pages match this query.</li>
+      <li class="muted">{{ .EmptyMessage }}</li>
     {{ end }}
   </ul>
 </div>
@@ -65,7 +65,9 @@
       {{ end }}
     </a>
   {{ else }}
-    <p class="muted">No pages match this query.</p>
+    <p class="muted">{{ .EmptyMessage }}</p>
   {{ end }}
 </div>
 {{- end }}
+
+

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +36,7 @@ func TestSelectionAndAnnotations(t *testing.T) {
 		encoded := base64.StdEncoding.EncodeToString([]byte(content))
 		return sdk.HTTPResponse{StatusCode: http.StatusOK, Body: []byte(`{"type":"file","encoding":"base64","size":` + stringInt(len(content)) + `,"content":"` + encoded + `"}`)}, nil
 	}
-	result := render(value, resources, nil, httpDo)
+	result := render(value, resources, nil, httpDo, localize.For("en"))
 	out := result.Parts[0].Text
 	for _, want := range []string{"&lt;script&gt;", "Line 21:", `class="external-file-marker" title="Annotation 1">1</span>`, `class="external-file-marker" title="Annotation 2">2</span>`, "{{include:private}}", "GitHub", "kumbuka-me/kumbuka", "main"} {
 		assert.Contains(t, out, want, "missing %q", want)
@@ -75,7 +76,7 @@ func TestInvalidSyntaxNeverFetches(t *testing.T) {
 			}, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
 				require.FailNow(t, "invalid syntax fetched")
 				return sdk.HTTPResponse{}, nil
-			})
+			}, localize.For("en"))
 			require.Contains(t, result.Parts[0].Text, "Invalid external file")
 		})
 	}
@@ -109,7 +110,7 @@ func TestAnnotationRanges(t *testing.T) {
 		"10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
 	}, "\n")}
 	require.True(t, annotationsWithinSelection(value.Notes, file))
-	output := renderExternalFile(value, source{}, file, defaultPresentation())
+	output := renderExternalFile(value, source{}, file, defaultPresentation(), localize.For("en"))
 	require.Equal(t, 5, strings.Count(output, "external-file-line-annotated"), output)
 	require.Contains(t, output, "<strong>Lines 12–15:</strong>")
 	require.Contains(t, output, "<strong>Line 18:</strong>")
@@ -146,7 +147,7 @@ func TestErrorsAndOutOfRangeNotes(t *testing.T) {
 	}
 	out := render(value, resources, nil, func(sdk.HTTPRequest) (sdk.HTTPResponse, error) {
 		return sdk.HTTPResponse{}, errors.New("secret upstream")
-	}).Parts[0].Text
+	}, localize.For("en")).Parts[0].Text
 	require.NotContains(t, out, "secret token")
 	require.NotContains(t, out, "secret upstream")
 	require.Contains(t, out, "unavailable")
@@ -201,7 +202,7 @@ func TestPresentationMarkupUsesSeparateReferenceGutter(t *testing.T) {
 	file := selectedFile{Start: 1, Content: "first\nsecond"}
 	appearance := defaultPresentation()
 
-	output := renderExternalFile(value, source, file, appearance)
+	output := renderExternalFile(value, source, file, appearance, localize.For("en"))
 	for _, expected := range []string{
 		"external-file-reference-right",
 		"external-file-color-accent",
@@ -220,7 +221,7 @@ func TestPresentationMarkupUsesSeparateReferenceGutter(t *testing.T) {
 	left.ShowLineNumbers = false
 	left.ShowProvider = false
 	left.ShowBranch = false
-	output = renderExternalFile(value, source, file, left)
+	output = renderExternalFile(value, source, file, left, localize.For("en"))
 	require.Contains(t, output, `class="external-file-gutter"><span class="external-file-marker"`, "left gutter not rendered before source: %s", output)
 	require.Contains(t, output, `</span><span class="external-file-source">second</span>`, "left gutter not rendered before source: %s", output)
 	require.Contains(t, output, "external-file-hide-line-numbers")
@@ -240,4 +241,12 @@ func TestPresentationOverrideValidationRejectsUnknownValues(t *testing.T) {
 		require.True(t, matched, "accepted presentation override %q: %+v", args, value)
 		require.True(t, value.Invalid, "accepted presentation override %q: %+v", args, value)
 	}
+}
+
+func TestExternalFilePresentationGerman(t *testing.T) {
+	value := options{Path: "README.md", Notes: []annotation{{Start: 1, End: 1, Text: "Hinweis"}}}
+	file := selectedFile{Start: 1, Content: "Zeile"}
+	output := renderExternalFile(value, source{}, file, defaultPresentation(), localize.For("de"))
+	require.Contains(t, output, "Zeile 1:")
+	require.Contains(t, output, `title="Hinweis 1"`)
 }

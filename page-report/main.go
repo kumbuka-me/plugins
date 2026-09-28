@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -10,7 +11,7 @@ import (
 func main() {}
 
 // init registers the Page Report macro with the Kumbuka plugin SDK.
-func init() { sdk.RegisterMacro("page-report", parse, renderMacro) }
+func init() { sdk.RegisterLocalizedMacro("page-report", parse, renderMacro) }
 
 // pages adapts the Kumbuka page capability to the page-report feature interface.
 type pages struct {
@@ -27,7 +28,7 @@ func (pages) GetPage(_ context.Context, slug string) (sdk.Page, error) {
 }
 
 // renderMacro renders a parsed report using public page capabilities.
-func renderMacro(options macroOptions) (sdk.Result, error) {
-	html, err := newRenderer(context.Background(), pages{})(options)
+func renderMacro(invocation sdk.LocalizedMacro[macroOptions]) (sdk.Result, error) {
+	html, err := newRenderer(context.Background(), pages{}, localize.For(invocation.Locale))(invocation.Value)
 	return sdk.Text(html), err
 }

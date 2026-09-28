@@ -6,6 +6,7 @@ import (
 	"html"
 	"strings"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
@@ -21,6 +22,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Module != "callouts" || request.Stage != "preprocess" {
 		return sdk.RenderResult{Error: "unsupported render request"}
 	}
+	localizer := localize.For(request.Locale)
 	lines := strings.Split(request.Source, "\n")
 	var output fragments
 	for index := 0; index < len(lines); index++ {
@@ -43,7 +45,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 		for index++; index < len(lines) && strings.TrimSpace(lines[index]) != ""; index++ {
 			body = append(body, lines[index])
 		}
-		label := strings.ToUpper(kind[:1]) + kind[1:]
+		label := localizer.Text("callout." + kind)
 		output.line(`<aside class="callout ` + kind + `"><strong>` + html.EscapeString(label) + `</strong><div class="callout-body">`)
 		markdown := strings.Join(body, "\n")
 		output.flush()

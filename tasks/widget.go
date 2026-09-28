@@ -107,14 +107,14 @@ func taskTokens(line string) []taskOptions {
 }
 
 // renderControls builds the page-details task summary and one non-JavaScript advance action per task.
-func renderControls(source string, readStorage storageReader, workflow taskWorkflow) sdk.Result {
+func renderControls(source string, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) sdk.Result {
 	tasks := discoverTasks(source)
 	if len(tasks) == 0 {
 		return sdk.Text("")
 	}
 
 	var output strings.Builder
-	output.WriteString(`<div class="task-controls"><h3>Tasks</h3><p class="muted">Track tasks on this page without editing its Markdown.</p>`)
+	output.WriteString(`<div class="task-controls"><h3>` + html.EscapeString(localizer.Text("tasks.title")) + `</h3><p class="muted">` + html.EscapeString(localizer.Text("tasks.help")) + `</p>`)
 	actions := make([]sdk.WidgetAction, 0, len(tasks))
 	for _, task := range tasks {
 		state := readTaskState(task, readStorage, workflow)
@@ -125,12 +125,12 @@ func renderControls(source string, readStorage storageReader, workflow taskWorkf
 		output.WriteString(`<div class="task-control"><strong>`)
 		output.WriteString(html.EscapeString(task.Text))
 		output.WriteString(`</strong><small>`)
-		output.WriteString(html.EscapeString(definition.Label))
+		output.WriteString(html.EscapeString(workflow.stateLabel(definition, localizer)))
 		if task.Assignee != "" {
 			output.WriteString(` · ` + html.EscapeString(task.Assignee))
 		}
 		if task.Due != "" {
-			output.WriteString(` · Due ` + html.EscapeString(task.Due))
+			output.WriteString(` · ` + html.EscapeString(localizer.Textf("tasks.due", task.Due)))
 		}
 		output.WriteString(`</small></div>`)
 
@@ -139,7 +139,7 @@ func renderControls(source string, readStorage storageReader, workflow taskWorkf
 			actions = append(actions, sdk.WidgetAction{
 				ID:    actionID(task.ID, next.ID),
 				Kind:  "command",
-				Label: "Move to " + next.Label + ": " + task.Text,
+				Label: localizer.Textf("tasks.move", workflow.stateLabel(next, localizer), task.Text),
 			})
 		}
 	}
@@ -163,7 +163,7 @@ func resolveAction(source, action string, workflow taskWorkflow) (taskOptions, t
 }
 
 // applyTaskAction persists one transition and delivers its retry-safe assignee notification.
-func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow, services taskMutationServices) error {
+func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow, services taskMutationServices, localizer sdk.Localizer) error {
 	task, target, ok := resolveAction(source, action, workflow)
 	if !ok {
 		return fmt.Errorf("task action is no longer available")
@@ -182,7 +182,7 @@ func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow
 	if state.NotificationSent {
 		return nil
 	}
-	return notifyTaskTransition(page, task, previous, target, state, services)
+	return notifyTaskTransition(page, task, previous, target, state, services, workflow.stateLabel(target, localizer), localizer)
 }
 
 // applyTaskTransition loads and persists a requested state change while preserving retry metadata.
@@ -238,7 +238,7 @@ func acknowledgeUnassignedTask(taskID string, state taskState, write func(string
 }
 
 // notifyTaskTransition delivers one pending assignee notification and acknowledges it durably.
-func notifyTaskTransition(page sdk.Page, task taskOptions, previous, target taskWorkflowState, state taskState, services taskMutationServices) error {
+func notifyTaskTransition(page sdk.Page, task taskOptions, previous, target taskWorkflowState, state taskState, services taskMutationServices, targetLabel string, localizer sdk.Localizer) error {
 	if services.ResolveMention == nil || services.SendNotification == nil {
 		return fmt.Errorf("task notification capability is unavailable")
 	}
@@ -247,7 +247,7 @@ func notifyTaskTransition(page sdk.Page, task taskOptions, previous, target task
 	if err != nil {
 		return err
 	}
-	title, body := taskStateNotification(previous, target, task.Text, page.Title)
+	title, body := taskStateNotification(previous, target, task.Text, page.Title, targetLabel, localizer)
 	_, err = services.SendNotification(sdk.NotificationInput{
 		RecipientUserID: assignee.ID,
 		Title:           title,
@@ -265,7 +265,7 @@ func notifyTaskTransition(page sdk.Page, task taskOptions, previous, target task
 }
 
 // notifyTaskAssignments sends one retry-safe notification for each new or changed assignee.
-func notifyTaskAssignments(context sdk.ContentChangeContext, services taskAssignmentServices) error {
+func notifyTaskAssignments(context sdk.ContentChangeContext, services taskAssignmentServices, localizer sdk.Localizer) error {
 	if services.ResolveMention == nil || services.SendNotification == nil {
 		return fmt.Errorf("task assignment notification capability is unavailable")
 	}
@@ -284,8 +284,8 @@ func notifyTaskAssignments(context sdk.ContentChangeContext, services taskAssign
 		}
 		_, err = services.SendNotification(sdk.NotificationInput{
 			RecipientUserID: assignee.ID,
-			Title:           boundedUTF8("Task assigned: "+task.Text, maxTaskNotificationTitleBytes),
-			Body:            boundedUTF8("You were assigned a task on "+context.Page.Title+".", maxTaskNotificationBodyBytes),
+			Title:           boundedUTF8(localizer.Textf("tasks.notification.assigned_title", task.Text), maxTaskNotificationTitleBytes),
+			Body:            boundedUTF8(localizer.Textf("tasks.notification.assigned_body", context.Page.Title), maxTaskNotificationBodyBytes),
 			URL:             "/pages/" + pagePath(context.Page.Slug),
 			IdempotencyKey:  taskAssignmentNotificationKey(context.Page, task),
 		})
@@ -306,18 +306,20 @@ func loadTaskState(task taskOptions, read storageReader, workflow taskWorkflow) 
 }
 
 // taskStateNotification creates a bounded notification for one configured state transition.
-func taskStateNotification(previous, target taskWorkflowState, text, pageTitle string) (string, string) {
-	prefix := "Task state changed: "
-	body := "A task on " + pageTitle + " moved to " + target.Label + "."
+func taskStateNotification(previous, target taskWorkflowState, text, pageTitle, targetLabel string, localizer sdk.Localizer) (string, string) {
+	titleKey := "tasks.notification.changed_title"
+	bodyKey := "tasks.notification.changed_body"
 	switch {
 	case target.Completed && !previous.Completed:
-		prefix = "Task completed: "
-		body = "A task on " + pageTitle + " was completed as " + target.Label + "."
+		titleKey = "tasks.notification.completed_title"
+		bodyKey = "tasks.notification.completed_body"
 	case previous.Completed && !target.Completed:
-		prefix = "Task reopened: "
-		body = "A task on " + pageTitle + " was reopened as " + target.Label + "."
+		titleKey = "tasks.notification.reopened_title"
+		bodyKey = "tasks.notification.reopened_body"
 	}
-	return boundedUTF8(prefix+text, maxTaskNotificationTitleBytes), boundedUTF8(body, maxTaskNotificationBodyBytes)
+	title := localizer.Textf(titleKey, text)
+	body := localizer.Textf(bodyKey, pageTitle, targetLabel)
+	return boundedUTF8(title, maxTaskNotificationTitleBytes), boundedUTF8(body, maxTaskNotificationBodyBytes)
 }
 
 // boundedUTF8 truncates text to a byte limit without splitting a UTF-8 sequence.

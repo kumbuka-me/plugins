@@ -4,6 +4,7 @@
 
   type BrowserContext = {
     html: string;
+    locale: string;
   };
 
   type StatusOption = {
@@ -11,6 +12,12 @@
     label: string;
     color: string;
   };
+
+  function statusAriaLabel(locale: string, prefix: string): string {
+    if (locale.toLowerCase().split("-")[0] === "de")
+      return prefix ? `Status: ${prefix}` : "Status";
+    return prefix ? `${prefix} status` : "Status";
+  }
 
   // decodeHex decodes UTF-8 metadata transported through sanitizer-safe class tokens.
   function decodeHex(value: string): string {
@@ -112,7 +119,10 @@
 
     const select = document.createElement("select");
     select.className = `status-dropdown status-dropdown-${style}`;
-    select.setAttribute("aria-label", prefix ? `${prefix} status` : "Status");
+    select.setAttribute(
+      "aria-label",
+      statusAriaLabel(context.locale || "en", prefix),
+    );
     select.dataset.kumbukaCommandModule = "page-details";
 
     for (const option of options) {

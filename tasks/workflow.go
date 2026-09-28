@@ -34,11 +34,13 @@ type taskWorkflowState struct {
 type taskWorkflow struct {
 	// States contains state definitions in administrator-configured order.
 	States []taskWorkflowState
+	// Builtin reports whether the default first-party workflow is in use.
+	Builtin bool
 }
 
 // defaultTaskWorkflow returns the backward-compatible Open/Done workflow.
 func defaultTaskWorkflow() taskWorkflow {
-	return taskWorkflow{States: []taskWorkflowState{
+	return taskWorkflow{Builtin: true, States: []taskWorkflowState{
 		{ID: "open", Label: "Open", Color: "#64748b"},
 		{ID: "done", Label: "Done", Color: "#16a34a", Completed: true},
 	}}
@@ -162,6 +164,19 @@ func (w taskWorkflow) state(id string) (taskWorkflowState, bool) {
 		}
 	}
 	return taskWorkflowState{}, false
+}
+
+// stateLabel returns a localized label for the built-in workflow and preserves administrator-defined labels.
+func (w taskWorkflow) stateLabel(state taskWorkflowState, localizer sdk.Localizer) string {
+	if w.Builtin {
+		switch state.ID {
+		case "open":
+			return localizer.Text("tasks.state.open")
+		case "done":
+			return localizer.Text("tasks.state.done")
+		}
+	}
+	return state.Label
 }
 
 // initialState resolves an explicit declaration state or the first configured workflow state.

@@ -42,3 +42,9 @@ func TestCalloutBodyPreservesMarkdownIndentation(t *testing.T) {
 	require.NotNil(t, result.Parts[1].Markdown, "unexpected fragments: %+v", result.Parts)
 	require.Equal(t, "- Parent\n  - Nested", *result.Parts[1].Markdown)
 }
+
+func TestCalloutLabelsAreLocalized(t *testing.T) {
+	result := transform(sdk.RenderRequest{APIVersion: 1, Locale: "de", Module: "callouts", Stage: "preprocess", Source: "!!! warning\nAchtung\n"})
+	require.Empty(t, result.Error)
+	require.Contains(t, result.Parts[0].Text, `<strong>Warnung</strong>`)
+}

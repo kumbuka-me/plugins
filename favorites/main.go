@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	"github.com/kumbuka-me/plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -17,16 +18,16 @@ func init() {
 }
 
 // renderHomeWidget loads favorite pages for the home dashboard surface.
-func renderHomeWidget(sdk.WidgetContext) (sdk.Result, error) {
+func renderHomeWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	pages, err := sdk.Pages().Favorites(100)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return sdk.Text(renderHome(pages, widgetui.HostIcon)), nil
+	return sdk.Text(renderHome(pages, widgetui.HostIcon, localize.For(context.Locale))), nil
 }
 
 // renderSidebarWidget loads favorite pages for the sidebar surface.
-func renderSidebarWidget(sdk.WidgetContext) (sdk.Result, error) {
+func renderSidebarWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	pages, err := sdk.Pages().Favorites(100)
 	if err != nil {
 		return sdk.Result{}, err
@@ -34,29 +35,29 @@ func renderSidebarWidget(sdk.WidgetContext) (sdk.Result, error) {
 	if len(pages) == 0 {
 		return sdk.Result{}, nil
 	}
-	return sdk.Text(renderSidebar(pages, widgetui.HostIcon)), nil
+	return sdk.Text(renderSidebar(pages, widgetui.HostIcon, localize.For(context.Locale))), nil
 }
 
 // renderHome renders the Favorites dashboard panel.
-func renderHome(pages []sdk.Page, icon widgetui.IconRenderer) string {
+func renderHome(pages []sdk.Page, icon widgetui.IconRenderer, localizer sdk.Localizer) string {
 	var output strings.Builder
 	output.WriteString(`<div class="panel-title"><h2 class="heading-with-icon">`)
 	output.WriteString(icon("star-lucide", 15))
-	output.WriteString(`<span>Favorites</span></h2></div>`)
+	output.WriteString(`<span>` + localizer.Text("favorites.title") + `</span></h2></div>`)
 	if len(pages) == 0 {
-		output.WriteString(`<p class="muted">Star useful pages to keep them close.</p>`)
+		output.WriteString(`<p class="muted">` + localizer.Text("favorites.empty") + `</p>`)
 		return output.String()
 	}
 	for _, page := range pages {
-		widgetui.WriteCompactPageRow(&output, page, icon)
+		widgetui.WriteCompactPageRow(&output, page, icon, localizer)
 	}
 	return output.String()
 }
 
 // renderSidebar renders pinned favorite links for the sidebar.
-func renderSidebar(pages []sdk.Page, icon widgetui.IconRenderer) string {
+func renderSidebar(pages []sdk.Page, icon widgetui.IconRenderer, localizer sdk.Localizer) string {
 	var output strings.Builder
-	output.WriteString(`<p class="nav-label">Pinned</p>`)
+	output.WriteString(`<p class="nav-label">` + localizer.Text("favorites.pinned") + `</p>`)
 	star := icon("star-lucide", 14)
 	for _, page := range pages {
 		widgetui.WriteSidebarShortcut(&output, page, star)

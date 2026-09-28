@@ -8,6 +8,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,7 +94,7 @@ func TestTransformSource(t *testing.T) {
 	}
 
 	t.Run("renders legacy done task as configured state", func(t *testing.T) {
-		output := transformSource(`{{task id="deploy" text="Deploy API" assignee="@alice" due="2026-10-01"}}`, read, workflow)
+		output := transformSource(`{{task id="deploy" text="Deploy API" assignee="@alice" due="2026-10-01"}}`, read, workflow, localize.For("en"))
 		assert.Contains(t, output, "kumbuka-task-completed")
 		assert.Contains(t, output, "kumbuka-task-state__done")
 		assert.Contains(t, output, actionID("deploy", "open"))
@@ -103,19 +104,19 @@ func TestTransformSource(t *testing.T) {
 	})
 
 	t.Run("renders unknown initial state as error", func(t *testing.T) {
-		output := transformSource(`{{task id="deploy" text="Deploy API" initial="review"}}`, nil, workflow)
+		output := transformSource(`{{task id="deploy" text="Deploy API" initial="review"}}`, nil, workflow, localize.For("en"))
 		assert.Contains(t, output, "Task error:")
 		assert.Contains(t, output, "not configured")
 	})
 
 	t.Run("renders parse error", func(t *testing.T) {
-		output := transformSource(`{{task id="bad id" text="Broken"}}`, nil, workflow)
+		output := transformSource(`{{task id="bad id" text="Broken"}}`, nil, workflow, localize.For("en"))
 		assert.Contains(t, output, "Task error:")
 	})
 
 	t.Run("preserves code", func(t *testing.T) {
 		source := "`{{task id=\"inline\" text=\"Inline\"}}`\n```text\n{{task id=\"fenced\" text=\"Fenced\"}}\n```"
-		assert.Equal(t, source, transformSource(source, nil, workflow))
+		assert.Equal(t, source, transformSource(source, nil, workflow, localize.For("en")))
 	})
 }
 
@@ -182,8 +183,8 @@ func TestApplyTaskAction(t *testing.T) {
 	}
 
 	action := actionID("deploy", "done")
-	require.Error(t, applyTaskAction(page, source, action, workflow, services))
-	require.NoError(t, applyTaskAction(page, source, action, workflow, services))
+	require.Error(t, applyTaskAction(page, source, action, workflow, services, localize.For("en")))
+	require.NoError(t, applyTaskAction(page, source, action, workflow, services, localize.For("en")))
 	require.Len(t, sent, 2)
 	assert.NotEmpty(t, sent[0].IdempotencyKey)
 	assert.Equal(t, sent[0].IdempotencyKey, sent[1].IdempotencyKey)
@@ -215,6 +216,7 @@ func TestApplyTaskActionPropagatesReadFailure(t *testing.T) {
 				return nil
 			},
 		},
+		localize.For("en"),
 	)
 	assert.ErrorIs(t, err, failure)
 	assert.False(t, written)
@@ -245,7 +247,7 @@ func TestNotifyTaskAssignments(t *testing.T) {
 			sent = append(sent, input)
 			return sdk.Notification{ID: int64(len(sent))}, nil
 		},
-	})
+	}, localize.For("en"))
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"@bob", "@carol"}, resolved)
@@ -264,7 +266,7 @@ func TestNotifyTaskAssignments(t *testing.T) {
 			sent = append(sent, input)
 			return sdk.Notification{}, nil
 		},
-	}))
+	}, localize.For("en")))
 	require.Len(t, sent, 4)
 	assert.Equal(t, firstKeys[0], sent[2].IdempotencyKey)
 	assert.Equal(t, firstKeys[1], sent[3].IdempotencyKey)
@@ -288,8 +290,19 @@ func TestLegacyTaskStateMapsOntoConfiguredWorkflow(t *testing.T) {
 func TestTaskStateNotification(t *testing.T) {
 	open := taskWorkflowState{ID: "open", Label: "Open", Color: "#64748b"}
 	done := taskWorkflowState{ID: "done", Label: "Done", Color: "#16a34a", Completed: true}
-	title, _ := taskStateNotification(open, done, strings.Repeat("é", 200), "Page")
+	title, _ := taskStateNotification(open, done, strings.Repeat("é", 200), "Page", "Done", localize.For("en"))
 	assert.LessOrEqual(t, len(title), maxTaskNotificationTitleBytes)
 	assert.True(t, utf8.ValidString(title))
 	assert.True(t, strings.HasPrefix(title, "Task completed: "))
+}
+
+func TestTaskPresentationAndNotificationsGerman(t *testing.T) {
+	workflow := defaultTaskWorkflow()
+	output := transformSource(`{{task id="deploy" text="Deploy" due="2026-10-01"}}`, nil, workflow, localize.For("de"))
+	require.Contains(t, output, "Offen")
+	require.Contains(t, output, "Fällig 2026-10-01")
+
+	title, body := taskStateNotification(workflow.States[0], workflow.States[1], "Deploy", "Release", workflow.stateLabel(workflow.States[1], localize.For("de")), localize.For("de"))
+	assert.Equal(t, "Aufgabe abgeschlossen: Deploy", title)
+	assert.Equal(t, "Eine Aufgabe auf Release wurde als Erledigt abgeschlossen.", body)
 }

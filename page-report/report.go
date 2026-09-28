@@ -41,7 +41,7 @@ type pageSource interface {
 }
 
 // newRenderer returns a request-bound renderer backed by the page catalog.
-func newRenderer(ctx context.Context, source pageSource) func(macroOptions) (string, error) {
+func newRenderer(ctx context.Context, source pageSource, localizer sdk.Localizer) func(macroOptions) (string, error) {
 	return func(options macroOptions) (string, error) {
 		pages, err := source.Search(ctx, options.Query, options.Limit)
 		if err != nil {
@@ -51,7 +51,7 @@ func newRenderer(ctx context.Context, source pageSource) func(macroOptions) (str
 			return "", err
 		}
 		sortPages(pages, options.Sort)
-		return render(options, pages)
+		return render(options, pages, localizer)
 	}
 }
 
@@ -91,6 +91,8 @@ type tableData struct {
 	Columns []columnData
 	// Rows contains prepared report rows in result order.
 	Rows []rowData
+	// EmptyMessage is shown when the report query returns no pages.
+	EmptyMessage string
 }
 
 // columnData describes one page-report table column.
@@ -115,8 +117,8 @@ var templateSource string
 var reportTemplate = template.Must(template.New("page-report").Parse(templateSource))
 
 // render executes the selected report presentation for the resolved pages.
-func render(options macroOptions, pages []sdk.Page) (string, error) {
-	data := buildTableData(options.Columns, pages)
+func render(options macroOptions, pages []sdk.Page, localizer sdk.Localizer) (string, error) {
+	data := buildTableData(options.Columns, pages, localizer)
 	var output strings.Builder
 	if err := reportTemplate.ExecuteTemplate(&output, options.View, data); err != nil {
 		return "", fmt.Errorf("render page report: %w", err)
@@ -125,13 +127,14 @@ func render(options macroOptions, pages []sdk.Page) (string, error) {
 }
 
 // buildTableData prepares template columns and row values for resolved pages.
-func buildTableData(columns []string, pages []sdk.Page) tableData {
+func buildTableData(columns []string, pages []sdk.Page, localizer sdk.Localizer) tableData {
 	data := tableData{
-		Columns: make([]columnData, 0, len(columns)),
-		Rows:    make([]rowData, 0, len(pages)),
+		Columns:      make([]columnData, 0, len(columns)),
+		Rows:         make([]rowData, 0, len(pages)),
+		EmptyMessage: localizer.Text("report.empty"),
 	}
 	for _, column := range columns {
-		data.Columns = append(data.Columns, columnData{Key: column, Label: columnLabel(column)})
+		data.Columns = append(data.Columns, columnData{Key: column, Label: columnLabel(column, localizer)})
 	}
 	for _, page := range pages {
 		cells := make([]string, 0, len(columns))
@@ -144,11 +147,11 @@ func buildTableData(columns []string, pages []sdk.Page) tableData {
 }
 
 // columnLabel returns the human-readable heading for a report column.
-func columnLabel(column string) string {
+func columnLabel(column string, localizer sdk.Localizer) string {
 	if key, ok := strings.CutPrefix(column, "property:"); ok {
 		return key
 	}
-	return strings.ToUpper(column[:1]) + column[1:]
+	return localizer.Text("report.column." + column)
 }
 
 // pageValue resolves one report cell from page metadata.

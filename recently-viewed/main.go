@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	"github.com/kumbuka-me/plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -20,12 +21,12 @@ func init() {
 }
 
 // renderHomeWidget loads recently viewed pages for the home dashboard surface.
-func renderHomeWidget(sdk.WidgetContext) (sdk.Result, error) {
+func renderHomeWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	pages, err := sdk.Pages().RecentViewed(8)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return sdk.Text(renderHome(pages, time.Now(), widgetui.HostIcon)), nil
+	return sdk.Text(renderHome(pages, time.Now(), widgetui.HostIcon, localize.For(context.Locale))), nil
 }
 
 // renderSidebarWidget loads sidebar history while excluding pinned favorites when needed.
@@ -46,27 +47,27 @@ func renderSidebarWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if len(pages) == 0 {
 		return sdk.Result{}, nil
 	}
-	return sdk.Text(renderSidebar(pages, widgetui.HostIcon)), nil
+	return sdk.Text(renderSidebar(pages, widgetui.HostIcon, localize.For(context.Locale))), nil
 }
 
 // renderHome renders the Recently Viewed dashboard panel.
-func renderHome(pages []sdk.Page, now time.Time, icon widgetui.IconRenderer) string {
+func renderHome(pages []sdk.Page, now time.Time, icon widgetui.IconRenderer, localizer sdk.Localizer) string {
 	var output strings.Builder
-	output.WriteString(`<div class="panel-title"><h2>Recently viewed</h2></div>`)
+	output.WriteString(`<div class="panel-title"><h2>` + localizer.Text("viewed.title") + `</h2></div>`)
 	if len(pages) == 0 {
-		output.WriteString(`<p class="muted">Pages you open will appear here.</p>`)
+		output.WriteString(`<p class="muted">` + localizer.Text("viewed.empty") + `</p>`)
 		return output.String()
 	}
 	for _, page := range pages {
-		widgetui.WritePageRow(&output, page, now, icon)
+		widgetui.WritePageRow(&output, page, now, icon, localizer)
 	}
 	return output.String()
 }
 
 // renderSidebar renders recently viewed shortcuts for the sidebar.
-func renderSidebar(pages []sdk.Page, icon widgetui.IconRenderer) string {
+func renderSidebar(pages []sdk.Page, icon widgetui.IconRenderer, localizer sdk.Localizer) string {
 	var output strings.Builder
-	output.WriteString(`<p class="nav-label">Recently viewed</p>`)
+	output.WriteString(`<p class="nav-label">` + localizer.Text("viewed.title") + `</p>`)
 	history := icon("history-lucide", 14)
 	for _, page := range pages {
 		widgetui.WriteSidebarShortcut(&output, page, history)

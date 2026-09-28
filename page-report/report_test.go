@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,4 +66,12 @@ func TestParse(t *testing.T) {
 		_, ok := parse(`{{pages query="tag:service" columns="title,,status"}}`)
 		assert.False(t, ok)
 	})
+}
+
+func TestReportLocalization(t *testing.T) {
+	html, err := render(macroOptions{Columns: []string{"title", "owner", "views"}, View: "table"}, nil, localize.For("de"))
+	require.NoError(t, err)
+	for _, expected := range []string{"Titel", "Verantwortlich", "Aufrufe", "Keine Seiten entsprechen dieser Abfrage."} {
+		assert.Contains(t, html, expected)
+	}
 }

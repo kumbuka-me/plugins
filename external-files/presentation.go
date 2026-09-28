@@ -126,29 +126,29 @@ func message(text string) sdk.Result {
 }
 
 // render loads settings and source configuration, fetches the file, validates notes, and renders escaped text.
-func render(value options, resources resourceReader, settings settingsReader, httpDo httpDoer) sdk.Result {
+func render(value options, resources resourceReader, settings settingsReader, httpDo httpDoer, localizer sdk.Localizer) sdk.Result {
 	if value.Invalid || value.Source == "" || value.Path == "" || len(value.Notes) > maxAnnotations {
-		return message("Invalid external file. Use source and path, optional lines, notes, and supported presentation overrides.")
+		return message(localizer.Text("external.invalid"))
 	}
 
 	source, err := loadSource(value.Source, resources)
 	if err != nil {
-		return message("External file unavailable. Ask an administrator to check the configured source and provider access.")
+		return message(localizer.Text("external.unavailable_admin"))
 	}
 	content, err := cachedFile(value.Source, source, value.Path, loadCacheTTL(settings), time.Now().UTC(), httpDo)
 	if err != nil {
-		return message("External file unavailable. Ask an administrator to check the configured source and provider access.")
+		return message(localizer.Text("external.unavailable_admin"))
 	}
 	file, err := selectLines(content, value.Start, value.End)
 	if err != nil {
-		return message("External file unavailable. Check the requested line range.")
+		return message(localizer.Text("external.unavailable_range"))
 	}
 	if !annotationsWithinSelection(value.Notes, file) {
-		return message("An annotation refers to a line outside the displayed file range.")
+		return message(localizer.Text("external.annotation_range"))
 	}
 
 	appearance := applyPresentationOverrides(loadPresentation(settings), value)
-	return sdk.Text(renderExternalFile(value, source, file, appearance))
+	return sdk.Text(renderExternalFile(value, source, file, appearance, localizer))
 }
 
 // annotationsWithinSelection reports whether every note range is contained by the displayed source.
@@ -164,7 +164,7 @@ func annotationsWithinSelection(notes []annotation, file selectedFile) bool {
 }
 
 // renderExternalFile builds the provider header, source rows, gutters, and note legend.
-func renderExternalFile(value options, source source, file selectedFile, appearance presentation) string {
+func renderExternalFile(value options, source source, file selectedFile, appearance presentation, localizer sdk.Localizer) string {
 	var output strings.Builder
 	lineNumbersClass := ""
 	if !appearance.ShowLineNumbers {
@@ -178,8 +178,8 @@ func renderExternalFile(value options, source source, file selectedFile, appeara
 		lineNumbersClass,
 	)
 	writeHeader(&output, value.Path, source, appearance)
-	writeCode(&output, file, value.Notes, appearance)
-	writeNotes(&output, value.Notes)
+	writeCode(&output, file, value.Notes, appearance, localizer)
+	writeNotes(&output, value.Notes, localizer)
 	output.WriteString(`</div>`)
 	return output.String()
 }
@@ -206,7 +206,7 @@ func writeHeader(output *strings.Builder, path string, source source, appearance
 }
 
 // writeCode appends escaped source lines with a dedicated configurable annotation gutter.
-func writeCode(output *strings.Builder, file selectedFile, notes []annotation, appearance presentation) {
+func writeCode(output *strings.Builder, file selectedFile, notes []annotation, appearance presentation, localizer sdk.Localizer) {
 	markers := make(map[int][]int)
 	annotated := make(map[int]bool)
 	for index, note := range notes {
@@ -228,11 +228,11 @@ func writeCode(output *strings.Builder, file selectedFile, notes []annotation, a
 		output.WriteString(`<span class="` + classes + `">`)
 		output.WriteString(`<span class="external-file-number">` + strconv.Itoa(number) + `</span>`)
 		if appearance.ReferencePosition == "left" {
-			writeMarkerGutter(output, lineMarkers)
+			writeMarkerGutter(output, lineMarkers, localizer)
 		}
 		output.WriteString(`<span class="external-file-source">` + html.EscapeString(line) + `</span>`)
 		if appearance.ReferencePosition == "right" {
-			writeMarkerGutter(output, lineMarkers)
+			writeMarkerGutter(output, lineMarkers, localizer)
 		}
 		output.WriteString(`</span>`)
 	}
@@ -240,16 +240,16 @@ func writeCode(output *strings.Builder, file selectedFile, notes []annotation, a
 }
 
 // writeMarkerGutter appends one fixed source-line annotation gutter.
-func writeMarkerGutter(output *strings.Builder, markers []int) {
+func writeMarkerGutter(output *strings.Builder, markers []int, localizer sdk.Localizer) {
 	output.WriteString(`<span class="external-file-gutter">`)
 	for _, marker := range markers {
-		fmt.Fprintf(output, `<span class="external-file-marker" title="Annotation %d">%d</span>`, marker, marker)
+		fmt.Fprintf(output, `<span class="external-file-marker" title="%s">%d</span>`, html.EscapeString(localizer.Textf("external.annotation", marker)), marker)
 	}
 	output.WriteString(`</span>`)
 }
 
 // writeNotes appends the annotation legend below the source block.
-func writeNotes(output *strings.Builder, notes []annotation) {
+func writeNotes(output *strings.Builder, notes []annotation, localizer sdk.Localizer) {
 	if len(notes) == 0 {
 		return
 	}
@@ -264,10 +264,10 @@ func writeNotes(output *strings.Builder, notes []annotation) {
 		output.WriteString(strconv.Itoa(index + 1))
 		output.WriteString(`</span><span><strong>`)
 		if note.Start == note.End {
-			output.WriteString("Line ")
+			output.WriteString(localizer.Text("external.line") + " ")
 			output.WriteString(strconv.Itoa(note.Start))
 		} else {
-			output.WriteString("Lines ")
+			output.WriteString(localizer.Text("external.lines") + " ")
 			output.WriteString(strconv.Itoa(note.Start))
 			output.WriteString("–")
 			output.WriteString(strconv.Itoa(note.End))

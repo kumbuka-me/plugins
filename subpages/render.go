@@ -16,6 +16,8 @@ type renderData struct {
 	Title string
 	// ShowTitle controls whether the heading is emitted.
 	ShowTitle bool
+	// AriaLabel describes the navigation landmark.
+	AriaLabel string
 }
 
 //go:embed template.gohtml
@@ -33,7 +35,7 @@ func newTemplate(icon func(string, int) (template.HTML, error)) *template.Templa
 }
 
 // newRenderer returns a renderer for one prepared navigation subtree and URL strategy.
-func newRenderer(nodes []sdk.NavigationNode, icon func(string, int) (template.HTML, error)) func(macroOptions) (string, error) {
+func newRenderer(nodes []sdk.NavigationNode, localizer sdk.Localizer, icon func(string, int) (template.HTML, error)) func(macroOptions) (string, error) {
 	htmlTemplate := newTemplate(icon)
 	return func(options macroOptions) (string, error) {
 		if len(nodes) == 0 {
@@ -45,6 +47,7 @@ func newRenderer(nodes []sdk.NavigationNode, icon func(string, int) (template.HT
 			Children:  nodes,
 			Title:     options.Title,
 			ShowTitle: options.ShowTitle,
+			AriaLabel: localizer.Text("subpages.title"),
 		})
 		if err != nil {
 			return "", err

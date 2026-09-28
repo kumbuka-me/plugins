@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	"github.com/stretchr/testify/require"
 )
@@ -12,7 +13,7 @@ func fakeIcon(name string, _ int) string { return "[" + name + "]" }
 
 func TestRenderHomeRecentlyViewed(t *testing.T) {
 	now := time.Date(2026, 9, 15, 16, 0, 0, 0, time.UTC)
-	output := renderHome([]sdk.Page{{Slug: "guide", Title: "Guide", UpdatedAt: now.Add(-2 * time.Hour)}}, now, fakeIcon)
+	output := renderHome([]sdk.Page{{Slug: "guide", Title: "Guide", UpdatedAt: now.Add(-2 * time.Hour)}}, now, fakeIcon, localize.For("en"))
 	for _, expected := range []string{"Recently viewed", `href="/pages/guide"`, "2h ago"} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
@@ -25,4 +26,11 @@ func TestWithoutFavorites(t *testing.T) {
 	require.Len(t, result, 2, "unexpected pages: %+v", result)
 	require.Equal(t, "one", result[0].Slug, "unexpected pages: %+v", result)
 	require.Equal(t, "three", result[1].Slug, "unexpected pages: %+v", result)
+}
+
+func TestRenderRecentlyViewedGerman(t *testing.T) {
+	now := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
+	output := renderHome([]sdk.Page{{Slug: "guide", Title: "Guide", UpdatedAt: now.Add(-2 * time.Hour)}}, now, fakeIcon, localize.For("de"))
+	require.Contains(t, output, "Zuletzt angesehen")
+	require.Contains(t, output, "vor 2 Std.")
 }

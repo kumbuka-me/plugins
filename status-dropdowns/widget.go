@@ -81,14 +81,14 @@ func statusTokens(line string) []statusOptions {
 }
 
 // renderControls builds the page-details widget and host-rendered command actions.
-func renderControls(source string, readResource resourceReader, readStorage storageReader) sdk.Result {
+func renderControls(source string, readResource resourceReader, readStorage storageReader, localizer sdk.Localizer) sdk.Result {
 	options := discoverStatuses(source)
 	if len(options) == 0 {
 		return sdk.Text("")
 	}
 
 	var output strings.Builder
-	output.WriteString(`<div class="status-controls"><h3>Status controls</h3><p class="muted">Change page statuses without editing the Markdown.</p>`)
+	output.WriteString(`<div class="status-controls"><h3>` + html.EscapeString(localizer.Text("status.controls")) + `</h3><p class="muted">` + html.EscapeString(localizer.Text("status.controls_help")) + `</p>`)
 	actions := make([]sdk.WidgetAction, 0)
 	setCache := make(map[string]statusSet)
 
@@ -118,8 +118,8 @@ func renderControls(source string, readResource resourceReader, readStorage stor
 		}
 		output.WriteString(`<div class="status-control"><strong>`)
 		output.WriteString(html.EscapeString(label))
-		output.WriteString(`</strong><small>Current: `)
-		output.WriteString(html.EscapeString(choice.Label))
+		output.WriteString(`</strong><small>`)
+		output.WriteString(html.EscapeString(localizer.Textf("status.current", statusChoiceLabel(set, choice, localizer))))
 		output.WriteString(`</small></div>`)
 
 		for index, candidate := range set.Choices {
@@ -129,7 +129,7 @@ func renderControls(source string, readResource resourceReader, readStorage stor
 			actions = append(actions, sdk.WidgetAction{
 				ID:    actionID(current.ID, index),
 				Kind:  "command",
-				Label: label + " → " + candidate.Label,
+				Label: label + " → " + statusChoiceLabel(set, candidate, localizer),
 			})
 		}
 	}

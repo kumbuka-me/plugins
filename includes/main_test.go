@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ func TestExpandIncludesNestedSections(t *testing.T) {
 		"shared":  "Use {{var:environment}} and {{snippet:warning}}.",
 	})
 
-	got, err := expandIncludes("{{include:runbook#Restore}}", load, nil, 0)
+	got, err := expandIncludes("{{include:runbook#Restore}}", load, nil, 0, localize.For("en"))
 	require.NoError(t, err, "expand includes: %v", err)
 	for _, expected := range []string{"## Restore", "Use {{var:environment}} and {{snippet:warning}}.", "### Detail"} {
 		require.Contains(t, got, expected, "expected output to contain %q: %q", expected, got)
@@ -37,7 +38,7 @@ func TestExpandIncludesAddsSourceBreadcrumb(t *testing.T) {
 		"operations/runbook": "# Runbook\n\n## Restore <safe>\n\nDo the thing.",
 	})
 
-	got, err := expandIncludes("{{include:operations/runbook#Restore <safe>}}", load, nil, 0)
+	got, err := expandIncludes("{{include:operations/runbook#Restore <safe>}}", load, nil, 0, localize.For("en"))
 	require.NoError(t, err)
 	require.Contains(t, got, `<p class="breadcrumbs include-breadcrumbs">Included from · Pages / operations/runbook / Restore &lt;safe&gt;</p>`)
 	require.Contains(t, got, "## Restore <safe>")
@@ -49,7 +50,7 @@ func TestNestedIncludesKeepTheirOwnSourceBreadcrumbs(t *testing.T) {
 		"shared-warning":     "# Shared warning\n\nBack up first.",
 	})
 
-	got, err := expandIncludes("{{include:operations/runbook}}", load, nil, 0)
+	got, err := expandIncludes("{{include:operations/runbook}}", load, nil, 0, localize.For("en"))
 	require.NoError(t, err)
 	require.Contains(t, got, "Included from · Pages / operations/runbook")
 	require.Contains(t, got, "Included from · Pages / shared-warning")
@@ -58,14 +59,14 @@ func TestNestedIncludesKeepTheirOwnSourceBreadcrumbs(t *testing.T) {
 func TestExpandIncludesRejectsRecursion(t *testing.T) {
 	load := pageFixture(map[string]string{"loop": "{{include:loop}}"})
 
-	_, err := expandIncludes("{{include:loop}}", load, nil, 0)
+	_, err := expandIncludes("{{include:loop}}", load, nil, 0, localize.For("en"))
 	require.Error(t, err, "expected recursive include error, got %v", err)
 	require.Contains(t, err.Error(), "recursive page include", "expected recursive include error, got %v", err)
 }
 
 func TestExpandIncludesLeavesFencedSyntaxLiteral(t *testing.T) {
 	const source = "```md\n{{include:missing}}\n```"
-	got, err := expandIncludes(source, pageFixture(nil), nil, 0)
+	got, err := expandIncludes(source, pageFixture(nil), nil, 0, localize.For("en"))
 	require.NoError(t, err, "expand fenced source: %v", err)
 	require.Equal(t, source, got, "fenced include changed: got %q want %q", got, source)
 }
@@ -89,4 +90,10 @@ func TestATXHeadingPreservesLiteralTrailingHashes(t *testing.T) {
 	}
 	_, _, ok := atxHeading("####### Too many")
 	require.False(t, ok, "accepted a seven-level heading")
+}
+
+func TestIncludeBreadcrumbGerman(t *testing.T) {
+	got := includeBreadcrumb("guide/start", "Restore", localize.For("de"))
+	require.Contains(t, got, "Eingebunden von")
+	require.Contains(t, got, "Seiten / guide/start / Restore")
 }

@@ -1,9 +1,38 @@
 (() => {
   type SortDirection = "ascending" | "descending";
-  const tableCollator = new Intl.Collator(undefined, {
-    numeric: true,
-    sensitivity: "base",
-  });
+  type BrowserContext = {
+    html: string;
+    locale: string;
+  };
+  type Messages = {
+    filterColumn: string;
+    filterValues: string;
+    clearColumnFilter: string;
+    column: (number: number) => string;
+    filter: (label: string) => string;
+    sortBy: (label: string) => string;
+  };
+
+  function messages(locale: string): Messages {
+    if (locale.toLowerCase().split("-")[0] === "de") {
+      return {
+        filterColumn: "Spalte filtern",
+        filterValues: "Werte filtern",
+        clearColumnFilter: "Spaltenfilter löschen",
+        column: (number) => `Spalte ${number}`,
+        filter: (label) => `${label} filtern`,
+        sortBy: (label) => `Nach ${label} sortieren`,
+      };
+    }
+    return {
+      filterColumn: "Filter column",
+      filterValues: "Filter values",
+      clearColumnFilter: "Clear column filter",
+      column: (number) => `Column ${number}`,
+      filter: (label) => `Filter ${label}`,
+      sortBy: (label) => `Sort by ${label}`,
+    };
+  }
 
   function tableRows(table: HTMLTableElement): HTMLTableRowElement[] {
     return table.tBodies.length ? [...table.tBodies[0].rows] : [];
@@ -18,8 +47,9 @@
     right: HTMLTableRowElement,
     column: number,
     direction: SortDirection,
+    collator: Intl.Collator,
   ): number {
-    const result = tableCollator.compare(
+    const result = collator.compare(
       tableCellText(left, column),
       tableCellText(right, column),
     );
@@ -45,6 +75,7 @@
     table: HTMLTableElement,
     headers: HTMLTableCellElement[],
     body: HTMLTableSectionElement,
+    collator: Intl.Collator,
   ): void {
     for (const [column, header] of headers.entries()) {
       const button = header.querySelector<HTMLButtonElement>(
@@ -77,7 +108,7 @@
         const rows = tableRows(table);
 
         rows.sort((left, right) =>
-          compareTableRows(left, right, column, direction),
+          compareTableRows(left, right, column, direction, collator),
         );
 
         for (const row of rows) body.append(row);
@@ -90,6 +121,7 @@
     shell: HTMLElement,
     headers: HTMLTableCellElement[],
     filterButtons: HTMLButtonElement[],
+    text: Messages,
   ): void {
     const rows = tableRows(table);
     if (!rows.length || !filterButtons.length) return;
@@ -119,7 +151,7 @@
     const label = document.createElement("span");
 
     label.className = "sr-only";
-    label.textContent = "Filter column";
+    label.textContent = text.filterColumn;
 
     const searchIcon = document.createElement("span");
 
@@ -134,14 +166,14 @@
 
     input.type = "search";
     input.className = "table-filter-input";
-    input.placeholder = "Filter values";
+    input.placeholder = text.filterValues;
     input.autocomplete = "off";
 
     const clear = document.createElement("button");
 
     clear.type = "button";
     clear.className = "table-filter-clear";
-    clear.setAttribute("aria-label", "Clear column filter");
+    clear.setAttribute("aria-label", text.clearColumnFilter);
     clear.hidden = true;
     clear.append(tableControlIcon("M18 6 6 18M6 6l12 12"));
     field.append(label, searchIcon, input, clear);
@@ -205,9 +237,9 @@
       activeButton = button;
 
       const columnLabel =
-        headers[column]?.dataset.tableColumnLabel || `Column ${column + 1}`;
+        headers[column]?.dataset.tableColumnLabel || text.column(column + 1);
 
-      menuTitle.textContent = `Filter ${columnLabel}`;
+      menuTitle.textContent = text.filter(columnLabel);
       input.value = filters.get(column) || "";
       clear.hidden = input.value === "";
       menu.hidden = false;
@@ -291,6 +323,8 @@
     shell: HTMLElement,
     sortable: boolean,
     filterable: boolean,
+    text: Messages,
+    collator: Intl.Collator,
   ): void {
     const headers = [...(table.tHead?.rows[0]?.cells ?? [])];
     const body = table.tBodies[0];
@@ -299,7 +333,7 @@
     const filterButtons: HTMLButtonElement[] = [];
 
     for (const [column, header] of headers.entries()) {
-      const columnLabel = header.textContent?.trim() || `Column ${column + 1}`;
+      const columnLabel = header.textContent?.trim() || text.column(column + 1);
 
       header.dataset.tableColumnLabel = columnLabel;
 
@@ -320,7 +354,7 @@
 
         sortButton.type = "button";
         sortButton.className = "table-sort-button";
-        sortButton.setAttribute("aria-label", `Sort by ${columnLabel}`);
+        sortButton.setAttribute("aria-label", text.sortBy(columnLabel));
 
         const indicator = document.createElement("span");
 
@@ -336,10 +370,10 @@
 
         filterButton.type = "button";
         filterButton.className = "table-filter-button";
-        filterButton.setAttribute("aria-label", `Filter ${columnLabel}`);
+        filterButton.setAttribute("aria-label", text.filter(columnLabel));
         filterButton.setAttribute("aria-expanded", "false");
         filterButton.setAttribute("aria-pressed", "false");
-        filterButton.title = `Filter ${columnLabel}`;
+        filterButton.title = text.filter(columnLabel);
         filterButton.append(
           tableControlIcon("M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"),
         );
@@ -350,11 +384,16 @@
       header.append(headerCell);
     }
 
-    if (sortable) setupTableSorting(table, headers, body);
-    if (filterable) setupTableFiltering(table, shell, headers, filterButtons);
+    if (sortable) setupTableSorting(table, headers, body, collator);
+    if (filterable)
+      setupTableFiltering(table, shell, headers, filterButtons, text);
   }
 
-  function setupInteractiveTable(table: HTMLTableElement): void {
+  function setupInteractiveTable(
+    table: HTMLTableElement,
+    locale: string,
+    text: Messages,
+  ): void {
     if (table.dataset.kumbukaInteractiveReady === "true") return;
 
     const sortable = table.classList.contains("kumbuka-table-sortable");
@@ -373,17 +412,24 @@
     table.before(shell);
     shell.append(scroll);
     scroll.append(table);
-    setupTableHeaders(table, shell, sortable, filterable);
+    setupTableHeaders(
+      table,
+      shell,
+      sortable,
+      filterable,
+      text,
+      new Intl.Collator(locale || "en", { numeric: true, sensitivity: "base" }),
+    );
   }
 
   // Wires markdown enhancements behavior.
-
   (globalThis as unknown as { kumbukaPlugin: unknown }).kumbukaPlugin = {
-    render(root: HTMLElement, context: { html: string }) {
+    render(root: HTMLElement, context: BrowserContext) {
+      const text = messages(context.locale || "en");
       root.className = "prose";
       root.innerHTML = context.html;
       for (const table of root.querySelectorAll<HTMLTableElement>("table"))
-        setupInteractiveTable(table);
+        setupInteractiveTable(table, context.locale || "en", text);
     },
   };
 })();

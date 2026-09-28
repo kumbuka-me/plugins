@@ -2,7 +2,6 @@
 package widgetui
 
 import (
-	"fmt"
 	"html"
 	"net/url"
 	"strings"

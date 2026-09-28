@@ -87,7 +87,7 @@ type resourceReader func(resource, key string) (sdk.PluginResourceRecord, error)
 type storageReader func(key string) (sdk.StoredValue, error)
 
 // transformSource renders status declarations outside fenced and inline code, including visible configuration errors.
-func transformSource(source string, readResource resourceReader, readStorage storageReader) string {
+func transformSource(source string, readResource resourceReader, readStorage storageReader, localizer sdk.Localizer) string {
 	lines := strings.Split(source, "\n")
 	sets := make(map[string]statusSet)
 	var output strings.Builder
@@ -113,7 +113,7 @@ func transformSource(source string, readResource resourceReader, readStorage sto
 			continue
 		}
 
-		transformed, used := transformLine(line, maxStatusDeclarations-count, sets, readResource, readStorage)
+		transformed, used := transformLine(line, maxStatusDeclarations-count, sets, readResource, readStorage, localizer)
 		count += used
 		output.WriteString(transformed)
 	}
@@ -122,7 +122,7 @@ func transformSource(source string, readResource resourceReader, readStorage sto
 }
 
 // transformLine renders status declarations on one non-fenced Markdown line while preserving inline code spans.
-func transformLine(line string, remaining int, sets map[string]statusSet, readResource resourceReader, readStorage storageReader) (string, int) {
+func transformLine(line string, remaining int, sets map[string]statusSet, readResource resourceReader, readStorage storageReader, localizer sdk.Localizer) (string, int) {
 	if remaining <= 0 || !strings.Contains(line, "{{status") {
 		return line, 0
 	}
@@ -146,7 +146,7 @@ func transformLine(line string, remaining int, sets map[string]statusSet, readRe
 		if codeTicks == 0 && used < remaining && strings.HasPrefix(line[index:], "{{status") {
 			relativeEnd := strings.Index(line[index:], "}}")
 			if relativeEnd < 0 {
-				output.WriteString(statusErrorHTML("unterminated status declaration"))
+				output.WriteString(statusErrorHTML("unterminated status declaration", localizer))
 				used++
 				break
 			}
@@ -154,7 +154,7 @@ func transformLine(line string, remaining int, sets map[string]statusSet, readRe
 			end := index + relativeEnd + 2
 			token := line[index:end]
 			if len(token) > maxStatusTokenBytes {
-				output.WriteString(statusErrorHTML("status declaration is too long"))
+				output.WriteString(statusErrorHTML("status declaration is too long", localizer))
 				used++
 				index = end
 				continue
@@ -162,9 +162,9 @@ func transformLine(line string, remaining int, sets map[string]statusSet, readRe
 
 			options, err := parseStatusToken(token)
 			if err != nil {
-				output.WriteString(statusErrorHTML(err.Error()))
+				output.WriteString(statusErrorHTML(err.Error(), localizer))
 			} else {
-				output.WriteString(renderStatus(options, sets, readResource, readStorage))
+				output.WriteString(renderStatus(options, sets, readResource, readStorage, localizer))
 			}
 			used++
 			index = end
@@ -541,26 +541,26 @@ func findChoice(set statusSet, label string) (statusChoice, bool) {
 }
 
 // renderStatus resolves one status declaration into safe inline HTML or an explicit inline error.
-func renderStatus(options statusOptions, sets map[string]statusSet, readResource resourceReader, readStorage storageReader) string {
+func renderStatus(options statusOptions, sets map[string]statusSet, readResource resourceReader, readStorage storageReader, localizer sdk.Localizer) string {
 	set, err := resolveStatusSet(options, sets, readResource)
 	if err != nil {
-		return statusErrorHTML(err.Error())
+		return statusErrorHTML(err.Error(), localizer)
 	}
 	choice, err := selectedChoice(options, set, readStorage)
 	if err != nil {
-		return statusErrorHTML(err.Error())
+		return statusErrorHTML(err.Error(), localizer)
 	}
-	return statusHTML(options, set, choice)
+	return statusHTML(options, set, choice, localizer)
 }
 
 // statusErrorHTML renders one escaped inline configuration error instead of silently hiding a broken status.
-func statusErrorHTML(message string) string {
+func statusErrorHTML(message string, localizer sdk.Localizer) string {
 	escaped := html.EscapeString(message)
-	return `<span class="kumbuka-status kumbuka-status-error" title="` + escaped + `">Status error: ` + escaped + `</span>`
+	return `<span class="kumbuka-status kumbuka-status-error" title="` + escaped + `">` + html.EscapeString(localizer.Textf("status.error", message)) + `</span>`
 }
 
 // statusHTML renders one escaped fallback badge plus bounded browser-module choice metadata.
-func statusHTML(options statusOptions, set statusSet, choice statusChoice) string {
+func statusHTML(options statusOptions, set statusSet, choice statusChoice, localizer sdk.Localizer) string {
 	var output strings.Builder
 	output.WriteString(`<span class="kumbuka-status-browser" data-kumbuka-plugin="me.kumbuka.status-dropdowns" data-kumbuka-module="status-ui" data-kumbuka-input="html">`)
 	output.WriteString(`<span class="kumbuka-status-fallback" data-kumbuka-fallback>`)
@@ -571,7 +571,7 @@ func statusHTML(options statusOptions, set statusSet, choice statusChoice) strin
 		output.WriteString(`__`)
 		output.WriteString(actionID(options.ID, index))
 		output.WriteString(`__`)
-		output.WriteString(hex.EncodeToString([]byte(candidate.Label)))
+		output.WriteString(hex.EncodeToString([]byte(statusChoiceLabel(set, candidate, localizer))))
 	}
 	output.WriteString(`"></span>`)
 	if options.Prefix != "" {
@@ -579,23 +579,48 @@ func statusHTML(options statusOptions, set statusSet, choice statusChoice) strin
 		output.WriteString(html.EscapeString(options.Prefix))
 		output.WriteString(`</span>`)
 	}
-	writeStatusBadge(&output, options, choice)
+	writeStatusBadge(&output, options, set, choice, localizer)
 	output.WriteString(`</span></span>`)
 	return output.String()
 }
 
 // writeStatusBadge renders the passive fallback shown when browser modules are unavailable.
-func writeStatusBadge(output *strings.Builder, options statusOptions, choice statusChoice) {
+func writeStatusBadge(output *strings.Builder, options statusOptions, set statusSet, choice statusChoice, localizer sdk.Localizer) {
 	output.WriteString(`<span class="kumbuka-status kumbuka-status-`)
 	output.WriteString(statusToneForColor(choice.Color))
 	output.WriteString(` kumbuka-status-`)
 	output.WriteString(options.Style)
-	output.WriteString(`" title="Status: `)
-	output.WriteString(html.EscapeString(choice.Label))
+	output.WriteString(`" title="`)
+	displayLabel := statusChoiceLabel(set, choice, localizer)
+	output.WriteString(html.EscapeString(localizer.Textf("status.title", displayLabel)))
 	output.WriteString(`">`)
 	output.WriteString(`<span class="kumbuka-status-value">`)
-	output.WriteString(html.EscapeString(choice.Label))
+	output.WriteString(html.EscapeString(displayLabel))
 	output.WriteString(`</span></span>`)
+}
+
+// statusChoiceLabel returns a localized display label for built-in status sets while preserving configured labels.
+func statusChoiceLabel(set statusSet, choice statusChoice, localizer sdk.Localizer) string {
+	keys := map[string]map[string]string{
+		"workflow": {
+			"To do":       "status.workflow.todo",
+			"In progress": "status.workflow.in_progress",
+			"Blocked":     "status.workflow.blocked",
+			"Done":        "status.workflow.done",
+		},
+		"approval": {
+			"Draft":     "status.approval.draft",
+			"In review": "status.approval.in_review",
+			"Approved":  "status.approval.approved",
+			"Rejected":  "status.approval.rejected",
+		},
+	}
+	if choices := keys[set.Name]; choices != nil {
+		if key := choices[choice.Label]; key != "" {
+			return localizer.Text(key)
+		}
+	}
+	return choice.Label
 }
 
 // statusToneForColor returns a bounded fallback class for known colors and gray for arbitrary custom colors.

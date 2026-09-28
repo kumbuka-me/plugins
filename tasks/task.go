@@ -56,7 +56,7 @@ type taskState struct {
 }
 
 // transformSource renders task declarations outside fenced and inline code.
-func transformSource(source string, readStorage storageReader, workflow taskWorkflow) string {
+func transformSource(source string, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) string {
 	lines := strings.Split(source, "\n")
 	var output strings.Builder
 	fence := ""
@@ -78,7 +78,7 @@ func transformSource(source string, readStorage storageReader, workflow taskWork
 			output.WriteString(line)
 			continue
 		}
-		transformed, used := transformLine(line, maxTaskDeclarations-count, readStorage, workflow)
+		transformed, used := transformLine(line, maxTaskDeclarations-count, readStorage, workflow, localizer)
 		count += used
 		output.WriteString(transformed)
 	}
@@ -86,7 +86,7 @@ func transformSource(source string, readStorage storageReader, workflow taskWork
 }
 
 // transformLine renders task declarations on one non-fenced line while preserving inline code spans.
-func transformLine(line string, remaining int, readStorage storageReader, workflow taskWorkflow) (string, int) {
+func transformLine(line string, remaining int, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) (string, int) {
 	if remaining <= 0 || !strings.Contains(line, "{{task") {
 		return line, 0
 	}
@@ -108,20 +108,20 @@ func transformLine(line string, remaining int, readStorage storageReader, workfl
 		if codeTicks == 0 && used < remaining && strings.HasPrefix(line[index:], "{{task") {
 			relativeEnd := strings.Index(line[index:], "}}")
 			if relativeEnd < 0 {
-				output.WriteString(taskErrorHTML("unterminated task declaration"))
+				output.WriteString(taskErrorHTML("unterminated task declaration", localizer))
 				used++
 				break
 			}
 			end := index + relativeEnd + 2
 			token := line[index:end]
 			if len(token) > maxTaskTokenBytes {
-				output.WriteString(taskErrorHTML("task declaration is too long"))
+				output.WriteString(taskErrorHTML("task declaration is too long", localizer))
 			} else if options, err := parseTaskToken(token); err != nil {
-				output.WriteString(taskErrorHTML(err.Error()))
+				output.WriteString(taskErrorHTML(err.Error(), localizer))
 			} else if _, err := workflow.initialState(options.InitialState); err != nil {
-				output.WriteString(taskErrorHTML(err.Error()))
+				output.WriteString(taskErrorHTML(err.Error(), localizer))
 			} else {
-				output.WriteString(renderTask(options, readStorage, workflow))
+				output.WriteString(renderTask(options, readStorage, workflow, localizer))
 			}
 			used++
 			index = end
@@ -285,11 +285,11 @@ func decodeTaskState(options taskOptions, stored sdk.StoredValue, workflow taskW
 }
 
 // renderTask renders one task declaration into safe fallback HTML and browser-module metadata.
-func renderTask(options taskOptions, read storageReader, workflow taskWorkflow) string {
+func renderTask(options taskOptions, read storageReader, workflow taskWorkflow, localizer sdk.Localizer) string {
 	state := readTaskState(options, read, workflow)
 	definition, ok := workflow.state(state.State)
 	if !ok {
-		return taskErrorHTML("task state is not configured")
+		return taskErrorHTML("task state is not configured", localizer)
 	}
 
 	completedClass := ""
@@ -313,28 +313,28 @@ func renderTask(options taskOptions, read storageReader, workflow taskWorkflow) 
 		} else {
 			output.WriteString(` kumbuka-task-choice-completed__false`)
 		}
-		output.WriteString(`">` + html.EscapeString(choice.Label) + `</span>`)
+		output.WriteString(`">` + html.EscapeString(workflow.stateLabel(choice, localizer)) + `</span>`)
 	}
 	output.WriteString(`</span>`)
 	output.WriteString(`<span class="kumbuka-task-box" aria-hidden="true">` + mark + `</span>`)
 	output.WriteString(`<span class="kumbuka-task-content"><span class="kumbuka-task-text">`)
 	output.WriteString(html.EscapeString(options.Text))
 	output.WriteString(`</span><span class="kumbuka-task-details">`)
-	output.WriteString(`<span class="kumbuka-task-state-label">` + html.EscapeString(definition.Label) + `</span>`)
+	output.WriteString(`<span class="kumbuka-task-state-label">` + html.EscapeString(workflow.stateLabel(definition, localizer)) + `</span>`)
 	if options.Assignee != "" {
 		output.WriteString(`<span class="kumbuka-task-assignee" data-kumbuka-mention>` + html.EscapeString(options.Assignee) + `</span>`)
 	}
 	if options.Due != "" {
-		output.WriteString(`<span class="kumbuka-task-due">Due ` + html.EscapeString(options.Due) + `</span>`)
+		output.WriteString(`<span class="kumbuka-task-due">` + html.EscapeString(localizer.Textf("tasks.due", options.Due)) + `</span>`)
 	}
 	output.WriteString(`</span></span></span></span>`)
 	return output.String()
 }
 
 // taskErrorHTML renders one escaped inline configuration error.
-func taskErrorHTML(message string) string {
+func taskErrorHTML(message string, localizer sdk.Localizer) string {
 	escaped := html.EscapeString(message)
-	return `<span class="kumbuka-task kumbuka-task-error" title="` + escaped + `">Task error: ` + escaped + `</span>`
+	return `<span class="kumbuka-task kumbuka-task-error" title="` + escaped + `">` + html.EscapeString(localizer.Textf("tasks.error", message)) + `</span>`
 }
 
 // storageKey derives a bounded opaque storage key from a public task identifier.

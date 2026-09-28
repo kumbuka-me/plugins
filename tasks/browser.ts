@@ -7,6 +7,7 @@
 
   type BrowserContext = {
     html: string;
+    locale: string;
   };
 
   type Choice = {
@@ -48,6 +49,12 @@
     };
   }
 
+  function taskStateLabel(locale: string): string {
+    return locale.toLowerCase().split("-")[0] === "de"
+      ? "Aufgabenstatus"
+      : "Task state";
+  }
+
   // renderTask replaces the passive sanitized fallback with an interactive workflow selector.
   function renderTask(root: HTMLElement, context: BrowserContext): void {
     const template = document.createElement("template");
@@ -81,7 +88,7 @@
     const select = document.createElement("select");
     select.className = "task-state-select";
     select.dataset.kumbukaCommandModule = "page-details";
-    select.setAttribute("aria-label", "Task state");
+    select.setAttribute("aria-label", taskStateLabel(context.locale || "en"));
     select.style.borderColor = current.color;
     for (const choice of choices) {
       const option = document.createElement("option");

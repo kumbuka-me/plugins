@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -22,7 +23,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 		return sdk.RenderResult{Error: "unsupported stage"}
 	}
 
-	output := transformSource(request.Source, sdk.Resources().Get, sdk.Storage().Get)
+	output := transformSource(request.Source, sdk.Resources().Get, sdk.Storage().Get, localize.For(request.Locale))
 	return sdk.Text(output)
 }
 
@@ -37,7 +38,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 		return sdk.Result{}, err
 	}
 
-	return renderControls(content.Markdown, sdk.Resources().Get, sdk.Storage().Get), nil
+	return renderControls(content.Markdown, sdk.Resources().Get, sdk.Storage().Get, localize.For(context.Locale)), nil
 }
 
 // commandWidget validates a page-scoped status action before persisting the selected value.

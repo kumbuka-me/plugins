@@ -6,6 +6,7 @@ import (
 	"html"
 	"strings"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -25,15 +26,15 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return sdk.Text(renderRevision(history)), nil
+	return sdk.Text(renderRevision(history, localize.For(context.Locale))), nil
 }
 
 // renderRevision renders the latest revision metadata and diff summary.
-func renderRevision(history sdk.RevisionHistory) string {
+func renderRevision(history sdk.RevisionHistory, localizer sdk.Localizer) string {
 	var output strings.Builder
-	output.WriteString("<h2>Revision history</h2>")
+	output.WriteString("<h2>" + localizer.Text("revision.title") + "</h2>")
 	if len(history.Revisions) == 0 {
-		output.WriteString(`<p class="muted">No revision history available.</p>`)
+		output.WriteString(`<p class="muted">` + localizer.Text("revision.empty") + `</p>`)
 		return output.String()
 	}
 
@@ -59,11 +60,11 @@ func renderRevision(history sdk.RevisionHistory) string {
 		fmt.Fprint(&output, revision.AddedLines)
 		output.WriteString(`</span><span class="widget-removed">−`)
 		fmt.Fprint(&output, revision.RemovedLines)
-		output.WriteString(`</span> lines</span>`)
+		output.WriteString(`</span> ` + localizer.Text("revision.lines") + `</span>`)
 	} else if revision.Number == 1 {
-		output.WriteString(`<span>created page</span>`)
+		output.WriteString(`<span>` + localizer.Text("revision.created") + `</span>`)
 	} else {
-		output.WriteString(`<span>metadata-only save</span>`)
+		output.WriteString(`<span>` + localizer.Text("revision.metadata") + `</span>`)
 	}
 	output.WriteString("</span></div>")
 	return output.String()

@@ -5,6 +5,7 @@ import (
 	"html"
 	"strings"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	"github.com/kumbuka-me/plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -23,7 +24,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 		return sdk.Result{}, errors.New("related pages requires a page")
 	}
 	if len(context.Page.Tags) == 0 {
-		return sdk.Text(renderRelated(nil)), nil
+		return sdk.Text(renderRelated(nil, localize.For(context.Locale))), nil
 	}
 
 	pages, err := sdk.Pages().Search(sdk.PageQuery{Query: "tag:" + context.Page.Tags[0], Limit: relatedLimit})
@@ -40,15 +41,15 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 			break
 		}
 	}
-	return sdk.Text(renderRelated(filtered)), nil
+	return sdk.Text(renderRelated(filtered, localize.For(context.Locale))), nil
 }
 
 // renderRelated renders related-page links or an empty state.
-func renderRelated(pages []sdk.Page) string {
+func renderRelated(pages []sdk.Page, localizer sdk.Localizer) string {
 	var output strings.Builder
-	output.WriteString("<h2>Related pages</h2>")
+	output.WriteString("<h2>" + localizer.Text("related.title") + "</h2>")
 	if len(pages) == 0 {
-		output.WriteString(`<p class="muted">No related pages yet.</p>`)
+		output.WriteString(`<p class="muted">` + localizer.Text("related.empty") + `</p>`)
 		return output.String()
 	}
 	output.WriteString(`<div class="widget-list">`)

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	"github.com/kumbuka-me/plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
@@ -15,24 +16,24 @@ func main() {}
 func init() { sdk.RegisterWidget("home", renderWidget) }
 
 // renderWidget loads the newest visible pages for the home widget.
-func renderWidget(sdk.WidgetContext) (sdk.Result, error) {
+func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	pages, err := sdk.Pages().Recent(8)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return sdk.Text(renderRecent(pages, time.Now(), widgetui.HostIcon)), nil
+	return sdk.Text(renderRecent(pages, time.Now(), widgetui.HostIcon, localize.For(context.Locale))), nil
 }
 
 // renderRecent renders the Recent Changes dashboard panel.
-func renderRecent(pages []sdk.Page, now time.Time, icon widgetui.IconRenderer) string {
+func renderRecent(pages []sdk.Page, now time.Time, icon widgetui.IconRenderer, localizer sdk.Localizer) string {
 	var output strings.Builder
-	output.WriteString(`<div class="panel-title"><h2>Recent changes</h2><a href="/search">View all</a></div>`)
+	output.WriteString(`<div class="panel-title"><h2>` + localizer.Text("recent.title") + `</h2><a href="/search">` + localizer.Text("recent.view_all") + `</a></div>`)
 	if len(pages) == 0 {
-		output.WriteString(`<div class="empty"><strong>Your Kumbuka knowledge base is ready.</strong><p>Create the first page and start linking knowledge together.</p></div>`)
+		output.WriteString(`<div class="empty"><strong>` + localizer.Text("recent.ready") + `</strong><p>` + localizer.Text("recent.empty") + `</p></div>`)
 		return output.String()
 	}
 	for _, page := range pages {
-		widgetui.WritePageRow(&output, page, now, icon)
+		widgetui.WritePageRow(&output, page, now, icon, localizer)
 	}
 	return output.String()
 }

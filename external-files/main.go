@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	"github.com/kumbuka-me/plugins/internal/macroargs"
 
 	sdk "github.com/kumbuka-me/sdk"
@@ -15,8 +16,8 @@ func main() {}
 
 // init registers the external-file macro and cache administration action with the Kumbuka SDK.
 func init() {
-	sdk.RegisterMacro("external-files", parse, func(value options) (sdk.Result, error) {
-		return render(value, sdk.Resources().Get, sdk.Settings().Get, sdk.HTTP().Do), nil
+	sdk.RegisterLocalizedMacro("external-files", parse, func(invocation sdk.LocalizedMacro[options]) (sdk.Result, error) {
+		return render(invocation.Value, sdk.Resources().Get, sdk.Settings().Get, sdk.HTTP().Do, localize.For(invocation.Locale)), nil
 	})
 	sdk.RegisterAdminAction("refresh-cache", func() error {
 		refreshCache()

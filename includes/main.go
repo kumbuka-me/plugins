@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
@@ -28,7 +29,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 		return sdk.RenderResult{Parts: []sdk.RenderPart{{Text: request.Source}}}
 	}
 
-	markdown, err := expandIncludes(request.Source, loadPage, nil, 0)
+	markdown, err := expandIncludes(request.Source, loadPage, nil, 0, localize.For(request.Locale))
 	if err != nil {
 		return sdk.RenderResult{Error: err.Error()}
 	}
@@ -41,7 +42,7 @@ func loadPage(slug string) (sdk.PageContent, error) {
 }
 
 // expandIncludes resolves includes outside fenced code blocks.
-func expandIncludes(source string, load pageLoader, seen map[string]bool, depth int) (string, error) {
+func expandIncludes(source string, load pageLoader, seen map[string]bool, depth int, localizer sdk.Localizer) (string, error) {
 	if depth > maxIncludeDepth {
 		return "", fmt.Errorf("include expansion exceeds maximum depth of %d", maxIncludeDepth)
 	}
@@ -66,7 +67,7 @@ func expandIncludes(source string, load pageLoader, seen map[string]bool, depth 
 			continue
 		}
 
-		expanded, err := expandLine(line, load, seen, depth)
+		expanded, err := expandLine(line, load, seen, depth, localizer)
 		if err != nil {
 			return "", err
 		}
@@ -77,7 +78,7 @@ func expandIncludes(source string, load pageLoader, seen map[string]bool, depth 
 }
 
 // expandLine replaces every well-formed include macro in one source line.
-func expandLine(line string, load pageLoader, seen map[string]bool, depth int) (string, error) {
+func expandLine(line string, load pageLoader, seen map[string]bool, depth int, localizer sdk.Localizer) (string, error) {
 	var output strings.Builder
 	for {
 		macro, ok := parseInclude(line)
@@ -86,7 +87,7 @@ func expandLine(line string, load pageLoader, seen map[string]bool, depth int) (
 			break
 		}
 		output.WriteString(line[:macro.start])
-		included, err := expandInclude(macro.target, load, seen, depth)
+		included, err := expandInclude(macro.target, load, seen, depth, localizer)
 		if err != nil {
 			return "", err
 		}
@@ -131,7 +132,7 @@ func parseInclude(line string) (includeMacro, bool) {
 }
 
 // expandInclude resolves one whole-page or heading-section include recursively.
-func expandInclude(target string, load pageLoader, seen map[string]bool, depth int) (string, error) {
+func expandInclude(target string, load pageLoader, seen map[string]bool, depth int, localizer sdk.Localizer) (string, error) {
 	page, heading := splitHeadingTarget(target)
 	slug := strings.Trim(page, "/")
 	if slug == "" {
@@ -152,23 +153,23 @@ func expandInclude(target string, load pageLoader, seen map[string]bool, depth i
 	}
 	nextSeen := maps.Clone(seen)
 	nextSeen[key] = true
-	expanded, err := expandIncludes(markdown, load, nextSeen, depth+1)
+	expanded, err := expandIncludes(markdown, load, nextSeen, depth+1, localizer)
 	if err != nil {
 		return "", fmt.Errorf("expand include %s: %w", slug, err)
 	}
-	return includeBreadcrumb(slug, heading) + expanded, nil
+	return includeBreadcrumb(slug, heading, localizer) + expanded, nil
 }
 
 // includeBreadcrumb identifies the source of transcluded content using Kumbuka's page breadcrumb convention.
-func includeBreadcrumb(slug, heading string) string {
-	parts := []string{"Pages", slug}
+func includeBreadcrumb(slug, heading string, localizer sdk.Localizer) string {
+	parts := []string{localizer.Text("common.pages"), slug}
 	if heading != "" {
 		parts = append(parts, heading)
 	}
 	for index := range parts {
 		parts[index] = html.EscapeString(parts[index])
 	}
-	return `<p class="breadcrumbs include-breadcrumbs">Included from · ` + strings.Join(parts, " / ") + "</p>\n\n"
+	return `<p class="breadcrumbs include-breadcrumbs">` + html.EscapeString(localizer.Text("include.from")) + ` · ` + strings.Join(parts, " / ") + "</p>\n\n"
 }
 
 // splitHeadingTarget separates a page path from an optional heading fragment.

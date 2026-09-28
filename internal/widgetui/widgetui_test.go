@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,24 +63,39 @@ func TestPageIconFallsBackWhenCustomIconUnavailable(t *testing.T) {
 func TestRelativeTime(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
-	t.Run("zero", func(t *testing.T) { t.Parallel(); assert.Empty(t, RelativeTime(time.Time{}, now)) })
-	t.Run("future", func(t *testing.T) { t.Parallel(); assert.Equal(t, "just now", RelativeTime(now.Add(time.Minute), now)) })
+	t.Run("zero", func(t *testing.T) { t.Parallel(); assert.Empty(t, RelativeTime(time.Time{}, now, localize.For("en"))) })
+	t.Run("future", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, "just now", RelativeTime(now.Add(time.Minute), now, localize.For("en")))
+	})
 	t.Run("below minute", func(t *testing.T) {
 		t.Parallel()
-		assert.Equal(t, "just now", RelativeTime(now.Add(-time.Minute+time.Nanosecond), now))
+		assert.Equal(t, "just now", RelativeTime(now.Add(-time.Minute+time.Nanosecond), now, localize.For("en")))
 	})
-	t.Run("minute boundary", func(t *testing.T) { t.Parallel(); assert.Equal(t, "1m ago", RelativeTime(now.Add(-time.Minute), now)) })
+	t.Run("minute boundary", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, "1m ago", RelativeTime(now.Add(-time.Minute), now, localize.For("en")))
+	})
 	t.Run("below hour", func(t *testing.T) {
 		t.Parallel()
-		assert.Equal(t, "59m ago", RelativeTime(now.Add(-time.Hour+time.Nanosecond), now))
+		assert.Equal(t, "59m ago", RelativeTime(now.Add(-time.Hour+time.Nanosecond), now, localize.For("en")))
 	})
-	t.Run("hour boundary", func(t *testing.T) { t.Parallel(); assert.Equal(t, "1h ago", RelativeTime(now.Add(-time.Hour), now)) })
+	t.Run("hour boundary", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, "1h ago", RelativeTime(now.Add(-time.Hour), now, localize.For("en")))
+	})
 	t.Run("below day", func(t *testing.T) {
 		t.Parallel()
-		assert.Equal(t, "23h ago", RelativeTime(now.Add(-24*time.Hour+time.Nanosecond), now))
+		assert.Equal(t, "23h ago", RelativeTime(now.Add(-24*time.Hour+time.Nanosecond), now, localize.For("en")))
 	})
-	t.Run("day boundary", func(t *testing.T) { t.Parallel(); assert.Equal(t, "1d ago", RelativeTime(now.Add(-24*time.Hour), now)) })
-	t.Run("partial days", func(t *testing.T) { t.Parallel(); assert.Equal(t, "2d ago", RelativeTime(now.Add(-49*time.Hour), now)) })
+	t.Run("day boundary", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, "1d ago", RelativeTime(now.Add(-24*time.Hour), now, localize.For("en")))
+	})
+	t.Run("partial days", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, "2d ago", RelativeTime(now.Add(-49*time.Hour), now, localize.For("en")))
+	})
 }
 
 func TestWritePageRow(t *testing.T) {
@@ -91,14 +107,14 @@ func TestWritePageRow(t *testing.T) {
 		require.Equal(t, "file-text-lucide", name)
 		assert.Equal(t, 17, size)
 		return "<svg/>"
-	})
+	}, localize.For("en"))
 	assert.Equal(t, `prefix<a class="page-row" href="/pages/guide/a%20b"><span class="doc-icon"><svg/></span><span><strong>&lt;Title&gt;&amp;</strong><small>guide/a b · &lt;tag&gt;, a&amp;b</small></span><time>1h ago</time></a>`, output.String())
 }
 
 func TestWritePageRowWithoutTagsOrTimestamp(t *testing.T) {
 	t.Parallel()
 	var output strings.Builder
-	WritePageRow(&output, sdk.Page{Slug: "a&b", Title: "Page"}, time.Time{}, func(string, int) string { return "" })
+	WritePageRow(&output, sdk.Page{Slug: "a&b", Title: "Page"}, time.Time{}, func(string, int) string { return "" }, localize.For("en"))
 	assert.Equal(t, `<a class="page-row" href="/pages/a&b"><span class="doc-icon"></span><span><strong>Page</strong><small>a&amp;b</small></span><time></time></a>`, output.String())
 }
 
@@ -109,7 +125,7 @@ func TestWriteCompactPageRow(t *testing.T) {
 		require.Equal(t, "file-text-lucide", name)
 		assert.Equal(t, 15, size)
 		return "<svg/>"
-	})
+	}, localize.For("en"))
 	assert.Equal(t, `<a class="compact-row" href="/pages/a%20b"><span><svg/></span><strong>&lt;Page&gt;</strong><small>42 views</small></a>`, output.String())
 }
 

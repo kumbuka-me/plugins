@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"testing"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -110,7 +111,7 @@ func TestParse(t *testing.T) {
 func TestNewRenderer(t *testing.T) {
 	icon := func(string, int) (template.HTML, error) { return "", nil }
 	nodes := []sdk.NavigationNode{{Title: "Guide", URL: "/docs/guide/", Icon: "book-open-lucide", Page: true, Children: []sdk.NavigationNode{{Title: "Install", URL: "/docs/guide/install/", Page: true}}}}
-	render := newRenderer(nodes, icon)
+	render := newRenderer(nodes, localize.For("en"), icon)
 	html, err := render(macroOptions{Title: "Related pages", ShowTitle: true})
 	require.NoError(t, err)
 	assert.Contains(t, html, "Related pages")
@@ -119,17 +120,26 @@ func TestNewRenderer(t *testing.T) {
 	html, err = render(macroOptions{ShowTitle: false})
 	require.NoError(t, err)
 	assert.NotContains(t, html, "subpage-toc-heading")
-	html, err = newRenderer([]sdk.NavigationNode{{Title: `<script>bad()</script>`, URL: "javascript:bad()", Page: true}}, icon)(macroOptions{Title: "<unsafe>", ShowTitle: true})
+	html, err = newRenderer([]sdk.NavigationNode{{Title: `<script>bad()</script>`, URL: "javascript:bad()", Page: true}}, localize.For("en"), icon)(macroOptions{Title: "<unsafe>", ShowTitle: true})
 	require.NoError(t, err)
 	assert.NotContains(t, html, "<script>")
 	assert.Contains(t, html, "&lt;unsafe&gt;")
 	assert.Contains(t, html, `href="#ZgotmplZ"`)
-	html, err = newRenderer(nil, func(string, int) (template.HTML, error) { require.FailNow(t, "unexpected icon call"); return "", nil })(macroOptions{ShowTitle: true})
+	html, err = newRenderer(nil, localize.For("en"), func(string, int) (template.HTML, error) { require.FailNow(t, "unexpected icon call"); return "", nil })(macroOptions{ShowTitle: true})
 	require.NoError(t, err)
 	assert.Empty(t, html)
-	html, err = newRenderer([]sdk.NavigationNode{{Title: "Folder", Children: nodes}}, icon)(macroOptions{})
+	html, err = newRenderer([]sdk.NavigationNode{{Title: "Folder", Children: nodes}}, localize.For("en"), icon)(macroOptions{})
 	require.NoError(t, err)
 	assert.Contains(t, html, `class="subpage-toc-label"`)
 	assert.Contains(t, html, "Folder")
 	assert.Contains(t, html, `href="/docs/guide/"`)
+}
+
+func TestNewRendererGermanDefaultLabel(t *testing.T) {
+	icon := func(string, int) (template.HTML, error) { return "", nil }
+	render := newRenderer([]sdk.NavigationNode{{Title: "Guide", URL: "/guide", Page: true}}, localize.For("de"), icon)
+	html, err := render(macroOptions{Title: localize.For("de").Text("subpages.title"), ShowTitle: true, DefaultTitle: true})
+	require.NoError(t, err)
+	assert.Contains(t, html, "Seiten in diesem Abschnitt")
+	assert.Contains(t, html, `aria-label="Seiten in diesem Abschnitt"`)
 }

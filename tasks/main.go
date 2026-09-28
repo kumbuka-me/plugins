@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -26,7 +27,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if err != nil {
 		return sdk.RenderResult{Error: err.Error()}
 	}
-	return sdk.Text(transformSource(request.Source, sdk.Storage().Get, workflow))
+	return sdk.Text(transformSource(request.Source, sdk.Storage().Get, workflow, localize.For(request.Locale)))
 }
 
 // renderWidget renders task controls for declarations on the current page.
@@ -42,7 +43,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return renderControls(content.Markdown, sdk.Storage().Get, workflow), nil
+	return renderControls(content.Markdown, sdk.Storage().Get, workflow, localize.For(context.Locale)), nil
 }
 
 // commandWidget validates a page-scoped task action before persisting the new state.
@@ -63,7 +64,7 @@ func commandWidget(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult, e
 		Write:            sdk.Storage().Set,
 		ResolveMention:   sdk.Users().ResolveMention,
 		SendNotification: sdk.Notifications().Send,
-	}); err != nil {
+	}, localize.For(context.Locale)); err != nil {
 		return sdk.WidgetCommandResult{}, err
 	}
 	return sdk.WidgetCommandResult{}, nil
@@ -74,5 +75,5 @@ func contentChanged(context sdk.ContentChangeContext) error {
 	return notifyTaskAssignments(context, taskAssignmentServices{
 		ResolveMention:   sdk.Users().ResolveMention,
 		SendNotification: sdk.Notifications().Send,
-	})
+	}, localize.For(context.Locale))
 }

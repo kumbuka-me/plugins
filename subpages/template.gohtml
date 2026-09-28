@@ -21,7 +21,7 @@
 
 {{ define "subpage-toc" }}
   {{ if .Children }}
-    <nav class="subpage-toc" aria-label="Pages in this section">
+    <nav class="subpage-toc" aria-label="{{ .AriaLabel }}">
       {{ if .ShowTitle }}
         <div class="subpage-toc-heading">
           <span aria-hidden="true">{{ icon "list-tree-lucide" 18 }}</span>
@@ -34,3 +34,5 @@
     </nav>
   {{ end }}
 {{ end }}
+
+

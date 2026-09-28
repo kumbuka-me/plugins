@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -104,7 +105,7 @@ func TestTransformSource(t *testing.T) {
 
 	t.Run("renders reusable interactive status", func(t *testing.T) {
 		source := `| API | {{status id="release/api" set="workflow" prefix="API"}} |`
-		output := transformSource(source, readResource, readStorage)
+		output := transformSource(source, readResource, readStorage, localize.For("en"))
 		encodedColor := hex.EncodeToString([]byte("#16a34a"))
 		if !strings.Contains(output, "kumbuka-status-green") || !strings.Contains(output, ">Done</span>") {
 			t.Fatalf("stored status was not rendered: %s", output)
@@ -120,14 +121,14 @@ func TestTransformSource(t *testing.T) {
 	})
 
 	t.Run("renders page local status", func(t *testing.T) {
-		output := transformSource(`{{status id="risk" options="Low;High" colors="#64748b;#dc2626" initial="High"}}`, readResource, nil)
+		output := transformSource(`{{status id="risk" options="Low;High" colors="#64748b;#dc2626" initial="High"}}`, readResource, nil, localize.For("en"))
 		if !strings.Contains(output, ">High</span>") || !strings.Contains(output, hex.EncodeToString([]byte("#dc2626"))) {
 			t.Fatalf("page-local status was not rendered: %s", output)
 		}
 	})
 
 	t.Run("renders declaration error", func(t *testing.T) {
-		output := transformSource(`{{status id="risk" set="workflow" options="Low;High"}}`, readResource, nil)
+		output := transformSource(`{{status id="risk" set="workflow" options="Low;High"}}`, readResource, nil, localize.For("en"))
 		if !strings.Contains(output, "Status error:") || !strings.Contains(output, "either set or options") {
 			t.Fatalf("status error was not rendered: %s", output)
 		}
@@ -137,7 +138,7 @@ func TestTransformSource(t *testing.T) {
 		readInvalid := func(string, string) (sdk.PluginResourceRecord, error) {
 			return sdk.PluginResourceRecord{Key: "broken", Values: map[string]string{"statuses": `[{"label":"Ready","color":"nope"}]`}}, nil
 		}
-		output := transformSource(`{{status id="broken" set="broken"}}`, readInvalid, nil)
+		output := transformSource(`{{status id="broken" set="broken"}}`, readInvalid, nil, localize.For("en"))
 		if !strings.Contains(output, `Status error: invalid status set &#34;broken&#34;`) || !strings.Contains(output, "invalid color") {
 			t.Fatalf("status-set error was not rendered: %s", output)
 		}
@@ -145,7 +146,7 @@ func TestTransformSource(t *testing.T) {
 
 	t.Run("preserves code", func(t *testing.T) {
 		source := "`{{status id=\"inline-code\" set=\"workflow\"}}`\n\n```text\n{{status id=\"fenced\" set=\"workflow\"}}\n```"
-		output := transformSource(source, readResource, readStorage)
+		output := transformSource(source, readResource, readStorage, localize.For("en"))
 		if !strings.Contains(output, "`{{status id=\"inline-code\" set=\"workflow\"}}`") {
 			t.Fatalf("inline code changed: %s", output)
 		}
@@ -194,3 +195,11 @@ type testError string
 func (e testError) Error() string { return string(e) }
 
 const errTestMissing = testError("missing")
+
+// TestStatusPresentationGerman verifies built-in status labels use the request locale.
+func TestStatusPresentationGerman(t *testing.T) {
+	output := transformSource(`{{status id="release" set="workflow" initial="In progress"}}`, nil, nil, localize.For("de"))
+	if !strings.Contains(output, "In Arbeit") || !strings.Contains(output, "Status: In Arbeit") {
+		t.Fatalf("German status presentation was not rendered: %s", output)
+	}
+}
