@@ -36,6 +36,11 @@
           "name": "initial",
           "type": "string",
           "max_bytes": 64
+        },
+        {
+          "name": "parent",
+          "type": "identifier",
+          "max_bytes": 128
         }
       ],
       "settings": [
@@ -64,6 +69,12 @@
           "attribute": "initial",
           "placeholder": "open",
           "suggestions": ["open", "done"]
+        },
+        {
+          "type": "text",
+          "label": "Parent task ID",
+          "attribute": "parent",
+          "placeholder": "parent-task-id"
         }
       ],
       "preview": {
@@ -72,10 +83,12 @@
           "class": "kumbuka-task",
           "title": "Task",
           "subtitle_attribute": "text",
-          "metadata_attributes": ["assignee", "due", "initial"],
+          "metadata_attributes": ["assignee", "due", "initial", "parent"],
           "body_text": "The current workflow state is stored separately when the rendered task is changed."
         }
       }
     }
   ]
 }
+
+

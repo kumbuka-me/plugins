@@ -17,13 +17,14 @@ import (
 // TestParseTaskToken verifies required, optional, and invalid task attributes.
 func TestParseTaskToken(t *testing.T) {
 	t.Run("complete", func(t *testing.T) {
-		task, err := parseTaskToken(`{{task id="deploy/api" text="Deploy API" assignee="@alice" due="2026-10-01" initial="in-progress"}}`)
+		task, err := parseTaskToken(`{{task id="deploy/api" text="Deploy API" assignee="@alice" due="2026-10-01" initial="in-progress" parent="release"}}`)
 		require.NoError(t, err)
 		assert.Equal(t, "deploy/api", task.ID)
 		assert.Equal(t, "Deploy API", task.Text)
 		assert.Equal(t, "@alice", task.Assignee)
 		assert.Equal(t, "2026-10-01", task.Due)
 		assert.Equal(t, "in-progress", task.InitialState)
+		assert.Equal(t, "release", task.Parent)
 	})
 
 	t.Run("invalid assignee", func(t *testing.T) {
@@ -50,6 +51,11 @@ func TestParseTaskToken(t *testing.T) {
 	t.Run("unsupported attribute", func(t *testing.T) {
 		_, err := parseTaskToken(`{{task id="docs" text="Write docs" priority="high"}}`)
 		require.ErrorContains(t, err, "unsupported")
+	})
+
+	t.Run("rejects self parent", func(t *testing.T) {
+		_, err := parseTaskToken(`{{task id="docs" text="Write docs" parent="docs"}}`)
+		require.ErrorContains(t, err, "own parent")
 	})
 }
 
@@ -118,6 +124,44 @@ func TestTransformSource(t *testing.T) {
 		source := "`{{task id=\"inline\" text=\"Inline\"}}`\n```text\n{{task id=\"fenced\" text=\"Fenced\"}}\n```"
 		assert.Equal(t, source, transformSource(source, nil, workflow, localize.For("en")))
 	})
+}
+
+// TestTaskListRendering verifies adjacent tasks are grouped and parent references create compact nesting.
+func TestTaskListRendering(t *testing.T) {
+	workflow := defaultTaskWorkflow()
+	read := func(key string) (sdk.StoredValue, error) {
+		if key == storageKey("release-notes") {
+			return sdk.StoredValue{Found: true, Value: []byte("done")}, nil
+		}
+		return sdk.StoredValue{}, nil
+	}
+	source := `{{task id="release" text="Prepare release"}}
+
+{{task id="release-notes" parent="release" text="Publish release notes"}}
+
+{{task id="production" parent="release" text="Deploy to production"}}
+
+{{task id="verify" parent="production" text="Verify production health"}}
+
+{{task id="announce" text="Announce the release"}}`
+
+	output := transformSource(source, read, workflow, localize.For("en"))
+	assert.Equal(t, 1, strings.Count(output, `class="kumbuka-task-browser"`))
+	assert.Contains(t, output, `class="kumbuka-task-list-header"`)
+	assert.Contains(t, output, `class="kumbuka-task-progress-current">1</span>`)
+	assert.Contains(t, output, "kumbuka-task-depth__0")
+	assert.Contains(t, output, "kumbuka-task-depth__1")
+	assert.Contains(t, output, "kumbuka-task-depth__2")
+	assert.Contains(t, output, "Publish release notes")
+}
+
+// TestTaskListInvalidParent verifies subtasks cannot point outside their adjacent task list.
+func TestTaskListInvalidParent(t *testing.T) {
+	workflow := defaultTaskWorkflow()
+	output := transformSource(`{{task id="release" text="Prepare release"}}
+{{task id="verify" parent="missing" text="Verify"}}`, nil, workflow, localize.For("en"))
+	require.Contains(t, output, "Task error:")
+	assert.Contains(t, output, "must appear before its subtask")
 }
 
 // TestDiscoverTasks verifies unique task discovery outside code spans and fences.
