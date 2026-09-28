@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.tasks
 name: Tasks
 icon: square-check-big-lucide
-version: 1.5.0
+version: 1.5.1
 description: Add persistent nested task lists with assignees, due dates, configurable states, and notifications to Kumbuka pages.
 default_enabled: true
 modules:
