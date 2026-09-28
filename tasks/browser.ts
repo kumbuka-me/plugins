@@ -245,6 +245,17 @@ body,
 .kumbuka-task-completed .kumbuka-task-details {
   opacity: 0.78;
 }
+
+.kumbuka-task-description {
+  color: var(--text-secondary, #64748b);
+  font-size: 0.78rem;
+  line-height: 1.38;
+  white-space: pre-wrap;
+}
+
+.kumbuka-task-completed .kumbuka-task-description {
+  opacity: 0.7;
+}
 `;
 
   function ensureStyles(): void {

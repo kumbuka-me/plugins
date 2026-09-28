@@ -4,7 +4,7 @@ id: me.kumbuka.tasks
 name: Tasks
 icon: square-check-big-lucide
 version: 1.6.0
-description: Add persistent nested task lists with assignees, due dates, configurable states, and notifications to Kumbuka pages.
+description: Add persistent nested task trees with descriptions, assignees, due dates, configurable states, and notifications to Kumbuka pages.
 default_enabled: true
 modules:
   - type: settings
@@ -65,7 +65,7 @@ modules:
     id: task-insert
     name: Tasks
     description: Insert a persistent task list with nested subtasks.
-    markdown: '{{tasks texts="Describe the task" ids="task-id"}}'
+    markdown: '{{tasks texts="Describe the task"}}'
     inline: false
     group: insert
     allowed_groups: [insert, blocks, plugins]

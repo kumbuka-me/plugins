@@ -19,12 +19,20 @@
           "separator": "\u001f"
         },
         {
+          "name": "descriptions",
+          "type": "list",
+          "max_bytes": 4096,
+          "max_items": 128,
+          "separator": "\u001f"
+        },
+        {
           "name": "ids",
           "type": "list",
           "required": true,
           "max_bytes": 128,
           "max_items": 128,
-          "separator": "\u001f"
+          "separator": "\u001f",
+          "unique": true
         },
         {
           "name": "parents",
@@ -57,40 +65,56 @@
       ],
       "settings": [
         {
-          "type": "table",
-          "label": "Tasks and subtasks",
+          "type": "tree",
+          "label": "Tasks",
           "attributes": [
             "texts",
+            "descriptions",
             "ids",
             "parents",
             "assignees",
             "dues",
             "initials"
           ],
-          "columns": [
+          "id_attribute": "ids",
+          "parent_attribute": "parents",
+          "title_attribute": "texts",
+          "description_attribute": "descriptions",
+          "id_prefix": "task-",
+          "max_depth": 16,
+          "fields": [
             {
+              "attribute": "texts",
               "label": "Task",
-              "type": "textarea"
+              "type": "text",
+              "placeholder": "Describe the task"
             },
             {
-              "label": "ID",
-              "type": "text"
+              "attribute": "descriptions",
+              "label": "Description",
+              "type": "textarea",
+              "placeholder": "Add details, context, or acceptance criteria"
             },
             {
-              "label": "Parent task ID",
-              "type": "text"
-            },
-            {
+              "attribute": "assignees",
               "label": "Assignee",
-              "type": "text"
+              "type": "mention",
+              "placeholder": "@alice"
             },
             {
+              "attribute": "dues",
               "label": "Due",
-              "type": "text"
+              "type": "date"
             },
             {
+              "attribute": "initials",
               "label": "Initial state",
-              "type": "text"
+              "type": "text",
+              "placeholder": "open",
+              "suggestions": [
+                "open",
+                "done"
+              ]
             }
           ]
         }
@@ -98,7 +122,10 @@
       "constraints": [
         {
           "kind": "same-length",
-          "attributes": ["texts", "ids"]
+          "attributes": [
+            "texts",
+            "ids"
+          ]
         }
       ],
       "preview": {
@@ -106,7 +133,7 @@
         "card": {
           "class": "kumbuka-task-list-editor",
           "title": "Tasks",
-          "body_text": "Edit every task, subtask, and deeper nested task in one modal. Set Parent task ID to nest a row under an earlier task.",
+          "body_text": "Edit the complete task tree, descriptions, assignees, due dates, and initial states in one form. Task identities and parent relationships are managed automatically.",
           "rendered": true
         }
       }
@@ -131,6 +158,11 @@
           "type": "string",
           "required": true,
           "max_bytes": 512
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "max_bytes": 4096
         },
         {
           "name": "assignee",
@@ -161,10 +193,10 @@
           "placeholder": "Describe the task"
         },
         {
-          "type": "text",
-          "label": "ID",
-          "attribute": "id",
-          "placeholder": "task-id"
+          "type": "textarea",
+          "label": "Description",
+          "attribute": "description",
+          "placeholder": "Add details, context, or acceptance criteria"
         },
         {
           "type": "mention",
@@ -172,19 +204,20 @@
           "attribute": "assignee",
           "placeholder": "@alice"
         },
-        { "type": "date", "label": "Due", "attribute": "due" },
         {
-          "type": "text",
-          "label": "Initial state ID",
-          "attribute": "initial",
-          "placeholder": "open",
-          "suggestions": ["open", "done"]
+          "type": "date",
+          "label": "Due",
+          "attribute": "due"
         },
         {
           "type": "text",
-          "label": "Parent task ID",
-          "attribute": "parent",
-          "placeholder": "parent-task-id"
+          "label": "Initial state",
+          "attribute": "initial",
+          "placeholder": "open",
+          "suggestions": [
+            "open",
+            "done"
+          ]
         }
       ],
       "preview": {
@@ -193,8 +226,12 @@
           "class": "kumbuka-task",
           "title": "Task",
           "subtitle_attribute": "text",
-          "metadata_attributes": ["assignee", "due", "initial", "parent"],
-          "body_text": "Single-task syntax remains supported for existing pages. New task lists can be edited together in one modal."
+          "metadata_attributes": [
+            "assignee",
+            "due",
+            "initial"
+          ],
+          "body_text": "Legacy single-task syntax remains supported. Internal task and parent IDs stay hidden in the visual editor."
         }
       }
     }

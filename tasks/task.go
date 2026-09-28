@@ -17,22 +17,25 @@ import (
 )
 
 const (
-	maxTaskDeclarations   = 128
-	maxTaskTokenBytes     = 2048
-	maxTaskListTokenBytes = 192 * 1024
-	maxTaskIDBytes        = 128
-	maxTaskTextBytes      = 512
-	maxAssigneeBytes      = 128
-	maxTaskDepth          = 16
-	taskListSeparator     = "\x1f"
+	maxTaskDeclarations     = 128
+	maxTaskTokenBytes       = 8192
+	maxTaskListTokenBytes   = 192 * 1024
+	maxTaskIDBytes          = 128
+	maxTaskTextBytes        = 512
+	maxTaskDescriptionBytes = 4096
+	maxAssigneeBytes        = 128
+	maxTaskDepth            = 16
+	taskListSeparator       = "\x1f"
 )
 
 // taskOptions contains one parsed task declaration from page Markdown.
 type taskOptions struct {
 	// ID is the globally stable storage identity for the task.
 	ID string
-	// Text is the visible task description.
+	// Text is the visible task title.
 	Text string
+	// Description optionally contains longer task context.
+	Description string
 	// Assignee optionally names the Kumbuka user responsible for the task.
 	Assignee string
 	// Due optionally contains a validated ISO calendar date.
@@ -250,21 +253,33 @@ func parseTaskListToken(token string) ([]taskOptions, error) {
 	}
 	for name := range arguments {
 		switch name {
-		case "texts", "ids", "parents", "assignees", "dues", "initials":
+		case "texts", "descriptions", "ids", "parents", "assignees", "dues", "initials":
 		default:
 			return nil, fmt.Errorf("unsupported task list attribute %q", name)
 		}
 	}
 
 	texts := splitTaskListAttribute(arguments["texts"])
-	ids := splitTaskListAttribute(arguments["ids"])
-	if len(texts) == 0 || len(ids) == 0 || len(texts) != len(ids) {
-		return nil, fmt.Errorf("task list texts and ids must contain the same non-zero number of items")
+	if len(texts) == 0 {
+		return nil, fmt.Errorf("task list must contain at least one task text")
+	}
+	ids, err := optionalTaskListAttribute(arguments["ids"], len(texts), "ids")
+	if err != nil {
+		return nil, err
+	}
+	for index := range ids {
+		if strings.TrimSpace(ids[index]) == "" {
+			ids[index] = automaticTaskID(index, texts[index])
+		}
 	}
 	if len(texts) > maxTaskDeclarations {
 		return nil, fmt.Errorf("task list may contain at most %d tasks", maxTaskDeclarations)
 	}
 
+	descriptions, err := optionalTaskListAttribute(arguments["descriptions"], len(texts), "descriptions")
+	if err != nil {
+		return nil, err
+	}
 	parents, err := optionalTaskListAttribute(arguments["parents"], len(texts), "parents")
 	if err != nil {
 		return nil, err
@@ -287,6 +302,7 @@ func parseTaskListToken(token string) ([]taskOptions, error) {
 		options := taskOptions{
 			ID:           strings.TrimSpace(ids[index]),
 			Text:         strings.TrimSpace(texts[index]),
+			Description:  strings.TrimSpace(descriptions[index]),
 			Parent:       strings.TrimSpace(parents[index]),
 			Assignee:     strings.TrimSpace(assignees[index]),
 			Due:          strings.TrimSpace(dues[index]),
@@ -349,7 +365,7 @@ func parseTaskToken(token string) (taskOptions, error) {
 	}
 	for name := range arguments {
 		switch name {
-		case "id", "text", "assignee", "due", "initial", "parent":
+		case "id", "text", "description", "assignee", "due", "initial", "parent":
 		default:
 			return taskOptions{}, fmt.Errorf("unsupported task attribute %q", name)
 		}
@@ -358,6 +374,7 @@ func parseTaskToken(token string) (taskOptions, error) {
 	options := taskOptions{
 		ID:           strings.TrimSpace(arguments["id"]),
 		Text:         strings.TrimSpace(arguments["text"]),
+		Description:  strings.TrimSpace(arguments["description"]),
 		Assignee:     strings.TrimSpace(arguments["assignee"]),
 		Due:          strings.TrimSpace(arguments["due"]),
 		InitialState: strings.TrimSpace(arguments["initial"]),
@@ -376,6 +393,9 @@ func validateTaskOptions(options taskOptions) error {
 	}
 	if options.Text == "" || len(options.Text) > maxTaskTextBytes || !utf8.ValidString(options.Text) {
 		return fmt.Errorf("task text must be 1-%d bytes of valid UTF-8", maxTaskTextBytes)
+	}
+	if len(options.Description) > maxTaskDescriptionBytes || !utf8.ValidString(options.Description) {
+		return fmt.Errorf("task description must be at most %d bytes of valid UTF-8", maxTaskDescriptionBytes)
 	}
 	if len(options.Assignee) > maxAssigneeBytes || !utf8.ValidString(options.Assignee) {
 		return fmt.Errorf("task assignee must be at most %d bytes of valid UTF-8", maxAssigneeBytes)
@@ -396,6 +416,12 @@ func validateTaskOptions(options taskOptions) error {
 		return fmt.Errorf("task cannot be its own parent")
 	}
 	return nil
+}
+
+// automaticTaskID derives a stable fallback identity for a task-list row that has not been saved by the visual editor yet.
+func automaticTaskID(index int, text string) string {
+	sum := sha256.Sum256([]byte(fmt.Sprintf("%d\x00%s", index, text)))
+	return "task-" + hex.EncodeToString(sum[:12])
 }
 
 // validMention reports whether value is a bounded canonical Kumbuka mention.
@@ -637,7 +663,11 @@ func renderTaskItem(options taskOptions, definition taskWorkflowState, workflow 
 	output.WriteString(`<span class="kumbuka-task-box" aria-hidden="true">` + mark + `</span>`)
 	output.WriteString(`<span class="kumbuka-task-content"><span class="kumbuka-task-text">`)
 	output.WriteString(html.EscapeString(options.Text))
-	output.WriteString(`</span><span class="kumbuka-task-details">`)
+	output.WriteString(`</span>`)
+	if options.Description != "" {
+		output.WriteString(`<span class="kumbuka-task-description">` + html.EscapeString(options.Description) + `</span>`)
+	}
+	output.WriteString(`<span class="kumbuka-task-details">`)
 	output.WriteString(`<span class="kumbuka-task-state-label">` + html.EscapeString(workflow.stateLabel(definition, localizer)) + `</span>`)
 	if options.Assignee != "" {
 		output.WriteString(`<span class="kumbuka-task-assignee" data-kumbuka-mention>` + html.EscapeString(options.Assignee) + `</span>`)

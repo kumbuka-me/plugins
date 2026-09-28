@@ -17,10 +17,11 @@ import (
 // TestParseTaskToken verifies required, optional, and invalid task attributes.
 func TestParseTaskToken(t *testing.T) {
 	t.Run("complete", func(t *testing.T) {
-		task, err := parseTaskToken(`{{task id="deploy/api" text="Deploy API" assignee="@alice" due="2026-10-01" initial="in-progress" parent="release"}}`)
+		task, err := parseTaskToken(`{{task id="deploy/api" text="Deploy API" description="Roll out the API after smoke tests." assignee="@alice" due="2026-10-01" initial="in-progress" parent="release"}}`)
 		require.NoError(t, err)
 		assert.Equal(t, "deploy/api", task.ID)
 		assert.Equal(t, "Deploy API", task.Text)
+		assert.Equal(t, "Roll out the API after smoke tests.", task.Description)
 		assert.Equal(t, "@alice", task.Assignee)
 		assert.Equal(t, "2026-10-01", task.Due)
 		assert.Equal(t, "in-progress", task.InitialState)
@@ -62,7 +63,7 @@ func TestParseTaskToken(t *testing.T) {
 // TestParseTaskListToken verifies one visual-editor task list expands into a validated hierarchy.
 func TestParseTaskListToken(t *testing.T) {
 	separator := `\u001f`
-	token := `{{tasks texts="Prepare release` + separator + `Publish notes` + separator + `Verify production" ids="release` + separator + `notes` + separator + `verify" parents="` + separator + `release` + separator + `notes" assignees="@alice` + separator + `@alice` + separator + `" dues="2026-10-01` + separator + separator + `2026-10-02"}}`
+	token := `{{tasks texts="Prepare release` + separator + `Publish notes` + separator + `Verify production" descriptions="Release everything` + separator + `Write notes` + separator + `Check health" ids="release` + separator + `notes` + separator + `verify" parents="` + separator + `release` + separator + `notes" assignees="@alice` + separator + `@alice` + separator + `" dues="2026-10-01` + separator + separator + `2026-10-02"}}`
 
 	tasks, err := parseTaskListToken(token)
 	require.NoError(t, err)
@@ -70,9 +71,19 @@ func TestParseTaskListToken(t *testing.T) {
 	assert.Equal(t, "release", tasks[0].ID)
 	assert.Empty(t, tasks[0].Parent)
 	assert.Equal(t, "release", tasks[1].Parent)
+	assert.Equal(t, "Write notes", tasks[1].Description)
 	assert.Equal(t, "notes", tasks[2].Parent)
 	assert.Equal(t, "@alice", tasks[1].Assignee)
 	assert.Equal(t, "2026-10-02", tasks[2].Due)
+}
+
+// TestParseTaskListTokenGeneratesMissingIDs verifies a freshly inserted visual task is renderable before its first Apply.
+func TestParseTaskListTokenGeneratesMissingIDs(t *testing.T) {
+	tasks, err := parseTaskListToken(`{{tasks texts="Describe the task"}}`)
+	require.NoError(t, err)
+	require.Len(t, tasks, 1)
+	assert.Equal(t, "Describe the task", tasks[0].Text)
+	assert.Regexp(t, `^task-[0-9a-f]{24}$`, tasks[0].ID)
 }
 
 // TestParseTaskListTokenRejectsForwardParent verifies modal rows form a deterministic document-order tree.
@@ -123,12 +134,13 @@ func TestTransformSource(t *testing.T) {
 	}
 
 	t.Run("renders legacy done task as configured state", func(t *testing.T) {
-		output := transformSource(`{{task id="deploy" text="Deploy API" assignee="@alice" due="2026-10-01"}}`, read, workflow, localize.For("en"))
+		output := transformSource(`{{task id="deploy" text="Deploy API" description="Deploy after verification." assignee="@alice" due="2026-10-01"}}`, read, workflow, localize.For("en"))
 		assert.Contains(t, output, "kumbuka-task-completed")
 		assert.Contains(t, output, "kumbuka-task-state__done")
 		assert.Contains(t, output, actionID("deploy", "open"))
 		assert.Contains(t, output, actionID("deploy", "done"))
 		assert.Contains(t, output, "Due 2026-10-01")
+		assert.Contains(t, output, `<span class="kumbuka-task-description">Deploy after verification.</span>`)
 		assert.Contains(t, output, `<span class="kumbuka-task-assignee" data-kumbuka-mention>@alice</span>`)
 	})
 

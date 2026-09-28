@@ -184,3 +184,14 @@
   border-radius: 0.35rem;
   color: #dc2626;
 }
+
+.prose .kumbuka-task-description {
+  color: var(--text-secondary, #64748b);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.prose .kumbuka-task-completed .kumbuka-task-description {
+  opacity: 0.72;
+}

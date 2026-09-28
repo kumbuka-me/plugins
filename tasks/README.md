@@ -1,42 +1,45 @@
 # Tasks
 
-Tasks adds persistent actionable task lists to Kumbuka pages. A task can have an assignee, due date, configurable workflow state, and any number of nested subtasks. State changes are stored separately from page Markdown, so checking a task does not create a page revision.
+Tasks adds persistent actionable task trees to Kumbuka pages. Tasks can have descriptions, assignees, due dates, configurable workflow states, and arbitrarily nested subtasks up to the configured safety limit. State changes are stored separately from page Markdown, so checking a task does not create a page revision.
 
 ## Visual editor
 
-The preferred way to create tasks is the **Tasks** block in the Visual editor. One block owns the entire task tree and opens one modal with a **Tasks and subtasks** table.
+The preferred way to create and edit tasks is the **Tasks** block in the Visual editor. One block owns the entire task tree and opens one large task editor.
 
-Each row contains:
+The editor deliberately hides implementation details. Users never enter task IDs or parent IDs. Kumbuka creates stable internal task identities automatically and preserves them when a task is renamed, reordered, or moved. Parent relationships are derived from the visible tree.
 
-- **Task** — the visible task text.
-- **ID** — the stable task identity used for persisted state.
-- **Parent task ID** — leave empty for a top-level task, or enter the ID of an earlier row to make this row its child.
+For every task you can edit:
+
+- **Task** — the short task title.
+- **Description** — optional longer context, instructions, or acceptance criteria.
 - **Assignee** — an optional canonical Kumbuka mention such as `@alice`.
-- **Due** — an optional `YYYY-MM-DD` date.
+- **Due** — an optional calendar date.
 - **Initial state** — an optional workflow state ID. When omitted, the first configured state is used.
 
-All tasks, subtasks, sub-subtasks, and deeper levels are edited in that same modal. Parent rows must appear before their children. Nesting is supported up to 16 levels.
+Use **+ Add task** for another top-level task and **+ Add subtask** on any task to create a child. Subtasks can themselves contain subtasks. Tasks can be dragged to reorder them or moved into another task's subtask area. Deleting a task with descendants asks for confirmation before removing the whole subtree.
 
-A newly inserted block starts with one row:
+The editor supports nesting up to 16 levels. Completing every child does not automatically complete its parent; each task has its own persisted state.
+
+A newly inserted block intentionally contains no public ID:
 
 ```markdown
-{{tasks texts="Describe the task" ids="task-id"}}
+{{tasks texts="Describe the task"}}
 ```
 
-When multiple rows are edited visually, Kumbuka stores the table columns as list attributes inside the same `{{tasks ...}}` declaration. Those list separators are an implementation detail; source-mode users can continue to use the readable single-task syntax below.
+When the block is first applied in the Visual editor, Kumbuka writes generated internal IDs into the source. They remain hidden from the normal editor UI and should be treated as persistence metadata.
 
-## Source-mode task syntax
+## Source mode
 
-The existing `{{task ...}}` form remains supported and adjacent declarations are rendered as one task list:
+The readable single-task syntax remains supported for users editing Markdown directly:
 
 ```markdown
-{{task id="release" text="Prepare release" assignee="@alice" due="2026-10-01"}}
-{{task id="release-notes" parent="release" text="Publish release notes" assignee="@alice"}}
+{{task id="release" text="Prepare release" description="Test and publish the release." assignee="@alice" due="2026-10-01"}}
+{{task id="release-notes" parent="release" text="Publish release notes" description="Include migration notes."}}
 {{task id="production" parent="release" text="Deploy to production" assignee="@bob"}}
 {{task id="verify" parent="production" text="Verify production health"}}
 ```
 
-This produces the hierarchy:
+Adjacent declarations are rendered as one tree:
 
 ```text
 Prepare release
@@ -45,7 +48,9 @@ Prepare release
    └─ Verify production health
 ```
 
-Only `id` and `text` are required for a single-task declaration. IDs support letters, numbers, `.`, `_`, `-`, `/`, and `:`. Keep an ID unchanged when editing or moving a task because persisted state is keyed by that ID.
+For source-mode `{{task ...}}` declarations, `id` and `text` are required. `description`, `assignee`, `due`, `initial`, and `parent` are optional. IDs support letters, numbers, `.`, `_`, `-`, `/`, and `:`. Keep an ID unchanged because persisted state is keyed by it.
+
+The compact `{{tasks ...}}` syntax used by the Visual editor stores parallel task fields in one macro. Those list attributes and generated IDs are implementation details; normal users do not need to edit them manually.
 
 Task declarations inside fenced code blocks or inline code remain literal. Invalid declarations render a visible **Task error** instead of silently disappearing.
 
@@ -60,11 +65,9 @@ Open **Administration → Plugin settings → Tasks → Workflow** to configure 
 
 When no states are configured, Tasks uses the backward-compatible `open` and `done` workflow. Existing persisted `open`/`done` values and the previous boolean JSON state format are mapped to the closest configured incomplete/completed state.
 
-Completing every child does not automatically complete its parent. A parent remains an independent task and must be moved to a completed state explicitly.
-
 ## Interaction
 
-Rendered task lists use compact rows instead of large cards. Nested tasks are shown below their parent with a hierarchy line. The circular control at the left changes state; the current state, assignee, and due date remain visible as secondary metadata. Completed tasks are muted and struck through, and multi-task lists show a completed/total counter.
+Rendered task trees use compact rows rather than large cards. Nested tasks are shown below their parent with hierarchy lines. The circular control at the left changes state; descriptions and task metadata remain visually secondary. Completed tasks are muted and struck through, and multi-task lists show a completed/total counter.
 
 State changes are sent through Kumbuka's host-mediated page-details command handler. Before persisting a change, Tasks rereads the current page and verifies that both the task and requested state are still valid.
 
