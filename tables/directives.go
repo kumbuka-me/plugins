@@ -52,71 +52,45 @@ func tableDirectivesEnabled(options tableOptions) bool {
 }
 
 // preprocessTableDirectives replaces enabled table directives with trusted markers consumed after rendering.
-func preprocessTableDirectives(
-	source string,
-	options tableOptions,
-) string {
-	lines := strings.Split(source, "\n")
-	out := make([]string, 0, len(lines))
-	fence := ""
+func preprocessTableDirectives(source string, options tableOptions) string {
+	var output strings.Builder
+	output.Grow(len(source))
 
-	for index, line := range lines {
-		marker := pluginmarkdown.Fence(line)
+	fence := ""
+	previousNonEmptyTableLine := false
+	for offset := 0; ; {
+		rest := source[offset:]
+		line, tail, hasNewline := strings.Cut(rest, "\n")
+		trimmed := strings.TrimSpace(line)
+		rendered := line
 
 		if fence != "" {
-			out = append(out, line)
-
 			if pluginmarkdown.Closes(line, fence) {
 				fence = ""
 			}
-
-			continue
-		}
-
-		if marker != "" {
+		} else if marker := pluginmarkdown.Fence(line); marker != "" {
 			fence = marker
-			out = append(out, line)
-			continue
-		}
-
-		trimmed := strings.TrimSpace(line)
-
-		if previousTableLine(lines, index) {
-			directive, ok := parseTableDirective(trimmed)
-
-			if ok &&
-				tableDirectiveActive(directive, options) {
-				out = append(
-					out,
-					`<div class="kumbuka-table-style-marker" data-table-style="`+
-						stdhtml.EscapeString(trimmed)+
-						`"></div>`,
-				)
-
-				continue
+		} else if previousNonEmptyTableLine {
+			if directive, ok := parseTableDirective(trimmed); ok && tableDirectiveActive(directive, options) {
+				rendered = `<div class="kumbuka-table-style-marker" data-table-style="` + stdhtml.EscapeString(trimmed) + `"></div>`
 			}
 		}
 
-		out = append(out, line)
-	}
-
-	return strings.Join(out, "\n")
-}
-
-// previousTableLine reports whether a directive immediately follows a Markdown table row.
-func previousTableLine(
-	lines []string,
-	index int,
-) bool {
-	for _, line := range slices.Backward(lines[:index]) {
-		if strings.TrimSpace(line) == "" {
-			continue
+		output.WriteString(rendered)
+		if hasNewline {
+			output.WriteByte('\n')
 		}
 
-		return strings.Contains(line, "|")
+		if trimmed != "" {
+			previousNonEmptyTableLine = strings.Contains(line, "|")
+		}
+		if !hasNewline {
+			break
+		}
+		offset = len(source) - len(tail)
 	}
 
-	return false
+	return output.String()
 }
 
 // parseTableDirective parses trusted table colors and optional browser interactions.
@@ -282,73 +256,9 @@ func tableTone(value string) bool {
 	}
 }
 
-// tableDirectiveWalker tracks the nearest table while applying rendered table markers.
-type tableDirectiveWalker struct {
-	// options contains the request-scoped table feature switches.
-	options tableOptions
-	// markers contains directive marker nodes removed after processing.
-	markers []*xhtml.Node
-	// lastTable is the nearest preceding rendered table in document order.
-	lastTable *xhtml.Node
-}
-
 // applyTableDirectiveMarkers applies trusted directives to the nearest preceding rendered table.
-func applyTableDirectiveMarkers(
-	rendered string,
-	options tableOptions,
-) (string, error) {
-	root, err := htmlutil.ParseFragment(rendered)
-	if err != nil {
-		return "", err
-	}
-
-	walker := tableDirectiveWalker{options: options}
-	walker.walk(root)
-
-	for _, marker := range walker.markers {
-		if marker.Parent != nil {
-			marker.Parent.RemoveChild(marker)
-		}
-	}
-
-	return htmlutil.RenderChildren(root)
-}
-
-// walk applies one table marker in document order and records it for removal.
-func (w *tableDirectiveWalker) walk(
-	node *xhtml.Node,
-) {
-	if node.Type == xhtml.ElementNode {
-		if node.Data == "table" {
-			w.lastTable = node
-		}
-
-		if node.Data == "div" &&
-			strings.Contains(
-				" "+htmlutil.Attribute(node, "class")+" ",
-				" kumbuka-table-style-marker ",
-			) {
-			directive, ok := parseTableDirective(
-				htmlutil.Attribute(node, "data-table-style"),
-			)
-
-			if ok && w.lastTable != nil {
-				applyTableDirective(
-					w.lastTable,
-					directive,
-					w.options,
-				)
-			}
-
-			w.markers = append(w.markers, node)
-
-			return
-		}
-	}
-
-	for child := node.FirstChild; child != nil; child = child.NextSibling {
-		w.walk(child)
-	}
+func applyTableDirectiveMarkers(rendered string, options tableOptions) (string, error) {
+	return processRenderedTables(rendered, options, false)
 }
 
 // applyTableDirective applies enabled colors and interaction classes to one rendered table.

@@ -55,45 +55,7 @@ func tableOptionsFromFeatures(features map[string]bool) tableOptions {
 
 // postprocessTables applies directives before wrapping rendered tables for browser modules.
 func postprocessTables(source string, options tableOptions) (string, error) {
-	output := source
-	var err error
-	if tableDirectivesEnabled(options) {
-		output, err = applyTableDirectiveMarkers(output, options)
-		if err != nil {
-			return "", err
-		}
-	}
-	return markTables(output)
-}
-
-// markTables leaves semantic HTML as the accessible, script-free fallback.
-func markTables(source string) (string, error) {
-	root, err := htmlutil.ParseFragment(source)
-	if err != nil {
-		return "", err
-	}
-
-	for _, table := range collectTables(root) {
-		wrapTable(table)
-	}
-	return htmlutil.RenderChildren(root)
-}
-
-// collectTables returns rendered tables in document order without descending into a table twice.
-func collectTables(root *xhtml.Node) []*xhtml.Node {
-	var tables []*xhtml.Node
-	var walk func(*xhtml.Node)
-	walk = func(node *xhtml.Node) {
-		if node.Type == xhtml.ElementNode && node.Data == "table" {
-			tables = append(tables, node)
-			return
-		}
-		for child := node.FirstChild; child != nil; child = child.NextSibling {
-			walk(child)
-		}
-	}
-	walk(root)
-	return tables
+	return processRenderedTables(source, options, true)
 }
 
 // wrapTable moves one rendered table into the host plugin-block fallback wrapper.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	sdk "github.com/kumbuka-me/sdk"
@@ -23,6 +24,34 @@ func TestTaskListPresentationDoesNotRewriteUnrelatedInputs(t *testing.T) {
 	got, err := presentTaskLists(source)
 	require.NoError(t, err)
 	require.Contains(t, got, "<input", "unrelated input was rewritten: %s", got)
+}
+
+func TestTaskListPresentationKeepsLargeUnrelatedHTMLOutsideListItems(t *testing.T) {
+	t.Parallel()
+
+	prefix := strings.Repeat(`<p>before content</p>`, 20_000)
+	suffix := strings.Repeat(`<p>after content</p>`, 20_000)
+	source := prefix + `<ul><li><input checked="" disabled="" type="checkbox"/> done</li></ul>` + suffix
+
+	got, err := presentTaskLists(source)
+
+	require.NoError(t, err)
+	require.True(t, strings.HasPrefix(got, prefix), "large prefix changed")
+	require.True(t, strings.HasSuffix(got, suffix), "large suffix changed")
+	require.Contains(t, got, `class="task-list-checkbox checked"`)
+	require.NotContains(t, got[len(prefix):len(got)-len(suffix)], "<input")
+}
+
+func TestNestedTaskListsTransformOnce(t *testing.T) {
+	t.Parallel()
+
+	source := `<ul><li><input disabled="" type="checkbox"/> parent<ul><li><input checked="" disabled="" type="checkbox"/> child</li></ul></li></ul>`
+	got, err := presentTaskLists(source)
+
+	require.NoError(t, err)
+	require.Equal(t, 2, strings.Count(got, `class="task-list-item"`))
+	require.Equal(t, 2, strings.Count(got, `role="checkbox"`))
+	require.NotContains(t, got, "<input")
 }
 
 func TestTaskListTransformRejectsWrongStage(t *testing.T) {
