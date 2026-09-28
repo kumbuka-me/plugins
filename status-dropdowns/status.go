@@ -574,6 +574,11 @@ func statusHTML(options statusOptions, set statusSet, choice statusChoice) strin
 		output.WriteString(hex.EncodeToString([]byte(candidate.Label)))
 	}
 	output.WriteString(`"></span>`)
+	if options.Prefix != "" {
+		output.WriteString(`<span class="kumbuka-status-prefix">`)
+		output.WriteString(html.EscapeString(options.Prefix))
+		output.WriteString(`</span>`)
+	}
 	writeStatusBadge(&output, options, choice)
 	output.WriteString(`</span></span>`)
 	return output.String()
@@ -588,11 +593,6 @@ func writeStatusBadge(output *strings.Builder, options statusOptions, choice sta
 	output.WriteString(`" title="Status: `)
 	output.WriteString(html.EscapeString(choice.Label))
 	output.WriteString(`">`)
-	if options.Prefix != "" {
-		output.WriteString(`<span class="kumbuka-status-prefix">`)
-		output.WriteString(html.EscapeString(options.Prefix))
-		output.WriteString(`</span>`)
-	}
 	output.WriteString(`<span class="kumbuka-status-value">`)
 	output.WriteString(html.EscapeString(choice.Label))
 	output.WriteString(`</span></span>`)

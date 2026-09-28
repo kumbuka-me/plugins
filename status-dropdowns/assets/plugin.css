@@ -9,6 +9,13 @@
   display: none;
 }
 
+.prose .kumbuka-status-fallback {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+}
+
 .prose .kumbuka-status {
   display: inline-flex;
   align-items: center;
@@ -27,8 +34,14 @@
 }
 
 .prose .kumbuka-status-prefix {
-  opacity: 0.72;
+  max-width: 8rem;
+  overflow: hidden;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.78rem;
   font-weight: 550;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .prose .kumbuka-status-prefix::after {
@@ -132,7 +145,3 @@
   color: #dc2626;
   white-space: normal;
 }
-
-
-
-

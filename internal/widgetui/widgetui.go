@@ -43,7 +43,7 @@ func PagePath(slug string) string {
 }
 
 // RelativeTime formats a timestamp as the compact age used by dashboard widgets.
-func RelativeTime(value, now time.Time) string {
+func RelativeTime(value, now time.Time, localizer sdk.Localizer) string {
 	if value.IsZero() {
 		return ""
 	}
@@ -51,18 +51,18 @@ func RelativeTime(value, now time.Time) string {
 	delta := now.Sub(value)
 	switch {
 	case delta < time.Minute:
-		return "just now"
+		return localizer.Text("time.just_now")
 	case delta < time.Hour:
-		return fmt.Sprintf("%dm ago", int(delta/time.Minute))
+		return localizer.Textf("time.minutes_ago", int(delta/time.Minute))
 	case delta < 24*time.Hour:
-		return fmt.Sprintf("%dh ago", int(delta/time.Hour))
+		return localizer.Textf("time.hours_ago", int(delta/time.Hour))
 	default:
-		return fmt.Sprintf("%dd ago", int(delta/(24*time.Hour)))
+		return localizer.Textf("time.days_ago", int(delta/(24*time.Hour)))
 	}
 }
 
 // WritePageRow appends the standard timestamped page row used by dashboard widgets.
-func WritePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon IconRenderer) {
+func WritePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon IconRenderer, localizer sdk.Localizer) {
 	output.WriteString(`<a class="page-row" href="/pages/`)
 	output.WriteString(PagePath(page.Slug))
 	output.WriteString(`"><span class="doc-icon">`)
@@ -76,12 +76,12 @@ func WritePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon Ic
 		output.WriteString(html.EscapeString(strings.Join(page.Tags, ", ")))
 	}
 	output.WriteString(`</small></span><time>`)
-	output.WriteString(RelativeTime(page.UpdatedAt, now))
+	output.WriteString(RelativeTime(page.UpdatedAt, now, localizer))
 	output.WriteString(`</time></a>`)
 }
 
 // WriteCompactPageRow appends the standard compact page row with its view count.
-func WriteCompactPageRow(output *strings.Builder, page sdk.Page, icon IconRenderer) {
+func WriteCompactPageRow(output *strings.Builder, page sdk.Page, icon IconRenderer, localizer sdk.Localizer) {
 	output.WriteString(`<a class="compact-row" href="/pages/`)
 	output.WriteString(PagePath(page.Slug))
 	output.WriteString(`"><span>`)
@@ -89,7 +89,7 @@ func WriteCompactPageRow(output *strings.Builder, page sdk.Page, icon IconRender
 	output.WriteString(`</span><strong>`)
 	output.WriteString(html.EscapeString(page.Title))
 	output.WriteString(`</strong><small>`)
-	fmt.Fprintf(output, "%d views", page.ViewCount)
+	output.WriteString(localizer.Textf("common.views", page.ViewCount))
 	output.WriteString(`</small></a>`)
 }
 

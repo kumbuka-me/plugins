@@ -114,6 +114,9 @@ func TestTransformSource(t *testing.T) {
 			!strings.Contains(output, "kumbuka-status-choice__"+encodedColor+"__"+actionID("release/api", 3)+"__446f6e65") {
 			t.Fatalf("interactive status metadata was not rendered: %s", output)
 		}
+		if !strings.Contains(output, `<span class="kumbuka-status-prefix">API</span><span class="kumbuka-status kumbuka-status-green`) {
+			t.Fatalf("status prefix was not rendered before the fallback badge: %s", output)
+		}
 	})
 
 	t.Run("renders page local status", func(t *testing.T) {
