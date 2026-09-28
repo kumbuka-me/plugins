@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	maxControlledTasks            = 32
+	maxControlledTasks            = maxTaskDeclarations
 	maxTaskNotificationTitleBytes = 200
 	maxTaskNotificationBodyBytes  = 2000
 )
@@ -75,7 +75,7 @@ func discoverTasks(source string) []taskOptions {
 	return result
 }
 
-// taskTokens parses task declarations on one line while ignoring inline code spans.
+// taskTokens parses task and task-list declarations on one line while ignoring inline code spans.
 func taskTokens(line string) []taskOptions {
 	var result []taskOptions
 	codeTicks := 0
@@ -90,15 +90,28 @@ func taskTokens(line string) []taskOptions {
 			index += run
 			continue
 		}
+
+		if codeTicks == 0 && strings.HasPrefix(line[index:], "{{tasks") {
+			end := strings.Index(line[index:], "}}")
+			if end >= 0 {
+				end += index + 2
+				if tasks, err := parseTaskListToken(line[index:end]); err == nil {
+					result = append(result, tasks...)
+				}
+				index = end
+				continue
+			}
+		}
+
 		if codeTicks == 0 && strings.HasPrefix(line[index:], "{{task") {
 			end := strings.Index(line[index:], "}}")
 			if end >= 0 {
 				end += index + 2
 				if options, err := parseTaskToken(line[index:end]); err == nil {
 					result = append(result, options)
-					index = end
-					continue
 				}
+				index = end
+				continue
 			}
 		}
 		index++

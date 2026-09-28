@@ -1,15 +1,19 @@
-.prose .kumbuka-task-browser {
+.prose .kumbuka-task-browser,
+.prose .kumbuka-task-list,
+.prose .kumbuka-task-items,
+.prose .kumbuka-task-node,
+.prose .kumbuka-task-children {
   display: block;
-  margin: 0.5rem 0;
+  min-width: 0;
+}
+
+.prose .kumbuka-task-browser {
+  margin: 0.55rem 0;
 }
 
 .prose .kumbuka-task-list {
-  display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 0.25rem 0.45rem;
-  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-  border-radius: 0.65rem;
 }
 
 .prose .kumbuka-task-list-header {
@@ -17,86 +21,81 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.28rem 0.25rem 0.42rem;
+  margin-bottom: 0.28rem;
+  padding: 0 0.15rem 0.34rem;
   border-bottom: 1px solid color-mix(in srgb, currentColor 9%, transparent);
 }
 
 .prose .kumbuka-task-list-title {
-  font-size: 0.8rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
 }
 
 .prose .kumbuka-task-progress {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  padding: 0 0.42rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 6%, transparent);
   color: var(--text-secondary, #64748b);
-  font-size: 0.72rem;
+  font-size: 0.69rem;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
-.prose .kumbuka-task-items {
-  display: block;
+.prose .kumbuka-task-node {
+  position: relative;
 }
 
-.prose .kumbuka-task-meta,
-.prose .kumbuka-task-choices {
-  display: none;
+.prose .kumbuka-task-node + .kumbuka-task-node {
+  margin-top: 0.06rem;
+}
+
+.prose .kumbuka-task-children {
+  position: relative;
+  margin-left: 0.67rem;
+  padding-left: 0.73rem;
+  border-left: 1px solid color-mix(in srgb, currentColor 13%, transparent);
+}
+
+.prose .kumbuka-task-children > .kumbuka-task-node > .kumbuka-task-fallback::before {
+  content: "";
+  position: absolute;
+  left: -0.77rem;
+  top: 0.82rem;
+  width: 0.56rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 13%, transparent);
 }
 
 .prose .kumbuka-task-fallback {
   position: relative;
   display: grid;
-  grid-template-columns: 1.6rem minmax(0, 1fr);
+  grid-template-columns: 1.35rem minmax(0, 1fr);
   align-items: start;
-  gap: 0.48rem;
+  gap: 0.44rem;
   box-sizing: border-box;
   min-width: 0;
-  padding: 0.42rem 0.22rem;
-  border-radius: 0.4rem;
+  padding: 0.34rem 0.38rem;
+  border-radius: 0.42rem;
 }
 
-.prose .kumbuka-task-fallback + .kumbuka-task-fallback {
-  border-top: 1px solid color-mix(in srgb, currentColor 5%, transparent);
-}
-
-.prose .kumbuka-task-depth__1 {
-  margin-left: 1.15rem;
-}
-
-.prose .kumbuka-task-depth__2 {
-  margin-left: 2.3rem;
-}
-
-.prose .kumbuka-task-depth__3 {
-  margin-left: 3.45rem;
-}
-
-.prose .kumbuka-task-depth__4 {
-  margin-left: 4.6rem;
-}
-
-.prose .kumbuka-task-fallback:not(.kumbuka-task-depth__0)::before {
-  content: "";
-  position: absolute;
-  left: -0.64rem;
-  top: -0.12rem;
-  width: 0.48rem;
-  height: 1.02rem;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-  border-left: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-  border-bottom-left-radius: 0.3rem;
+.prose .kumbuka-task-node:hover > .kumbuka-task-fallback {
+  background: color-mix(in srgb, currentColor 3.5%, transparent);
 }
 
 .prose .kumbuka-task-box {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.02rem;
-  height: 1.02rem;
+  width: 0.94rem;
+  height: 0.94rem;
   box-sizing: border-box;
-  margin: 0.08rem 0 0 0.24rem;
-  border: 1.6px solid currentColor;
+  margin: 0.12rem 0 0 0.14rem;
+  border: 1.55px solid currentColor;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.63rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -105,52 +104,77 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.13rem;
 }
 
 .prose .kumbuka-task-text {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 0.92rem;
-  line-height: 1.38;
+  font-size: 0.91rem;
+  font-weight: 540;
+  line-height: 1.34;
 }
 
 .prose .kumbuka-task-details {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.28rem;
+  gap: 0.26rem;
+  min-height: 1.1rem;
   color: var(--text-secondary, #64748b);
-  font-size: 0.72rem;
-  line-height: 1.3;
+  font-size: 0.69rem;
+  line-height: 1.25;
 }
 
-.prose .kumbuka-task-details > span + span::before {
-  content: "·";
-  margin-right: 0.28rem;
-  opacity: 0.7;
-}
-
+.prose .kumbuka-task-state-label,
 .prose .kumbuka-task-assignee {
   display: inline-flex;
   align-items: center;
-  padding: 0.04rem 0.3rem;
+  min-height: 1.08rem;
+  box-sizing: border-box;
   border-radius: 999px;
-  background: color-mix(in srgb, currentColor 7%, transparent);
-  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prose .kumbuka-task-state-label {
+  gap: 0.24rem;
+  padding: 0 0.34rem;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  font-weight: 650;
+}
+
+.prose .kumbuka-task-state-label::before {
+  content: "";
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.72;
+}
+
+.prose .kumbuka-task-assignee {
+  padding: 0 0.34rem;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  font-weight: 650;
+}
+
+.prose .kumbuka-task-due {
+  white-space: nowrap;
 }
 
 .prose .kumbuka-task-completed .kumbuka-task-box {
-  border-color: currentColor;
+  background: currentColor;
+  color: var(--surface, white);
 }
 
 .prose .kumbuka-task-completed .kumbuka-task-text {
-  opacity: 0.58;
+  opacity: 0.56;
   text-decoration: line-through;
 }
 
 .prose .kumbuka-task-completed .kumbuka-task-details {
-  opacity: 0.72;
+  opacity: 0.78;
 }
 
 .prose .kumbuka-task-error {

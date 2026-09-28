@@ -2,6 +2,116 @@
   "version": 1,
   "widgets": [
     {
+      "id": "tasks",
+      "name": "Tasks",
+      "inline": false,
+      "syntax": {
+        "kind": "macro",
+        "name": "tasks"
+      },
+      "attributes": [
+        {
+          "name": "texts",
+          "type": "list",
+          "required": true,
+          "max_bytes": 512,
+          "max_items": 128,
+          "separator": "\u001f"
+        },
+        {
+          "name": "ids",
+          "type": "list",
+          "required": true,
+          "max_bytes": 128,
+          "max_items": 128,
+          "separator": "\u001f"
+        },
+        {
+          "name": "parents",
+          "type": "list",
+          "max_bytes": 128,
+          "max_items": 128,
+          "separator": "\u001f"
+        },
+        {
+          "name": "assignees",
+          "type": "list",
+          "max_bytes": 128,
+          "max_items": 128,
+          "separator": "\u001f"
+        },
+        {
+          "name": "dues",
+          "type": "list",
+          "max_bytes": 10,
+          "max_items": 128,
+          "separator": "\u001f"
+        },
+        {
+          "name": "initials",
+          "type": "list",
+          "max_bytes": 64,
+          "max_items": 128,
+          "separator": "\u001f"
+        }
+      ],
+      "settings": [
+        {
+          "type": "table",
+          "label": "Tasks and subtasks",
+          "attributes": [
+            "texts",
+            "ids",
+            "parents",
+            "assignees",
+            "dues",
+            "initials"
+          ],
+          "columns": [
+            {
+              "label": "Task",
+              "type": "textarea"
+            },
+            {
+              "label": "ID",
+              "type": "text"
+            },
+            {
+              "label": "Parent task ID",
+              "type": "text"
+            },
+            {
+              "label": "Assignee",
+              "type": "text"
+            },
+            {
+              "label": "Due",
+              "type": "text"
+            },
+            {
+              "label": "Initial state",
+              "type": "text"
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "same-length",
+          "attributes": ["texts", "ids"]
+        }
+      ],
+      "preview": {
+        "kind": "card",
+        "card": {
+          "class": "kumbuka-task-list-editor",
+          "title": "Tasks",
+          "body_text": "Edit every task, subtask, and deeper nested task in one modal. Set Parent task ID to nest a row under an earlier task.",
+          "rendered": true
+        }
+      }
+    },
+    {
       "id": "task",
       "name": "Task",
       "inline": false,
@@ -84,11 +194,9 @@
           "title": "Task",
           "subtitle_attribute": "text",
           "metadata_attributes": ["assignee", "due", "initial", "parent"],
-          "body_text": "The current workflow state is stored separately when the rendered task is changed."
+          "body_text": "Single-task syntax remains supported for existing pages. New task lists can be edited together in one modal."
         }
       }
     }
   ]
 }
-
-
