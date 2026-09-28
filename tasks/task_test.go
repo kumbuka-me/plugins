@@ -160,6 +160,13 @@ func TestTransformSource(t *testing.T) {
 	})
 }
 
+// TestRenderTaskListHeader verifies the progress count is emitted directly into the rendered header.
+func TestRenderTaskListHeader(t *testing.T) {
+	header := renderTaskListHeader("Tasks", 1, 5)
+	assert.Equal(t, 1, strings.Count(header, `class="kumbuka-task-progress-current">1</span>`))
+	assert.Contains(t, header, `class="kumbuka-task-progress-total">5</span>`)
+}
+
 // TestTaskListRendering verifies adjacent tasks are grouped and parent references create compact nesting.
 func TestTaskListRendering(t *testing.T) {
 	workflow := defaultTaskWorkflow()

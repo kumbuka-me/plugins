@@ -538,13 +538,7 @@ func renderTaskList(tasks []taskOptions, read storageReader, workflow taskWorkfl
 	output.WriteString(`<span class="kumbuka-task-browser" data-kumbuka-plugin="me.kumbuka.tasks" data-kumbuka-module="task-ui" data-kumbuka-input="html">`)
 	output.WriteString(`<span class="` + listClass + `" data-kumbuka-fallback>`)
 	if len(tasks) > 1 {
-		output.WriteString(`<span class="kumbuka-task-list-header"><span class="kumbuka-task-list-title">`)
-		output.WriteString(html.EscapeString(localizer.Text("tasks.title")))
-		output.WriteString(`</span><span class="kumbuka-task-progress"><span class="kumbuka-task-progress-current">`)
-		fmt.Printf("%d\n", completed)
-		output.WriteString(`</span><span class="kumbuka-task-progress-separator"> / </span><span class="kumbuka-task-progress-total">`)
-		fmt.Fprintf(&output, "%d", len(tasks))
-		output.WriteString(`</span></span></span>`)
+		output.WriteString(renderTaskListHeader(localizer.Text("tasks.title"), completed, len(tasks)))
 	}
 	output.WriteString(`<span class="kumbuka-task-items">`)
 	for _, index := range roots {
@@ -552,6 +546,17 @@ func renderTaskList(tasks []taskOptions, read storageReader, workflow taskWorkfl
 	}
 	output.WriteString(`</span></span></span>`)
 	return output.String()
+}
+
+// renderTaskListHeader renders the list title and progress counter as one complete fragment.
+// Keeping the counter in one fragment prevents an incomplete header when the renderer changes.
+func renderTaskListHeader(title string, completed, total int) string {
+	return fmt.Sprintf(
+		`<span class="kumbuka-task-list-header"><span class="kumbuka-task-list-title">%s</span><span class="kumbuka-task-progress"><span class="kumbuka-task-progress-current">%d</span><span class="kumbuka-task-progress-separator"> / </span><span class="kumbuka-task-progress-total">%d</span></span></span>`,
+		html.EscapeString(title),
+		completed,
+		total,
+	)
 }
 
 // taskDepths resolves parent references in document order and rejects invalid task trees.
