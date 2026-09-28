@@ -17,13 +17,14 @@ import (
 )
 
 const (
-	maxTaskDeclarations = 128
-	maxTaskTokenBytes   = 2048
-	maxTaskIDBytes      = 128
-	maxTaskTextBytes    = 512
-	maxAssigneeBytes    = 128
-	maxTaskDepth        = 16
-	maxVisibleTaskDepth = 4
+	maxTaskDeclarations   = 128
+	maxTaskTokenBytes     = 2048
+	maxTaskListTokenBytes = 192 * 1024
+	maxTaskIDBytes        = 128
+	maxTaskTextBytes      = 512
+	maxAssigneeBytes      = 128
+	maxTaskDepth          = 16
+	taskListSeparator     = "\x1f"
 )
 
 // taskOptions contains one parsed task declaration from page Markdown.
@@ -156,6 +157,7 @@ func transformLine(line string, remaining int, readStorage storageReader, workfl
 	if remaining <= 0 || !strings.Contains(line, "{{task") {
 		return line, 0
 	}
+
 	var output strings.Builder
 	used := 0
 	codeTicks := 0
@@ -171,6 +173,36 @@ func transformLine(line string, remaining int, readStorage storageReader, workfl
 			index += run
 			continue
 		}
+
+		if codeTicks == 0 && used < remaining && strings.HasPrefix(line[index:], "{{tasks") {
+			relativeEnd := strings.Index(line[index:], "}}")
+			if relativeEnd < 0 {
+				output.WriteString(taskErrorHTML("unterminated task list declaration", localizer))
+				used++
+				break
+			}
+			end := index + relativeEnd + 2
+			token := line[index:end]
+			if len(token) > maxTaskListTokenBytes {
+				output.WriteString(taskErrorHTML("task list declaration is too long", localizer))
+				used++
+			} else if tasks, err := parseTaskListToken(token); err != nil {
+				output.WriteString(taskErrorHTML(err.Error(), localizer))
+				used++
+			} else if len(tasks) > remaining-used {
+				output.WriteString(taskErrorHTML(fmt.Sprintf("task list exceeds the %d task page limit", maxTaskDeclarations), localizer))
+				used = remaining
+			} else if err := validateTaskWorkflowStates(tasks, workflow); err != nil {
+				output.WriteString(taskErrorHTML(err.Error(), localizer))
+				used += len(tasks)
+			} else {
+				output.WriteString(renderTaskList(tasks, readStorage, workflow, localizer))
+				used += len(tasks)
+			}
+			index = end
+			continue
+		}
+
 		if codeTicks == 0 && used < remaining && strings.HasPrefix(line[index:], "{{task") {
 			relativeEnd := strings.Index(line[index:], "}}")
 			if relativeEnd < 0 {
@@ -193,10 +225,111 @@ func transformLine(line string, remaining int, readStorage storageReader, workfl
 			index = end
 			continue
 		}
+
 		output.WriteByte(line[index])
 		index++
 	}
 	return output.String(), used
+}
+
+// parseTaskListToken parses one visual-editor task list declaration into individual task options.
+func parseTaskListToken(token string) ([]taskOptions, error) {
+	value := strings.TrimSpace(token)
+	body, ok := strings.CutPrefix(value, "{{tasks")
+	if !ok || len(value) > maxTaskListTokenBytes {
+		return nil, fmt.Errorf("invalid task list declaration")
+	}
+	body, ok = strings.CutSuffix(body, "}}")
+	if !ok || (body != "" && body[0] != ' ' && body[0] != '\t') {
+		return nil, fmt.Errorf("invalid task list declaration")
+	}
+
+	arguments, ok := macroargs.ParseUnique(strings.TrimSpace(body))
+	if !ok {
+		return nil, fmt.Errorf("invalid task list attributes")
+	}
+	for name := range arguments {
+		switch name {
+		case "texts", "ids", "parents", "assignees", "dues", "initials":
+		default:
+			return nil, fmt.Errorf("unsupported task list attribute %q", name)
+		}
+	}
+
+	texts := splitTaskListAttribute(arguments["texts"])
+	ids := splitTaskListAttribute(arguments["ids"])
+	if len(texts) == 0 || len(ids) == 0 || len(texts) != len(ids) {
+		return nil, fmt.Errorf("task list texts and ids must contain the same non-zero number of items")
+	}
+	if len(texts) > maxTaskDeclarations {
+		return nil, fmt.Errorf("task list may contain at most %d tasks", maxTaskDeclarations)
+	}
+
+	parents, err := optionalTaskListAttribute(arguments["parents"], len(texts), "parents")
+	if err != nil {
+		return nil, err
+	}
+	assignees, err := optionalTaskListAttribute(arguments["assignees"], len(texts), "assignees")
+	if err != nil {
+		return nil, err
+	}
+	dues, err := optionalTaskListAttribute(arguments["dues"], len(texts), "dues")
+	if err != nil {
+		return nil, err
+	}
+	initials, err := optionalTaskListAttribute(arguments["initials"], len(texts), "initials")
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := make([]taskOptions, len(texts))
+	for index := range texts {
+		options := taskOptions{
+			ID:           strings.TrimSpace(ids[index]),
+			Text:         strings.TrimSpace(texts[index]),
+			Parent:       strings.TrimSpace(parents[index]),
+			Assignee:     strings.TrimSpace(assignees[index]),
+			Due:          strings.TrimSpace(dues[index]),
+			InitialState: strings.TrimSpace(initials[index]),
+		}
+		if err := validateTaskOptions(options); err != nil {
+			return nil, fmt.Errorf("task %d: %w", index+1, err)
+		}
+		tasks[index] = options
+	}
+	if _, err := taskDepths(tasks); err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
+// splitTaskListAttribute decodes one visual-editor list attribute while preserving empty cells.
+func splitTaskListAttribute(value string) []string {
+	if value == "" {
+		return nil
+	}
+	return strings.Split(value, taskListSeparator)
+}
+
+// optionalTaskListAttribute pads an omitted or short optional list with blank values.
+func optionalTaskListAttribute(value string, count int, name string) ([]string, error) {
+	values := splitTaskListAttribute(value)
+	if len(values) > count {
+		return nil, fmt.Errorf("task list %s contains more values than tasks", name)
+	}
+	padded := make([]string, count)
+	copy(padded, values)
+	return padded, nil
+}
+
+// validateTaskWorkflowStates verifies every requested initial state against the active workflow.
+func validateTaskWorkflowStates(tasks []taskOptions, workflow taskWorkflow) error {
+	for _, task := range tasks {
+		if _, err := workflow.initialState(task.InitialState); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // parseTaskToken parses one complete task declaration and validates its attributes.
@@ -230,31 +363,39 @@ func parseTaskToken(token string) (taskOptions, error) {
 		InitialState: strings.TrimSpace(arguments["initial"]),
 		Parent:       strings.TrimSpace(arguments["parent"]),
 	}
-	if !validName(options.ID, maxTaskIDBytes) {
-		return taskOptions{}, fmt.Errorf("task id must be 1-%d bytes and contain only letters, numbers, dots, underscores, hyphens, slashes, or colons", maxTaskIDBytes)
-	}
-	if options.Text == "" || len(options.Text) > maxTaskTextBytes || !utf8.ValidString(options.Text) {
-		return taskOptions{}, fmt.Errorf("task text must be 1-%d bytes of valid UTF-8", maxTaskTextBytes)
-	}
-	if len(options.Assignee) > maxAssigneeBytes || !utf8.ValidString(options.Assignee) {
-		return taskOptions{}, fmt.Errorf("task assignee must be at most %d bytes of valid UTF-8", maxAssigneeBytes)
-	}
-	if options.Assignee != "" && !validMention(options.Assignee) {
-		return taskOptions{}, fmt.Errorf("task assignee must be a canonical @mention")
-	}
-	if options.Due != "" && !validDueDate(options.Due) {
-		return taskOptions{}, fmt.Errorf("task due date must use YYYY-MM-DD")
-	}
-	if options.InitialState != "" && !validTaskStateID(options.InitialState) {
-		return taskOptions{}, fmt.Errorf("task initial state must be a valid workflow state ID")
-	}
-	if options.Parent != "" && !validName(options.Parent, maxTaskIDBytes) {
-		return taskOptions{}, fmt.Errorf("task parent must be a valid task id")
-	}
-	if options.Parent == options.ID {
-		return taskOptions{}, fmt.Errorf("task cannot be its own parent")
+	if err := validateTaskOptions(options); err != nil {
+		return taskOptions{}, err
 	}
 	return options, nil
+}
+
+// validateTaskOptions validates the shared fields used by legacy task and task-list declarations.
+func validateTaskOptions(options taskOptions) error {
+	if !validName(options.ID, maxTaskIDBytes) {
+		return fmt.Errorf("task id must be 1-%d bytes and contain only letters, numbers, dots, underscores, hyphens, slashes, or colons", maxTaskIDBytes)
+	}
+	if options.Text == "" || len(options.Text) > maxTaskTextBytes || !utf8.ValidString(options.Text) {
+		return fmt.Errorf("task text must be 1-%d bytes of valid UTF-8", maxTaskTextBytes)
+	}
+	if len(options.Assignee) > maxAssigneeBytes || !utf8.ValidString(options.Assignee) {
+		return fmt.Errorf("task assignee must be at most %d bytes of valid UTF-8", maxAssigneeBytes)
+	}
+	if options.Assignee != "" && !validMention(options.Assignee) {
+		return fmt.Errorf("task assignee must be a canonical @mention")
+	}
+	if options.Due != "" && !validDueDate(options.Due) {
+		return fmt.Errorf("task due date must use YYYY-MM-DD")
+	}
+	if options.InitialState != "" && !validTaskStateID(options.InitialState) {
+		return fmt.Errorf("task initial state must be a valid workflow state ID")
+	}
+	if options.Parent != "" && !validName(options.Parent, maxTaskIDBytes) {
+		return fmt.Errorf("task parent must be a valid task id")
+	}
+	if options.Parent == options.ID {
+		return fmt.Errorf("task cannot be its own parent")
+	}
+	return nil
 }
 
 // validMention reports whether value is a bounded canonical Kumbuka mention.
@@ -362,7 +503,7 @@ func renderTask(options taskOptions, read storageReader, workflow taskWorkflow, 
 	return renderTaskList([]taskOptions{options}, read, workflow, localizer)
 }
 
-// renderTaskList renders one or more adjacent task declarations as a compact list.
+// renderTaskList renders one or more tasks as a compact nested list.
 func renderTaskList(tasks []taskOptions, read storageReader, workflow taskWorkflow, localizer sdk.Localizer) string {
 	if len(tasks) == 0 {
 		return ""
@@ -387,6 +528,7 @@ func renderTaskList(tasks []taskOptions, read storageReader, workflow taskWorkfl
 		}
 	}
 
+	roots, children := taskTree(tasks)
 	listClass := "kumbuka-task-list"
 	if len(tasks) == 1 {
 		listClass += " kumbuka-task-list-single"
@@ -399,14 +541,14 @@ func renderTaskList(tasks []taskOptions, read storageReader, workflow taskWorkfl
 		output.WriteString(`<span class="kumbuka-task-list-header"><span class="kumbuka-task-list-title">`)
 		output.WriteString(html.EscapeString(localizer.Text("tasks.title")))
 		output.WriteString(`</span><span class="kumbuka-task-progress"><span class="kumbuka-task-progress-current">`)
-		fmt.Fprintf(&output, "%d", completed)
-		output.WriteString(`</span> / <span class="kumbuka-task-progress-total">`)
+		fmt.Printf("%d\n", completed)
+		output.WriteString(`</span><span class="kumbuka-task-progress-separator"> / </span><span class="kumbuka-task-progress-total">`)
 		fmt.Fprintf(&output, "%d", len(tasks))
 		output.WriteString(`</span></span></span>`)
 	}
 	output.WriteString(`<span class="kumbuka-task-items">`)
-	for index, options := range tasks {
-		output.WriteString(renderTaskItem(options, states[index], visibleTaskDepth(depths[index]), workflow, localizer))
+	for _, index := range roots {
+		renderTaskNode(&output, index, tasks, states, depths, children, workflow, localizer)
 	}
 	output.WriteString(`</span></span></span>`)
 	return output.String()
@@ -440,39 +582,53 @@ func taskDepths(tasks []taskOptions) ([]int, error) {
 	return depths, nil
 }
 
-// visibleTaskDepth caps indentation while preserving deeper parent relationships in the task model.
-func visibleTaskDepth(depth int) int {
-	if depth > maxVisibleTaskDepth {
-		return maxVisibleTaskDepth
+// taskTree converts validated parent references into root and child indexes while preserving row order.
+func taskTree(tasks []taskOptions) ([]int, [][]int) {
+	roots := make([]int, 0, len(tasks))
+	children := make([][]int, len(tasks))
+	byID := make(map[string]int, len(tasks))
+	for index, task := range tasks {
+		if task.Parent == "" {
+			roots = append(roots, index)
+		} else if parent, ok := byID[task.Parent]; ok {
+			children[parent] = append(children[parent], index)
+		}
+		byID[task.ID] = index
 	}
-	return depth
+	return roots, children
 }
 
-// renderTaskItem renders one passive task row and its sanitized browser command metadata.
-func renderTaskItem(options taskOptions, definition taskWorkflowState, depth int, workflow taskWorkflow, localizer sdk.Localizer) string {
-	completedClass := ""
+// renderTaskNode writes one task row followed by recursively nested child tasks.
+func renderTaskNode(output *strings.Builder, index int, tasks []taskOptions, states []taskWorkflowState, depths []int, children [][]int, workflow taskWorkflow, localizer sdk.Localizer) {
+	output.WriteString(`<span class="kumbuka-task-node kumbuka-task-depth__` + fmt.Sprintf("%d", depths[index]) + `">`)
+	output.WriteString(renderTaskItem(tasks[index], states[index], workflow, localizer))
+	if len(children[index]) > 0 {
+		output.WriteString(`<span class="kumbuka-task-children">`)
+		for _, child := range children[index] {
+			renderTaskNode(output, child, tasks, states, depths, children, workflow, localizer)
+		}
+		output.WriteString(`</span>`)
+	}
+	output.WriteString(`</span>`)
+}
+
+// renderTaskItem renders one passive task row and sanitizer-safe browser command metadata.
+func renderTaskItem(options taskOptions, definition taskWorkflowState, workflow taskWorkflow, localizer sdk.Localizer) string {
 	mark := ""
 	if definition.Completed {
-		completedClass = " kumbuka-task-completed"
 		mark = "✓"
 	}
 
-	var output strings.Builder
-	output.WriteString(`<span class="kumbuka-task-fallback kumbuka-task-depth__` + fmt.Sprintf("%d", depth) + completedClass + `">`)
-	output.WriteString(`<span class="kumbuka-task-meta kumbuka-task-state__` + definition.ID + `"></span>`)
-	output.WriteString(`<span class="kumbuka-task-choices" hidden>`)
-	for _, choice := range workflow.States {
-		output.WriteString(`<span class="kumbuka-task-choice kumbuka-task-choice-id__` + choice.ID)
-		output.WriteString(` kumbuka-task-choice-action__` + actionID(options.ID, choice.ID))
-		output.WriteString(` kumbuka-task-choice-color__` + strings.TrimPrefix(choice.Color, "#"))
-		if choice.Completed {
-			output.WriteString(` kumbuka-task-choice-completed__true`)
-		} else {
-			output.WriteString(` kumbuka-task-choice-completed__false`)
-		}
-		output.WriteString(`">` + html.EscapeString(workflow.stateLabel(choice, localizer)) + `</span>`)
+	classes := []string{"kumbuka-task-fallback", "kumbuka-task-state__" + definition.ID}
+	if definition.Completed {
+		classes = append(classes, "kumbuka-task-completed")
 	}
-	output.WriteString(`</span>`)
+	for _, choice := range workflow.States {
+		classes = append(classes, taskChoiceClass(options.ID, choice, workflow.stateLabel(choice, localizer)))
+	}
+
+	var output strings.Builder
+	output.WriteString(`<span class="` + strings.Join(classes, " ") + `">`)
 	output.WriteString(`<span class="kumbuka-task-box" aria-hidden="true">` + mark + `</span>`)
 	output.WriteString(`<span class="kumbuka-task-content"><span class="kumbuka-task-text">`)
 	output.WriteString(html.EscapeString(options.Text))
@@ -486,6 +642,20 @@ func renderTaskItem(options taskOptions, definition taskWorkflowState, depth int
 	}
 	output.WriteString(`</span></span></span>`)
 	return output.String()
+}
+
+// taskChoiceClass encodes workflow metadata into one sanitizer-safe class token.
+func taskChoiceClass(taskID string, choice taskWorkflowState, label string) string {
+	completed := "0"
+	if choice.Completed {
+		completed = "1"
+	}
+	return "kumbuka-task-choice__" +
+		hex.EncodeToString([]byte(choice.ID)) + "__" +
+		actionID(taskID, choice.ID) + "__" +
+		strings.TrimPrefix(choice.Color, "#") + "__" +
+		completed + "__" +
+		hex.EncodeToString([]byte(label))
 }
 
 // taskErrorHTML renders one escaped inline configuration error.

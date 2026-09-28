@@ -59,6 +59,29 @@ func TestParseTaskToken(t *testing.T) {
 	})
 }
 
+// TestParseTaskListToken verifies one visual-editor task list expands into a validated hierarchy.
+func TestParseTaskListToken(t *testing.T) {
+	separator := `\u001f`
+	token := `{{tasks texts="Prepare release` + separator + `Publish notes` + separator + `Verify production" ids="release` + separator + `notes` + separator + `verify" parents="` + separator + `release` + separator + `notes" assignees="@alice` + separator + `@alice` + separator + `" dues="2026-10-01` + separator + separator + `2026-10-02"}}`
+
+	tasks, err := parseTaskListToken(token)
+	require.NoError(t, err)
+	require.Len(t, tasks, 3)
+	assert.Equal(t, "release", tasks[0].ID)
+	assert.Empty(t, tasks[0].Parent)
+	assert.Equal(t, "release", tasks[1].Parent)
+	assert.Equal(t, "notes", tasks[2].Parent)
+	assert.Equal(t, "@alice", tasks[1].Assignee)
+	assert.Equal(t, "2026-10-02", tasks[2].Due)
+}
+
+// TestParseTaskListTokenRejectsForwardParent verifies modal rows form a deterministic document-order tree.
+func TestParseTaskListTokenRejectsForwardParent(t *testing.T) {
+	separator := `\u001f`
+	_, err := parseTaskListToken(`{{tasks texts="Child` + separator + `Parent" ids="child` + separator + `parent" parents="parent` + separator + `"}}`)
+	require.ErrorContains(t, err, "must appear before")
+}
+
 // TestLoadTaskWorkflow verifies configured ordering, validation, and default behavior.
 func TestLoadTaskWorkflow(t *testing.T) {
 	t.Run("defaults to open and done", func(t *testing.T) {
@@ -120,6 +143,17 @@ func TestTransformSource(t *testing.T) {
 		assert.Contains(t, output, "Task error:")
 	})
 
+	t.Run("renders visual editor task list", func(t *testing.T) {
+		separator := `\u001f`
+		source := `{{tasks texts="Prepare release` + separator + `Publish notes` + separator + `Verify production" ids="release` + separator + `notes` + separator + `verify" parents="` + separator + `release` + separator + `notes"}}`
+		output := transformSource(source, nil, workflow, localize.For("en"))
+		assert.Equal(t, 1, strings.Count(output, `class="kumbuka-task-browser"`))
+		assert.Contains(t, output, "kumbuka-task-depth__2")
+		assert.Contains(t, output, "kumbuka-task-children")
+		assert.Contains(t, output, "Verify production")
+		assert.NotContains(t, output, "kumbuka-task-choices")
+	})
+
 	t.Run("preserves code", func(t *testing.T) {
 		source := "`{{task id=\"inline\" text=\"Inline\"}}`\n```text\n{{task id=\"fenced\" text=\"Fenced\"}}\n```"
 		assert.Equal(t, source, transformSource(source, nil, workflow, localize.For("en")))
@@ -166,11 +200,15 @@ func TestTaskListInvalidParent(t *testing.T) {
 
 // TestDiscoverTasks verifies unique task discovery outside code spans and fences.
 func TestDiscoverTasks(t *testing.T) {
-	source := "{{task id=\"one\" text=\"One\"}}\n`{{task id=\"inline\" text=\"Inline\"}}`\n{{task id=\"one\" text=\"Duplicate\"}}\n{{task id=\"two\" text=\"Two\"}}"
+	separator := `\u001f`
+	source := "{{task id=\"one\" text=\"One\"}}\n`{{task id=\"inline\" text=\"Inline\"}}`\n{{task id=\"one\" text=\"Duplicate\"}}\n" +
+		`{{tasks texts="Two` + separator + `Three" ids="two` + separator + `three" parents="` + separator + `two"}}`
 	tasks := discoverTasks(source)
-	require.Len(t, tasks, 2)
+	require.Len(t, tasks, 3)
 	assert.Equal(t, "one", tasks[0].ID)
 	assert.Equal(t, "two", tasks[1].ID)
+	assert.Equal(t, "three", tasks[2].ID)
+	assert.Equal(t, "two", tasks[2].Parent)
 }
 
 // TestResolveAction verifies that only configured states for currently declared tasks are accepted.
