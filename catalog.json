@@ -1547,6 +1547,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.1.6",
+          "api_version": 1,
+          "released_at": "2026-09-28T13:44:51Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tables/v1.1.6/tables-1.1.6.kumbukaplugin",
+          "sha256": "574bde8f92f6dc83866163fc1864bebdc8a504b7a5a9d682fa64635a7e56a3e7"
+        },
+        {
           "version": "1.1.4",
           "api_version": 1,
           "released_at": "2026-09-28T12:05:45Z",
