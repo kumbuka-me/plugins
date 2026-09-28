@@ -48,3 +48,38 @@ func TestCalloutLabelsAreLocalized(t *testing.T) {
 	require.Empty(t, result.Error)
 	require.Contains(t, result.Parts[0].Text, `<strong>Warnung</strong>`)
 }
+
+func TestCalloutWithoutBodyAtEndOfSource(t *testing.T) {
+	t.Parallel()
+
+	result := transform(sdk.RenderRequest{
+		APIVersion: 1,
+		Module:     "callouts",
+		Stage:      "preprocess",
+		Source:     "!!! note",
+	})
+
+	require.Empty(t, result.Error)
+	require.Len(t, result.Parts, 3, "unexpected fragments: %+v", result.Parts)
+	require.NotNil(t, result.Parts[1].Markdown)
+	require.Empty(t, *result.Parts[1].Markdown)
+}
+
+func TestMultipleCalloutsPreserveLiteralSpacing(t *testing.T) {
+	t.Parallel()
+
+	result := transform(sdk.RenderRequest{
+		APIVersion: 1,
+		Module:     "callouts",
+		Stage:      "preprocess",
+		Source:     "Before\n\n!!! warning\nFirst\n\nBetween\n\n!!! tip\nSecond\n\nAfter\n",
+	})
+
+	require.Empty(t, result.Error)
+	require.Len(t, result.Parts, 5, "unexpected fragments: %+v", result.Parts)
+	require.Equal(t, "First", *result.Parts[1].Markdown)
+	require.Equal(t, "Second", *result.Parts[3].Markdown)
+	require.Contains(t, result.Parts[0].Text, "Before\n\n")
+	require.Contains(t, result.Parts[2].Text, "\n\nBetween\n\n")
+	require.Contains(t, result.Parts[4].Text, "\n\nAfter\n")
+}

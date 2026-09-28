@@ -91,3 +91,19 @@ func TestPostprocessTablesLeavesInactiveDirectiveParagraphVisible(t *testing.T) 
 	require.NoError(t, err)
 	assert.Contains(t, got, `<p>{table sortable}</p>`)
 }
+
+func TestPostprocessTablesStreamingPathPreservesExistingAttributes(t *testing.T) {
+	t.Parallel()
+
+	source := `<table class="existing" data-test="yes"><thead><tr><th class="heading">Service</th><th>Status</th></tr></thead><tbody><tr><td>API</td><td>Healthy</td></tr></tbody></table>` +
+		`<div class="kumbuka-table-style-marker" data-table-style="{table header=accent col:2=info sortable filterable}"></div>`
+
+	got, err := postprocessTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true})
+
+	require.NoError(t, err)
+	assert.Contains(t, got, `class="existing kumbuka-table-sortable kumbuka-table-filterable kumbuka-table-styled"`)
+	assert.Contains(t, got, `data-test="yes"`)
+	assert.Contains(t, got, `class="heading table-tone-accent"`)
+	assert.Contains(t, got, `table-tone-info`)
+	assert.Contains(t, got, `data-kumbuka-module="interactive"`)
+}
