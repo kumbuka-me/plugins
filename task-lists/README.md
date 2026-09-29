@@ -1,6 +1,6 @@
-# Task Lists
+# Checklists
 
-Task Lists renders GitHub-style Markdown task items with accessible visible checkbox state.
+Checklists renders GitHub-style Markdown task items as accessible controls that can be toggled directly in page view mode.
 
 ## Usage
 
@@ -9,8 +9,8 @@ Task Lists renders GitHub-style Markdown task items with accessible visible chec
 - [ ] Run upgrade
 ```
 
-The rendered checkboxes are presentation only; editing the Markdown remains the way to change their state. The plugin contributes the Task list action to the editor's block toolbar; Kumbuka's generic list editor continues list prefixes when Enter is pressed.
+Clicking a checkbox updates the canonical Markdown and creates a normal page revision. The write uses optimistic concurrency, so a stale page cannot silently overwrite a newer edit. The plugin also contributes the Checklist action to the editor's block toolbar; Kumbuka's generic list editor continues list prefixes when Enter is pressed.
 
 ## Permissions
 
-This plugin requests no Kumbuka capabilities. Kumbuka supplies only the standard `task-list` Markdown grammar adapter; this plugin's WASM module and filtered content stylesheet own the accessible checkbox presentation. Disabling the plugin therefore removes both parsing and presentation from new renders.
+This plugin requests sandboxed browser rendering plus page-content read and narrowly scoped page-content write capabilities. The write is available only for the page that emitted the command and preserves all page metadata. Kumbuka supplies the standard `task-list` Markdown grammar adapter; disabling the plugin removes both parsing and presentation from new renders.

@@ -1,9 +1,10 @@
 api_version: 1
 provider: Kumbuka
 id: me.kumbuka.task-lists
-name: Task Lists
-version: 1.2.2
-description: Render Markdown task list items with visible checkbox state.
+name: Checklists
+icon: list-checks-lucide
+version: 1.3.0
+description: Add lightweight, interactive Markdown checklists to Kumbuka pages.
 default_enabled: true
 modules:
   - type: markdown-syntax
@@ -27,10 +28,18 @@ modules:
       - contains: "[ ]"
       - contains: "[x]"
       - contains: "[X]"
+  - type: browser-module
+    id: checklist-ui
+    javascript: plugin.js
+    css: browser.css
+  - type: widget
+    id: commands
+    surface: page.after-content
+    order: 1000
   - type: editor-insert
     id: editor
-    name: Task list
-    description: Prefix selected lines with task-list markers.
+    name: Checklist
+    description: Prefix selected lines with interactive checklist markers.
     markdown: "- [ ] "
     placeholder: task
     mode: prefix-lines
@@ -38,4 +47,7 @@ modules:
     allowed_groups: [blocks, insert]
     order: 20
     icon: list-checks-lucide
-permissions: []
+permissions:
+  - browser:render
+  - pages:content
+  - pages:write

@@ -1,11 +1,35 @@
-.prose .task-list-item {
+.prose .checklist-item {
   list-style: none;
 }
 
-.prose .task-list-checkbox {
-  margin-right: 0.45em;
+.prose .kumbuka-checklist-browser {
+  display: block;
 }
 
-.prose .task-list-checkbox.checked {
-  color: var(--accent);
+.prose .checklist-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  min-width: 1.05rem;
+  min-height: 1.05rem;
+  max-width: 1.05rem;
+  max-height: 1.05rem;
+  box-sizing: border-box;
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 0.28rem;
+  background: var(--surface);
+  color: transparent;
+  vertical-align: -0.12rem;
+  appearance: none;
+  line-height: 1;
+}
+
+.prose .checklist-checkbox.checked {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
 }
