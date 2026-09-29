@@ -21,6 +21,22 @@ ol {
   padding-left: 1.5rem;
 }
 
+.kumbuka-checklist-indent-compact {
+  padding-inline-start: 1rem;
+}
+
+.kumbuka-checklist-indent-default {
+  padding-inline-start: 1.5rem;
+}
+
+.kumbuka-checklist-indent-comfortable {
+  padding-inline-start: 2rem;
+}
+
+.kumbuka-checklist-indent-wide {
+  padding-inline-start: 2.75rem;
+}
+
 .checklist-item {
   margin: 0.28rem 0;
   list-style: none;

@@ -1,5 +1,7 @@
 # Checklists
 
+Interactive Markdown checklists with configurable Compact, Default, Comfortable, or Wide indentation in plugin settings.
+
 Checklists renders GitHub-style Markdown task items as accessible controls that can be toggled directly in page view mode.
 
 ## Usage

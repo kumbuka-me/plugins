@@ -3,10 +3,25 @@ provider: Kumbuka
 id: me.kumbuka.task-lists
 name: Checklists
 icon: list-checks-lucide
-version: 1.3.1
+version: 1.4.0
 description: Add lightweight, interactive Markdown checklists to Kumbuka pages.
 default_enabled: true
 modules:
+  - type: settings
+    id: layout
+    name: Indentation
+    description: Choose how far checklist levels are indented.
+    fields:
+      - id: indent
+        name: Indent
+        type: select
+        required: true
+        default: Default
+        options:
+          - Compact
+          - Default
+          - Comfortable
+          - Wide
   - type: markdown-syntax
     id: grammar
     syntax: task-list
@@ -49,5 +64,6 @@ modules:
     icon: list-checks-lucide
 permissions:
   - browser:render
+  - settings:read
   - pages:content
   - pages:write

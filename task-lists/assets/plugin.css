@@ -6,6 +6,22 @@
   display: block;
 }
 
+.prose .kumbuka-checklist-indent-compact {
+  padding-inline-start: 1rem;
+}
+
+.prose .kumbuka-checklist-indent-default {
+  padding-inline-start: 1.5rem;
+}
+
+.prose .kumbuka-checklist-indent-comfortable {
+  padding-inline-start: 2rem;
+}
+
+.prose .kumbuka-checklist-indent-wide {
+  padding-inline-start: 2.75rem;
+}
+
 .prose .checklist-checkbox {
   display: inline-flex;
   align-items: center;

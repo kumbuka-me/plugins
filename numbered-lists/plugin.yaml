@@ -1,0 +1,32 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.numbered-lists
+name: Numbered Lists
+icon: list-ordered-lucide
+version: 1.0.0
+description: Configure indentation for Markdown numbered lists.
+default_enabled: true
+modules:
+  - type: settings
+    id: layout
+    name: Indentation
+    description: Choose how far numbered-list levels are indented.
+    fields:
+      - id: indent
+        name: Indent
+        type: select
+        required: true
+        default: Default
+        options:
+          - Compact
+          - Default
+          - Comfortable
+          - Wide
+  - type: renderer-extension
+    id: indent
+    stage: postprocess
+  - type: content-style
+    id: style
+    css: plugin.css
+permissions:
+  - settings:read

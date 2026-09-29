@@ -1,0 +1,15 @@
+.prose .kumbuka-numbered-list-indent-compact {
+  padding-inline-start: 1rem;
+}
+
+.prose .kumbuka-numbered-list-indent-default {
+  padding-inline-start: 1.5rem;
+}
+
+.prose .kumbuka-numbered-list-indent-comfortable {
+  padding-inline-start: 2rem;
+}
+
+.prose .kumbuka-numbered-list-indent-wide {
+  padding-inline-start: 2.75rem;
+}

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kumbuka-me/plugins/internal/htmlutil"
+	"github.com/kumbuka-me/plugins/internal/listindent"
 	sdk "github.com/kumbuka-me/sdk"
 	xhtml "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -24,7 +25,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Module != "presentation" || request.Stage != "postprocess" {
 		return sdk.RenderResult{Error: "unsupported checklist render request"}
 	}
-	output, err := presentChecklists(request.Source)
+	output, err := presentChecklistsWithIndent(request.Source, listindent.Load(sdk.Settings().Get))
 	if err != nil {
 		return sdk.RenderResult{Error: err.Error()}
 	}
@@ -78,6 +79,10 @@ type openElement struct {
 // presentChecklists wraps each outer task list once so one sandboxed browser
 // module can own every checkbox in the list without creating an iframe per row.
 func presentChecklists(source string) (string, error) {
+	return presentChecklistsWithIndent(source, listindent.Default)
+}
+
+func presentChecklistsWithIndent(source, indent string) (string, error) {
 	spans, fingerprint, err := checklistSpans(source)
 	if err != nil || len(spans) == 0 {
 		return source, err
@@ -87,7 +92,7 @@ func presentChecklists(source string) (string, error) {
 	cursor := 0
 	for _, span := range spans {
 		output.WriteString(source[cursor:span.start])
-		fragment, transformErr := presentChecklistFragment(source[span.start:span.end], span.firstIndex, fingerprint)
+		fragment, transformErr := presentChecklistFragment(source[span.start:span.end], span.firstIndex, fingerprint, listindent.Class("checklist", indent))
 		if transformErr != nil {
 			return "", transformErr
 		}
@@ -167,14 +172,24 @@ func checklistSpans(source string) ([]checklistSpan, string, error) {
 	return filtered, checklistFingerprint(states), nil
 }
 
-func presentChecklistFragment(source string, firstIndex int, fingerprint string) (string, error) {
+func presentChecklistFragment(source string, firstIndex int, fingerprint, indentClass string) (string, error) {
 	root, err := htmlutil.ParseFragment(source)
 	if err != nil {
 		return "", err
 	}
 	index := firstIndex
 	walkChecklist(root, &index, fingerprint)
+	markChecklistLists(root, indentClass)
 	return htmlutil.RenderChildren(root)
+}
+
+func markChecklistLists(node *xhtml.Node, className string) {
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type == xhtml.ElementNode && (child.DataAtom == atom.Ul || child.DataAtom == atom.Ol) {
+			htmlutil.AddClass(child, className)
+		}
+		markChecklistLists(child, className)
+	}
 }
 
 func taskCheckboxCheckedToken(token xhtml.Token) bool {

@@ -1,0 +1,32 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.bulleted-lists
+name: Bulleted Lists
+icon: list-lucide
+version: 1.0.0
+description: Configure indentation for Markdown bulleted lists.
+default_enabled: true
+modules:
+  - type: settings
+    id: layout
+    name: Indentation
+    description: Choose how far bulleted-list levels are indented.
+    fields:
+      - id: indent
+        name: Indent
+        type: select
+        required: true
+        default: Default
+        options:
+          - Compact
+          - Default
+          - Comfortable
+          - Wide
+  - type: renderer-extension
+    id: indent
+    stage: postprocess
+  - type: content-style
+    id: style
+    css: plugin.css
+permissions:
+  - settings:read

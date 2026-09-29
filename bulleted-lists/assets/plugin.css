@@ -1,0 +1,15 @@
+.prose .kumbuka-bulleted-list-indent-compact:not(:has(.checklist-item)) {
+  padding-inline-start: 1rem;
+}
+
+.prose .kumbuka-bulleted-list-indent-default:not(:has(.checklist-item)) {
+  padding-inline-start: 1.5rem;
+}
+
+.prose .kumbuka-bulleted-list-indent-comfortable:not(:has(.checklist-item)) {
+  padding-inline-start: 2rem;
+}
+
+.prose .kumbuka-bulleted-list-indent-wide:not(:has(.checklist-item)) {
+  padding-inline-start: 2.75rem;
+}
