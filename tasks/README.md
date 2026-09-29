@@ -67,7 +67,7 @@ When no states are configured, Tasks uses the backward-compatible `open` and `do
 
 ## Interaction
 
-Rendered task trees use compact rows rather than large cards. Nested tasks are shown below their parent with hierarchy lines. The circular control at the left changes state; descriptions and task metadata remain visually secondary. Completed tasks are muted and struck through, and multi-task lists show a completed/total counter.
+Rendered task trees use compact rows rather than large cards. Nested tasks are shown below their parent with hierarchy lines. The visible state pill is a native select that changes state, while the circle at the left remains a quick state indicator. Descriptions and task metadata remain visually secondary. Completed tasks are muted and struck through, and multi-task lists show a completed/total counter.
 
 State changes are sent through Kumbuka's host-mediated page-details command handler. Before persisting a change, Tasks rereads the current page and verifies that both the task and requested state are still valid.
 

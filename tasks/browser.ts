@@ -31,6 +31,13 @@ body,
   width: 100%;
 }
 
+body {
+  color: var(--text, #1f2937);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
 .kumbuka-task-list {
   display: block;
   width: 100%;
@@ -114,18 +121,6 @@ body,
   background: color-mix(in srgb, currentColor 3.5%, transparent);
 }
 
-.task-state-control {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.22rem;
-  height: 1.22rem;
-  margin-top: 0.08rem;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
 .task-state-indicator {
   display: inline-flex;
   align-items: center;
@@ -133,6 +128,7 @@ body,
   width: 0.94rem;
   height: 0.94rem;
   box-sizing: border-box;
+  margin: 0.12rem 0 0 0.14rem;
   border: 1.55px solid var(--task-state-color, currentColor);
   border-radius: 999px;
   background: transparent;
@@ -140,31 +136,33 @@ body,
   font-size: 0.63rem;
   font-weight: 800;
   line-height: 1;
-  pointer-events: none;
   transition:
-    transform 100ms ease,
     background-color 120ms ease,
     border-color 120ms ease,
     color 120ms ease;
 }
 
-.task-state-control:hover .task-state-indicator {
-  transform: scale(1.08);
-}
-
 .task-state-select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  min-height: 1.42rem;
+  box-sizing: border-box;
   margin: 0;
-  padding: 0;
-  border: 0;
-  opacity: 0;
+  padding: 0.08rem 1.55rem 0.08rem 0.52rem;
+  border: 1px solid color-mix(in srgb, var(--task-state-color, currentColor) 34%, transparent);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--task-state-color, currentColor) 9%, transparent);
+  color: color-mix(in srgb, var(--task-state-color, currentColor) 78%, currentColor);
   cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.task-state-control:focus-within .task-state-indicator {
+.task-state-select:hover {
+  background-color: color-mix(in srgb, var(--task-state-color, currentColor) 15%, transparent);
+}
+
+.task-state-select:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--task-state-color, currentColor) 32%, transparent);
   outline-offset: 2px;
 }
@@ -348,9 +346,8 @@ body,
 
   function applyChoice(
     row: HTMLElement,
-    control: HTMLElement,
     indicator: HTMLElement,
-    stateLabel: HTMLElement | null,
+    select: HTMLSelectElement,
     choice: Choice,
   ): void {
     row.classList.toggle("kumbuka-task-completed", choice.completed);
@@ -359,9 +356,8 @@ body,
       "--task-state-foreground",
       readableForeground(choice.color),
     );
-    control.title = choice.label;
+    select.title = choice.label;
     indicator.textContent = choice.completed ? "✓" : "";
-    if (stateLabel) stateLabel.textContent = choice.label;
   }
 
   function upgradeTask(
@@ -379,9 +375,6 @@ body,
     const choices = parseChoices(row);
     const current = choices.find((choice) => choice.id === state);
     if (!current) throw new Error("Unknown task state");
-
-    const control = document.createElement("label");
-    control.className = "task-state-control";
 
     const indicator = document.createElement("span");
     indicator.className = "task-state-indicator";
@@ -406,11 +399,12 @@ body,
     const stateLabel = row.querySelector<HTMLElement>(
       ".kumbuka-task-state-label",
     );
-    applyChoice(row, control, indicator, stateLabel, current);
+    if (!stateLabel) throw new Error("Invalid task state label");
+    applyChoice(row, indicator, select, current);
     select.addEventListener("change", () => {
       const selected = choices.find((choice) => choice.action === select.value);
       if (!selected) return;
-      applyChoice(row, control, indicator, stateLabel, selected);
+      applyChoice(row, indicator, select, selected);
       select.setAttribute(
         "aria-label",
         `${taskStateLabel(locale || "en")}: ${selected.label}`,
@@ -418,8 +412,8 @@ body,
       updateProgress(list);
     });
 
-    control.append(indicator, select);
-    box.replaceWith(control);
+    box.replaceWith(indicator);
+    stateLabel.replaceWith(select);
     row.classList.remove("kumbuka-task-fallback");
     row.classList.add("task-item");
   }
