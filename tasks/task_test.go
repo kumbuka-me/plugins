@@ -17,7 +17,7 @@ import (
 // TestParseTaskToken verifies required, optional, and invalid task attributes.
 func TestParseTaskToken(t *testing.T) {
 	t.Run("complete", func(t *testing.T) {
-		task, err := parseTaskToken(`{{task id="deploy/api" text="Deploy API" description="Roll out the API after smoke tests." assignee="@alice" due="2026-10-01" initial="in-progress" parent="release"}}`)
+		task, err := parseTaskToken(`{{task id="deploy/api" text="Deploy API" description="Roll out the API after smoke tests." assignee="@alice" due="2026-10-01" initial="in-progress" parent="release" workflow="release-flow"}}`)
 		require.NoError(t, err)
 		assert.Equal(t, "deploy/api", task.ID)
 		assert.Equal(t, "Deploy API", task.Text)
@@ -26,6 +26,7 @@ func TestParseTaskToken(t *testing.T) {
 		assert.Equal(t, "2026-10-01", task.Due)
 		assert.Equal(t, "in-progress", task.InitialState)
 		assert.Equal(t, "release", task.Parent)
+		assert.Equal(t, "release-flow", task.Workflow)
 	})
 
 	t.Run("invalid assignee", func(t *testing.T) {
@@ -77,6 +78,24 @@ func TestParseTaskListToken(t *testing.T) {
 	assert.Equal(t, "2026-10-02", tasks[2].Due)
 }
 
+func TestTaskListWorkflowGroup(t *testing.T) {
+	tasks, err := parseTaskListToken(`{{tasks workflow="release-flow" texts="Prepare release" ids="release" initials="review"}}`)
+	require.NoError(t, err)
+	require.Len(t, tasks, 1)
+	require.Equal(t, "release-flow", tasks[0].Workflow)
+
+	readWorkflow := func(resource, key string) (sdk.PluginResourceRecord, error) {
+		require.Equal(t, "workflows", resource)
+		require.Equal(t, "release-flow", key)
+		return sdk.PluginResourceRecord{Key: key, Values: map[string]string{
+			"states": `[{"id":"draft","label":"Draft","color":"#64748b","completed":"false"},{"id":"review","label":"Review","color":"#2563eb","completed":"false"},{"id":"shipped","label":"Shipped","color":"#16a34a","completed":"true"}]`,
+		}}, nil
+	}
+	output := transformSourceWithWorkflows(`{{tasks workflow="release-flow" texts="Prepare release" ids="release" initials="review"}}`, nil, defaultTaskWorkflow(), readWorkflow, localize.For("en"))
+	require.Contains(t, output, "kumbuka-task-state__review")
+	require.Contains(t, output, actionID("release", "shipped"))
+}
+
 // TestParseTaskListTokenGeneratesMissingIDs verifies a freshly inserted visual task is renderable before its first Apply.
 func TestParseTaskListTokenGeneratesMissingIDs(t *testing.T) {
 	tasks, err := parseTaskListToken(`{{tasks texts="Describe the task"}}`)
@@ -105,13 +124,24 @@ func TestLoadTaskWorkflow(t *testing.T) {
 	})
 
 	t.Run("preserves configured order", func(t *testing.T) {
-		value := []byte(`[{"id":"todo","label":"To do","color":"#64748b","completed":"false"},{"id":"in-progress","label":"In progress","color":"#2563eb","completed":"false"},{"id":"done","label":"Done","color":"#16a34a","completed":"true"}]`)
+		value := []byte(`[{"id":"todo","label":"To do","color":"#64748b","completed":"false","default":"false"},{"id":"in-progress","label":"In progress","color":"#2563eb","completed":"false","default":"true"},{"id":"done","label":"Done","color":"#16a34a","completed":"true","default":"false"}]`)
 		workflow, err := loadTaskWorkflow(func(string) (sdk.StoredValue, error) {
 			return sdk.StoredValue{Found: true, Value: value}, nil
 		})
 		require.NoError(t, err)
 		assert.Equal(t, []string{"todo", "in-progress", "done"}, []string{workflow.States[0].ID, workflow.States[1].ID, workflow.States[2].ID})
 		assert.Equal(t, "done", workflow.nextState("in-progress").ID)
+		initial, initialErr := workflow.initialState("")
+		require.NoError(t, initialErr)
+		assert.Equal(t, "in-progress", initial.ID)
+	})
+
+	t.Run("rejects multiple defaults", func(t *testing.T) {
+		value := []byte(`[{"id":"todo","label":"To do","color":"#64748b","completed":"false","default":"true"},{"id":"review","label":"Review","color":"#2563eb","completed":"false","default":"true"}]`)
+		_, err := loadTaskWorkflow(func(string) (sdk.StoredValue, error) {
+			return sdk.StoredValue{Found: true, Value: value}, nil
+		})
+		require.ErrorContains(t, err, "more than one default")
 	})
 
 	t.Run("rejects duplicate IDs", func(t *testing.T) {
@@ -121,6 +151,13 @@ func TestLoadTaskWorkflow(t *testing.T) {
 		})
 		require.ErrorContains(t, err, "duplicated")
 	})
+}
+
+func TestTaskWorkflowFromRecordRejectsDuplicateStates(t *testing.T) {
+	_, err := taskWorkflowFromRecord("release", sdk.PluginResourceRecord{Key: "release", Values: map[string]string{
+		"states": `[{"id":"open","label":"Open","color":"#64748b","completed":"false"},{"id":"open","label":"Again","color":"#64748b","completed":"false"}]`,
+	}})
+	require.ErrorContains(t, err, "duplicated")
 }
 
 // TestTransformSource verifies rendering, stored state, errors, and code preservation.

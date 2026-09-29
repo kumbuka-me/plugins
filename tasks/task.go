@@ -44,6 +44,8 @@ type taskOptions struct {
 	InitialState string
 	// Parent optionally names an earlier task in the same rendered list.
 	Parent string
+	// Workflow optionally references an administrator-managed workflow group.
+	Workflow string
 }
 
 // storageReader reads one plugin-owned persisted task value.
@@ -65,6 +67,11 @@ type taskState struct {
 
 // transformSource renders task declarations outside fenced and inline code.
 func transformSource(source string, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) string {
+	return transformSourceWithWorkflows(source, readStorage, workflow, nil, localizer)
+}
+
+// transformSourceWithWorkflows renders tasks using the default workflow or a referenced workflow group.
+func transformSourceWithWorkflows(source string, readStorage storageReader, workflow taskWorkflow, readWorkflow workflowResourceReader, localizer sdk.Localizer) string {
 	lines := strings.Split(source, "\n")
 	output := make([]string, 0, len(lines))
 	fence := ""
@@ -87,14 +94,21 @@ func transformSource(source string, readStorage storageReader, workflow taskWork
 			continue
 		}
 
-		if tasks, next, ok := collectTaskList(lines, index, maxTaskDeclarations-count, workflow); ok {
-			output = append(output, renderTaskList(tasks, readStorage, workflow, localizer))
+		if tasks, next, ok := collectTaskList(lines, index, maxTaskDeclarations-count); ok {
+			active, workflowErr := resolveTaskWorkflow(tasks[0].Workflow, workflow, readWorkflow)
+			if workflowErr != nil {
+				output = append(output, taskErrorHTML(workflowErr.Error(), localizer))
+			} else if workflowErr = validateTaskWorkflowStates(tasks, active); workflowErr != nil {
+				output = append(output, taskErrorHTML(workflowErr.Error(), localizer))
+			} else {
+				output = append(output, renderTaskList(tasks, readStorage, active, localizer))
+			}
 			count += len(tasks)
 			index = next
 			continue
 		}
 
-		transformed, used := transformLine(line, maxTaskDeclarations-count, readStorage, workflow, localizer)
+		transformed, used := transformLineWithWorkflows(line, maxTaskDeclarations-count, readStorage, workflow, readWorkflow, localizer)
 		count += used
 		output = append(output, transformed)
 		index++
@@ -105,12 +119,12 @@ func transformSource(source string, readStorage storageReader, workflow taskWork
 
 // collectTaskList groups adjacent standalone task declarations into one compact rendered list.
 // Blank lines between task declarations are treated as list spacing and consumed.
-func collectTaskList(lines []string, start, remaining int, workflow taskWorkflow) ([]taskOptions, int, bool) {
+func collectTaskList(lines []string, start, remaining int) ([]taskOptions, int, bool) {
 	if remaining <= 0 || start >= len(lines) {
 		return nil, start, false
 	}
 
-	first, ok := standaloneTask(lines[start], workflow)
+	first, ok := standaloneTask(lines[start])
 	if !ok {
 		return nil, start, false
 	}
@@ -127,8 +141,8 @@ func collectTaskList(lines []string, start, remaining int, workflow taskWorkflow
 			break
 		}
 
-		task, found := standaloneTask(lines[next], workflow)
-		if !found {
+		task, found := standaloneTask(lines[next])
+		if !found || task.Workflow != first.Workflow {
 			next = separatorStart
 			break
 		}
@@ -140,7 +154,7 @@ func collectTaskList(lines []string, start, remaining int, workflow taskWorkflow
 }
 
 // standaloneTask parses a line that consists only of one valid task declaration.
-func standaloneTask(line string, workflow taskWorkflow) (taskOptions, bool) {
+func standaloneTask(line string) (taskOptions, bool) {
 	trimmed := strings.TrimSpace(line)
 	if !strings.HasPrefix(trimmed, "{{task") || !strings.HasSuffix(trimmed, "}}") {
 		return taskOptions{}, false
@@ -149,14 +163,15 @@ func standaloneTask(line string, workflow taskWorkflow) (taskOptions, bool) {
 	if err != nil {
 		return taskOptions{}, false
 	}
-	if _, err := workflow.initialState(options.InitialState); err != nil {
-		return taskOptions{}, false
-	}
 	return options, true
 }
 
 // transformLine renders task declarations on one non-fenced line while preserving inline code spans.
 func transformLine(line string, remaining int, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) (string, int) {
+	return transformLineWithWorkflows(line, remaining, readStorage, workflow, nil, localizer)
+}
+
+func transformLineWithWorkflows(line string, remaining int, readStorage storageReader, workflow taskWorkflow, readWorkflow workflowResourceReader, localizer sdk.Localizer) (string, int) {
 	if remaining <= 0 || !strings.Contains(line, "{{task") {
 		return line, 0
 	}
@@ -195,11 +210,14 @@ func transformLine(line string, remaining int, readStorage storageReader, workfl
 			} else if len(tasks) > remaining-used {
 				output.WriteString(taskErrorHTML(fmt.Sprintf("task list exceeds the %d task page limit", maxTaskDeclarations), localizer))
 				used = remaining
-			} else if err := validateTaskWorkflowStates(tasks, workflow); err != nil {
+			} else if active, err := resolveTaskWorkflow(tasks[0].Workflow, workflow, readWorkflow); err != nil {
+				output.WriteString(taskErrorHTML(err.Error(), localizer))
+				used += len(tasks)
+			} else if err := validateTaskWorkflowStates(tasks, active); err != nil {
 				output.WriteString(taskErrorHTML(err.Error(), localizer))
 				used += len(tasks)
 			} else {
-				output.WriteString(renderTaskList(tasks, readStorage, workflow, localizer))
+				output.WriteString(renderTaskList(tasks, readStorage, active, localizer))
 				used += len(tasks)
 			}
 			index = end
@@ -219,10 +237,12 @@ func transformLine(line string, remaining int, readStorage storageReader, workfl
 				output.WriteString(taskErrorHTML("task declaration is too long", localizer))
 			} else if options, err := parseTaskToken(token); err != nil {
 				output.WriteString(taskErrorHTML(err.Error(), localizer))
-			} else if _, err := workflow.initialState(options.InitialState); err != nil {
+			} else if active, err := resolveTaskWorkflow(options.Workflow, workflow, readWorkflow); err != nil {
+				output.WriteString(taskErrorHTML(err.Error(), localizer))
+			} else if _, err := active.initialState(options.InitialState); err != nil {
 				output.WriteString(taskErrorHTML(err.Error(), localizer))
 			} else {
-				output.WriteString(renderTask(options, readStorage, workflow, localizer))
+				output.WriteString(renderTask(options, readStorage, active, localizer))
 			}
 			used++
 			index = end
@@ -253,7 +273,7 @@ func parseTaskListToken(token string) ([]taskOptions, error) {
 	}
 	for name := range arguments {
 		switch name {
-		case "texts", "descriptions", "ids", "parents", "assignees", "dues", "initials":
+		case "texts", "descriptions", "ids", "parents", "assignees", "dues", "initials", "workflow":
 		default:
 			return nil, fmt.Errorf("unsupported task list attribute %q", name)
 		}
@@ -307,6 +327,7 @@ func parseTaskListToken(token string) ([]taskOptions, error) {
 			Assignee:     strings.TrimSpace(assignees[index]),
 			Due:          strings.TrimSpace(dues[index]),
 			InitialState: strings.TrimSpace(initials[index]),
+			Workflow:     strings.TrimSpace(arguments["workflow"]),
 		}
 		if err := validateTaskOptions(options); err != nil {
 			return nil, fmt.Errorf("task %d: %w", index+1, err)
@@ -365,7 +386,7 @@ func parseTaskToken(token string) (taskOptions, error) {
 	}
 	for name := range arguments {
 		switch name {
-		case "id", "text", "description", "assignee", "due", "initial", "parent":
+		case "id", "text", "description", "assignee", "due", "initial", "parent", "workflow":
 		default:
 			return taskOptions{}, fmt.Errorf("unsupported task attribute %q", name)
 		}
@@ -379,6 +400,7 @@ func parseTaskToken(token string) (taskOptions, error) {
 		Due:          strings.TrimSpace(arguments["due"]),
 		InitialState: strings.TrimSpace(arguments["initial"]),
 		Parent:       strings.TrimSpace(arguments["parent"]),
+		Workflow:     strings.TrimSpace(arguments["workflow"]),
 	}
 	if err := validateTaskOptions(options); err != nil {
 		return taskOptions{}, err
@@ -414,6 +436,9 @@ func validateTaskOptions(options taskOptions) error {
 	}
 	if options.Parent == options.ID {
 		return fmt.Errorf("task cannot be its own parent")
+	}
+	if options.Workflow != "" && !validName(options.Workflow, maxTaskIDBytes) {
+		return fmt.Errorf("task workflow group must be a valid name")
 	}
 	return nil
 }

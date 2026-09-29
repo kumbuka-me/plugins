@@ -1,5 +1,13 @@
 # Tasks
 
+Create persistent nested task trees with configurable workflows. Administrators can define a default workflow and reusable workflow groups in **Plugin settings → Tasks**.
+
+Reference a reusable group from a task tree:
+
+```markdown
+{{tasks workflow="release-flow" texts="Prepare release"}}
+```
+
 Tasks adds persistent actionable task trees to Kumbuka pages. Tasks can have descriptions, assignees, due dates, configurable workflow states, and arbitrarily nested subtasks up to the configured safety limit. State changes are stored separately from page Markdown, so checking a task does not create a page revision.
 
 ## Visual editor

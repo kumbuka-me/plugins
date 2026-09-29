@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.tasks
 name: Tasks
 icon: square-check-big-lucide
-version: 1.7.1
+version: 1.9.0
 description: Add persistent nested task trees with descriptions, assignees, due dates, configurable states, and notifications to Kumbuka pages.
 default_enabled: true
 modules:
@@ -41,6 +41,74 @@ modules:
             options:
               - "false"
               - "true"
+          - id: default
+            name: Default
+            type: select
+            required: true
+            default: "false"
+            options:
+              - "false"
+              - "true"
+  - type: admin-resource
+    id: workflows
+    name: Workflow groups
+    description: Reusable named workflows that task lists can reference with workflow="name".
+    fields:
+      - id: name
+        name: Name
+        type: text
+        required: true
+        key: true
+        max_bytes: 128
+      - id: description
+        name: Description
+        type: text
+        max_bytes: 1024
+      - id: states
+        name: States
+        type: list
+        required: true
+        max_bytes: 8192
+        max_items: 16
+        columns:
+          - id: id
+            name: ID
+            type: text
+            required: true
+            max_bytes: 64
+          - id: label
+            name: Label
+            type: text
+            required: true
+            max_bytes: 64
+          - id: color
+            name: Color
+            type: color
+            required: true
+            default: "#64748b"
+          - id: completed
+            name: Completed
+            type: select
+            required: true
+            default: "false"
+            options:
+              - "false"
+              - "true"
+          - id: default
+            name: Default
+            type: select
+            required: true
+            default: "false"
+            options:
+              - "false"
+              - "true"
+  - type: editor-completion
+    id: workflow-completion
+    resource: workflows
+    trigger: "{{tasks "
+    replacement: '{{tasks workflow="${name}" texts="Describe the task"}}'
+    label_field: name
+    detail_field: description
   - type: renderer-extension
     id: task
     stage: preprocess

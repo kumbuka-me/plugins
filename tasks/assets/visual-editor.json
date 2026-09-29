@@ -11,6 +11,11 @@
       },
       "attributes": [
         {
+          "name": "workflow",
+          "type": "identifier",
+          "max_bytes": 128
+        },
+        {
           "name": "texts",
           "type": "list",
           "required": true,
@@ -64,6 +69,13 @@
         }
       ],
       "settings": [
+        {
+          "type": "resource",
+          "label": "Workflow group",
+          "attribute": "workflow",
+          "placeholder": "Use the default workflow…",
+          "completion_module_id": "workflow-completion"
+        },
         {
           "type": "tree",
           "label": "Tasks",
@@ -148,6 +160,11 @@
       },
       "attributes": [
         {
+          "name": "workflow",
+          "type": "identifier",
+          "max_bytes": 128
+        },
+        {
           "name": "id",
           "type": "identifier",
           "required": true,
@@ -186,6 +203,13 @@
         }
       ],
       "settings": [
+        {
+          "type": "resource",
+          "label": "Workflow group",
+          "attribute": "workflow",
+          "placeholder": "Use the default workflow…",
+          "completion_module_id": "workflow-completion"
+        },
         {
           "type": "text",
           "label": "Task",

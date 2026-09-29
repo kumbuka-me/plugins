@@ -121,6 +121,10 @@ func taskTokens(line string) []taskOptions {
 
 // renderControls builds the page-details task summary and one non-JavaScript advance action per task.
 func renderControls(source string, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) sdk.Result {
+	return renderControlsWithWorkflows(source, readStorage, workflow, nil, localizer)
+}
+
+func renderControlsWithWorkflows(source string, readStorage storageReader, workflow taskWorkflow, readWorkflow workflowResourceReader, localizer sdk.Localizer) sdk.Result {
 	tasks := discoverTasks(source)
 	if len(tasks) == 0 {
 		return sdk.Text("")
@@ -130,15 +134,19 @@ func renderControls(source string, readStorage storageReader, workflow taskWorkf
 	output.WriteString(`<div class="task-controls"><h3>` + html.EscapeString(localizer.Text("tasks.title")) + `</h3><p class="muted">` + html.EscapeString(localizer.Text("tasks.help")) + `</p>`)
 	actions := make([]sdk.WidgetAction, 0, len(tasks))
 	for _, task := range tasks {
-		state := readTaskState(task, readStorage, workflow)
-		definition, ok := workflow.state(state.State)
+		active, err := resolveTaskWorkflow(task.Workflow, workflow, readWorkflow)
+		if err != nil {
+			continue
+		}
+		state := readTaskState(task, readStorage, active)
+		definition, ok := active.state(state.State)
 		if !ok {
 			continue
 		}
 		output.WriteString(`<div class="task-control"><strong>`)
 		output.WriteString(html.EscapeString(task.Text))
 		output.WriteString(`</strong><small>`)
-		output.WriteString(html.EscapeString(workflow.stateLabel(definition, localizer)))
+		output.WriteString(html.EscapeString(active.stateLabel(definition, localizer)))
 		if task.Assignee != "" {
 			output.WriteString(` · ` + html.EscapeString(task.Assignee))
 		}
@@ -147,12 +155,12 @@ func renderControls(source string, readStorage storageReader, workflow taskWorkf
 		}
 		output.WriteString(`</small></div>`)
 
-		if len(workflow.States) > 1 {
-			next := workflow.nextState(definition.ID)
+		if len(active.States) > 1 {
+			next := active.nextState(definition.ID)
 			actions = append(actions, sdk.WidgetAction{
 				ID:    actionID(task.ID, next.ID),
 				Kind:  "command",
-				Label: localizer.Textf("tasks.move", workflow.stateLabel(next, localizer), task.Text),
+				Label: localizer.Textf("tasks.move", active.stateLabel(next, localizer), task.Text),
 			})
 		}
 	}
@@ -165,8 +173,16 @@ func renderControls(source string, readStorage storageReader, workflow taskWorkf
 
 // resolveAction maps a host command ID back to a currently declared task and configured target state.
 func resolveAction(source, action string, workflow taskWorkflow) (taskOptions, taskWorkflowState, bool) {
+	return resolveActionWithWorkflows(source, action, workflow, nil)
+}
+
+func resolveActionWithWorkflows(source, action string, workflow taskWorkflow, readWorkflow workflowResourceReader) (taskOptions, taskWorkflowState, bool) {
 	for _, task := range discoverTasks(source) {
-		for _, state := range workflow.States {
+		active, err := resolveTaskWorkflow(task.Workflow, workflow, readWorkflow)
+		if err != nil {
+			continue
+		}
+		for _, state := range active.States {
 			if action == actionID(task.ID, state.ID) {
 				return task, state, true
 			}
@@ -177,7 +193,11 @@ func resolveAction(source, action string, workflow taskWorkflow) (taskOptions, t
 
 // applyTaskAction persists one transition and delivers its retry-safe assignee notification.
 func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow, services taskMutationServices, localizer sdk.Localizer) error {
-	task, target, ok := resolveAction(source, action, workflow)
+	return applyTaskActionWithWorkflows(page, source, action, workflow, nil, services, localizer)
+}
+
+func applyTaskActionWithWorkflows(page sdk.Page, source, action string, workflow taskWorkflow, readWorkflow workflowResourceReader, services taskMutationServices, localizer sdk.Localizer) error {
+	task, target, ok := resolveActionWithWorkflows(source, action, workflow, readWorkflow)
 	if !ok {
 		return fmt.Errorf("task action is no longer available")
 	}
@@ -185,7 +205,11 @@ func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow
 		return fmt.Errorf("task storage is unavailable")
 	}
 
-	state, previous, err := applyTaskTransition(task, target, workflow, services)
+	active, err := resolveTaskWorkflow(task.Workflow, workflow, readWorkflow)
+	if err != nil {
+		return err
+	}
+	state, previous, err := applyTaskTransition(task, target, active, services)
 	if err != nil {
 		return err
 	}
@@ -195,7 +219,7 @@ func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow
 	if state.NotificationSent {
 		return nil
 	}
-	return notifyTaskTransition(page, task, previous, target, state, services, workflow.stateLabel(target, localizer), localizer)
+	return notifyTaskTransition(page, task, previous, target, state, services, active.stateLabel(target, localizer), localizer)
 }
 
 // applyTaskTransition loads and persists a requested state change while preserving retry metadata.

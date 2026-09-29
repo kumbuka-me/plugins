@@ -18,6 +18,9 @@ const (
 // settingsReader reads one plugin-owned administrator setting.
 type settingsReader func(string) (sdk.StoredValue, error)
 
+// workflowResourceReader reads one administrator-managed workflow group.
+type workflowResourceReader func(resource, key string) (sdk.PluginResourceRecord, error)
+
 // taskWorkflowState describes one administrator-configured task state.
 type taskWorkflowState struct {
 	// ID is the stable state identifier persisted with task runtime state.
@@ -28,6 +31,8 @@ type taskWorkflowState struct {
 	Color string
 	// Completed marks states that represent completed work.
 	Completed bool
+	// Default marks the state assigned when a task omits an explicit initial state.
+	Default bool
 }
 
 // taskWorkflow contains the ordered states available to every task.
@@ -41,7 +46,7 @@ type taskWorkflow struct {
 // defaultTaskWorkflow returns the backward-compatible Open/Done workflow.
 func defaultTaskWorkflow() taskWorkflow {
 	return taskWorkflow{Builtin: true, States: []taskWorkflowState{
-		{ID: "open", Label: "Open", Color: "#64748b"},
+		{ID: "open", Label: "Open", Color: "#64748b", Default: true},
 		{ID: "done", Label: "Done", Color: "#16a34a", Completed: true},
 	}}
 }
@@ -72,6 +77,7 @@ func loadTaskWorkflow(read settingsReader) (taskWorkflow, error) {
 
 	workflow := taskWorkflow{States: make([]taskWorkflowState, 0, len(rows))}
 	seen := make(map[string]bool, len(rows))
+	defaultSeen := false
 	for index, row := range rows {
 		state, err := parseTaskWorkflowState(row)
 		if err != nil {
@@ -81,6 +87,70 @@ func loadTaskWorkflow(read settingsReader) (taskWorkflow, error) {
 			return taskWorkflow{}, fmt.Errorf("task workflow state %q is duplicated", state.ID)
 		}
 		seen[state.ID] = true
+		if state.Default {
+			if defaultSeen {
+				return taskWorkflow{}, fmt.Errorf("task workflow has more than one default state")
+			}
+			defaultSeen = true
+		}
+		workflow.States = append(workflow.States, state)
+	}
+	return workflow, nil
+}
+
+// resolveTaskWorkflow returns the default workflow or an explicitly referenced reusable group.
+func resolveTaskWorkflow(name string, fallback taskWorkflow, read workflowResourceReader) (taskWorkflow, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return fallback, nil
+	}
+	if !validName(name, maxTaskIDBytes) {
+		return taskWorkflow{}, fmt.Errorf("task workflow group must be a valid name")
+	}
+	if read == nil {
+		return taskWorkflow{}, fmt.Errorf("unknown task workflow group %q", name)
+	}
+	record, err := read("workflows", name)
+	if err != nil {
+		return taskWorkflow{}, fmt.Errorf("unknown task workflow group %q", name)
+	}
+	return taskWorkflowFromRecord(name, record)
+}
+
+// taskWorkflowFromRecord validates one administrator-managed workflow group.
+func taskWorkflowFromRecord(name string, record sdk.PluginResourceRecord) (taskWorkflow, error) {
+	if record.Key != "" && record.Key != name {
+		return taskWorkflow{}, fmt.Errorf("workflow record key does not match %q", name)
+	}
+	source := strings.TrimSpace(record.Values["states"])
+	if source == "" {
+		return taskWorkflow{}, fmt.Errorf("workflow group %q has no states", name)
+	}
+	var rows []map[string]string
+	if err := json.Unmarshal([]byte(source), &rows); err != nil {
+		return taskWorkflow{}, fmt.Errorf("workflow group %q has invalid states", name)
+	}
+	if len(rows) == 0 || len(rows) > maxTaskStates {
+		return taskWorkflow{}, fmt.Errorf("workflow group %q must contain between 1 and %d states", name, maxTaskStates)
+	}
+	workflow := taskWorkflow{States: make([]taskWorkflowState, 0, len(rows))}
+	seen := make(map[string]bool, len(rows))
+	defaultSeen := false
+	for index, row := range rows {
+		state, err := parseTaskWorkflowState(row)
+		if err != nil {
+			return taskWorkflow{}, fmt.Errorf("workflow group %q state %d: %w", name, index+1, err)
+		}
+		if seen[state.ID] {
+			return taskWorkflow{}, fmt.Errorf("workflow group %q state %q is duplicated", name, state.ID)
+		}
+		seen[state.ID] = true
+		if state.Default {
+			if defaultSeen {
+				return taskWorkflow{}, fmt.Errorf("workflow group %q has more than one default state", name)
+			}
+			defaultSeen = true
+		}
 		workflow.States = append(workflow.States, state)
 	}
 	return workflow, nil
@@ -108,6 +178,13 @@ func parseTaskWorkflowState(row map[string]string) (taskWorkflowState, error) {
 		state.Completed = true
 	default:
 		return taskWorkflowState{}, fmt.Errorf("completed must be true or false")
+	}
+	switch strings.TrimSpace(row["default"]) {
+	case "", "false":
+	case "true":
+		state.Default = true
+	default:
+		return taskWorkflowState{}, fmt.Errorf("default must be true or false")
 	}
 	return state, nil
 }
@@ -185,6 +262,11 @@ func (w taskWorkflow) initialState(id string) (taskWorkflowState, error) {
 		return taskWorkflowState{}, fmt.Errorf("task workflow has no states")
 	}
 	if id == "" {
+		for _, state := range w.States {
+			if state.Default {
+				return state, nil
+			}
+		}
 		return w.States[0], nil
 	}
 	state, ok := w.state(id)
