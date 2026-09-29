@@ -1729,6 +1729,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.3.1",
+          "api_version": 1,
+          "released_at": "2026-09-29T06:06:43Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/task-lists/v1.3.1/task-lists-1.3.1.kumbukaplugin",
+          "sha256": "9eae63f06042c3466fd2180b6da0c43d1da348d8a8680f891da73592befaf9e8"
+        },
+        {
           "version": "1.3.0",
           "api_version": 1,
           "released_at": "2026-09-29T06:04:04Z",
