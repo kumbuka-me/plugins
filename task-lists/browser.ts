@@ -1,7 +1,7 @@
 (() => {
   type BrowserContext = { html: string };
 
-  const action = /^toggle-([0-9]+)-([01])$/;
+  const action = /^toggle-([0-9]+)-([01])-([a-f0-9]{16})$/;
   const actionPrefix = "checklist-action__";
 
   function actionValue(button: HTMLButtonElement): RegExpExecArray | null {

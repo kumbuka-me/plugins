@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,11 +11,6 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 	xhtml "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
-)
-
-var (
-	checklistAction = regexp.MustCompile(`^toggle-([0-9]+)-([01])$`)
-	taskMarker      = regexp.MustCompile(`^((?:[ \t]{0,3}>[ \t]?)*[ \t]*(?:[-+*]|[0-9]+[.)])[ \t]+\[)([ xX])(\])`)
 )
 
 func main() {}
@@ -55,7 +49,7 @@ func commandChecklist(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult
 	if err != nil {
 		return sdk.WidgetCommandResult{}, err
 	}
-	markdown, err := toggleTaskMarker(content.Markdown, index, matches[2] == "1")
+	markdown, err := toggleTaskMarker(content.Markdown, index, matches[2] == "1", matches[3])
 	if err != nil {
 		return sdk.WidgetCommandResult{}, err
 	}
@@ -84,7 +78,7 @@ type openElement struct {
 // presentChecklists wraps each outer task list once so one sandboxed browser
 // module can own every checkbox in the list without creating an iframe per row.
 func presentChecklists(source string) (string, error) {
-	spans, err := checklistSpans(source)
+	spans, fingerprint, err := checklistSpans(source)
 	if err != nil || len(spans) == 0 {
 		return source, err
 	}
@@ -93,7 +87,7 @@ func presentChecklists(source string) (string, error) {
 	cursor := 0
 	for _, span := range spans {
 		output.WriteString(source[cursor:span.start])
-		fragment, transformErr := presentChecklistFragment(source[span.start:span.end], span.firstIndex)
+		fragment, transformErr := presentChecklistFragment(source[span.start:span.end], span.firstIndex, fingerprint)
 		if transformErr != nil {
 			return "", transformErr
 		}
@@ -106,10 +100,11 @@ func presentChecklists(source string) (string, error) {
 	return output.String(), nil
 }
 
-func checklistSpans(source string) ([]checklistSpan, error) {
+func checklistSpans(source string) ([]checklistSpan, string, error) {
 	tokenizer := xhtml.NewTokenizer(strings.NewReader(source))
 	var stack []openElement
 	var spans []checklistSpan
+	var states []bool
 	offset, checkboxIndex := 0, 0
 	for {
 		tokenType := tokenizer.Next()
@@ -117,7 +112,7 @@ func checklistSpans(source string) ([]checklistSpan, error) {
 			if tokenizer.Err() == io.EOF {
 				break
 			}
-			return nil, tokenizer.Err()
+			return nil, "", tokenizer.Err()
 		}
 		raw := tokenizer.Raw()
 		start := offset
@@ -135,6 +130,7 @@ func checklistSpans(source string) ([]checklistSpan, error) {
 						stack[index].task = true
 					}
 				}
+				states = append(states, taskCheckboxCheckedToken(token))
 				checkboxIndex++
 			}
 			if tokenType == xhtml.StartTagToken && !htmlVoidElement(token.Data) {
@@ -168,17 +164,26 @@ func checklistSpans(source string) ([]checklistSpan, error) {
 		}
 		filtered = append(filtered, span)
 	}
-	return filtered, nil
+	return filtered, checklistFingerprint(states), nil
 }
 
-func presentChecklistFragment(source string, firstIndex int) (string, error) {
+func presentChecklistFragment(source string, firstIndex int, fingerprint string) (string, error) {
 	root, err := htmlutil.ParseFragment(source)
 	if err != nil {
 		return "", err
 	}
 	index := firstIndex
-	walkChecklist(root, &index)
+	walkChecklist(root, &index, fingerprint)
 	return htmlutil.RenderChildren(root)
+}
+
+func taskCheckboxCheckedToken(token xhtml.Token) bool {
+	for _, attribute := range token.Attr {
+		if attribute.Key == "checked" {
+			return true
+		}
+	}
+	return false
 }
 
 func isTaskCheckboxToken(token xhtml.Token) bool {
@@ -203,14 +208,14 @@ func htmlVoidElement(name string) bool {
 	}
 }
 
-func walkChecklist(node *xhtml.Node, index *int) {
+func walkChecklist(node *xhtml.Node, index *int, fingerprint string) {
 	for child := node.FirstChild; child != nil; {
 		next := child.NextSibling
 		if isTaskCheckbox(child) {
-			replaceTaskCheckbox(child, *index)
+			replaceTaskCheckbox(child, *index, fingerprint)
 			*index = *index + 1
 		} else {
-			walkChecklist(child, index)
+			walkChecklist(child, index, fingerprint)
 		}
 		child = next
 	}
@@ -222,7 +227,7 @@ func isTaskCheckbox(node *xhtml.Node) bool {
 		htmlutil.HasAttribute(node, "disabled")
 }
 
-func replaceTaskCheckbox(node *xhtml.Node, index int) {
+func replaceTaskCheckbox(node *xhtml.Node, index int, fingerprint string) {
 	checked := htmlutil.HasAttribute(node, "checked")
 	state, mark, label := "0", "✓", "Mark complete"
 	className := "checklist-checkbox"
@@ -230,7 +235,7 @@ func replaceTaskCheckbox(node *xhtml.Node, index int) {
 		state, label = "1", "Mark incomplete"
 		className += " checked"
 	}
-	action := fmt.Sprintf("toggle-%d-%s", index, state)
+	action := fmt.Sprintf("toggle-%d-%s-%s", index, state, fingerprint)
 	className += " checklist-action__" + action
 	button := &xhtml.Node{Type: xhtml.ElementNode, Data: "button", DataAtom: atom.Button, Attr: []xhtml.Attribute{
 		{Key: "type", Val: "button"}, {Key: "class", Val: className}, {Key: "role", Val: "checkbox"},
@@ -240,62 +245,4 @@ func replaceTaskCheckbox(node *xhtml.Node, index int) {
 	htmlutil.AddClass(node.Parent, "checklist-item")
 	node.Parent.InsertBefore(button, node)
 	node.Parent.RemoveChild(node)
-}
-
-// toggleTaskMarker changes one task marker in document order while ignoring
-// fenced code blocks. expectedChecked rejects stale rendered controls.
-func toggleTaskMarker(source string, target int, expectedChecked bool) (string, error) {
-	lines := strings.SplitAfter(source, "\n")
-	itemIndex := 0
-	fence := byte(0)
-	fenceLength := 0
-	for lineIndex, line := range lines {
-		content := strings.TrimSuffix(line, "\n")
-		trimmed := strings.TrimLeft(content, " \t")
-		if marker, length := fenceMarker(trimmed); marker != 0 {
-			if fence == 0 {
-				fence, fenceLength = marker, length
-			} else if marker == fence && length >= fenceLength {
-				fence, fenceLength = 0, 0
-			}
-			continue
-		}
-		if fence != 0 {
-			continue
-		}
-		match := taskMarker.FindStringSubmatchIndex(content)
-		if match == nil {
-			continue
-		}
-		if itemIndex == target {
-			marker := content[match[4]:match[5]]
-			checked := marker == "x" || marker == "X"
-			if checked != expectedChecked {
-				return "", fmt.Errorf("checklist item changed; reload the page")
-			}
-			replacement := "x"
-			if checked {
-				replacement = " "
-			}
-			lines[lineIndex] = content[:match[4]] + replacement + content[match[5]:] + strings.TrimPrefix(line, content)
-			return strings.Join(lines, ""), nil
-		}
-		itemIndex++
-	}
-	return "", fmt.Errorf("checklist item no longer exists")
-}
-
-func fenceMarker(line string) (byte, int) {
-	if len(line) < 3 || (line[0] != '`' && line[0] != '~') {
-		return 0, 0
-	}
-	marker := line[0]
-	length := 1
-	for length < len(line) && line[length] == marker {
-		length++
-	}
-	if length < 3 {
-		return 0, 0
-	}
-	return marker, length
 }

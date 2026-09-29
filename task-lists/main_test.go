@@ -57,13 +57,18 @@ func TestNestedTaskListsTransformOnce(t *testing.T) {
 
 func TestToggleTaskMarkerUpdatesOnlyRequestedItem(t *testing.T) {
 	source := "- [ ] first\n\n```md\n- [ ] example\n```\n> - [X] second\n"
-	got, err := toggleTaskMarker(source, 1, true)
+	got, err := toggleTaskMarker(source, 1, true, checklistFingerprint([]bool{false, true}))
 	require.NoError(t, err)
 	require.Equal(t, "- [ ] first\n\n```md\n- [ ] example\n```\n> - [ ] second\n", got)
 }
 
 func TestToggleTaskMarkerRejectsStaleState(t *testing.T) {
-	_, err := toggleTaskMarker("- [x] done\n", 0, false)
+	_, err := toggleTaskMarker("- [x] done\n", 0, false, checklistFingerprint([]bool{true}))
+	require.Error(t, err)
+}
+
+func TestToggleTaskMarkerRejectsStaleChecklistShape(t *testing.T) {
+	_, err := toggleTaskMarker("- [ ] inserted\n- [ ] original\n", 0, false, checklistFingerprint([]bool{false}))
 	require.Error(t, err)
 }
 
