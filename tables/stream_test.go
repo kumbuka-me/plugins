@@ -18,7 +18,7 @@ func TestPostprocessTablesKeepsLargeUnrelatedHTMLOutsideTableFragments(t *testin
 		`<div class="kumbuka-table-style-marker" data-table-style="{table header=accent col:2=info sortable filterable}"></div>` +
 		suffix
 
-	got, err := postprocessTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true})
+	got, err := processRenderedTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true}, true)
 
 	require.NoError(t, err)
 	assert.True(t, strings.HasPrefix(got, prefix), "large prefix changed")
@@ -40,7 +40,7 @@ func TestPostprocessTablesAppliesDirectivesToNearestPrecedingTables(t *testing.T
 		`<table><thead><tr><th>Second</th></tr></thead><tbody><tr><td>B</td></tr></tbody></table>` +
 		`<div><div class="kumbuka-table-style-marker" data-table-style="{table header=green sortable}"></div></div>`
 
-	got, err := postprocessTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true})
+	got, err := processRenderedTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true}, true)
 
 	require.NoError(t, err)
 	assert.Equal(t, 2, strings.Count(got, `class="kumbuka-plugin-block"`))
@@ -56,7 +56,7 @@ func TestPostprocessTablesConsumesRenderedDirectiveParagraph(t *testing.T) {
 	source := `<table><thead><tr><th>Service</th><th>Status</th></tr></thead><tbody><tr><td>API</td><td>Healthy</td></tr></tbody></table>` +
 		"\n\n" + `<p>{table header=accent col:2=info sortable filterable}</p>`
 
-	got, err := postprocessTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true})
+	got, err := processRenderedTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true}, true)
 
 	require.NoError(t, err)
 	assert.Contains(t, got, `kumbuka-table-styled`)
@@ -73,7 +73,7 @@ func TestPostprocessTablesLeavesUnrelatedDirectiveParagraphVisible(t *testing.T)
 	source := `<table><thead><tr><th>Service</th></tr></thead><tbody><tr><td>API</td></tr></tbody></table>` +
 		`<p>Not part of the table.</p><p>{table header=accent sortable}</p>`
 
-	got, err := postprocessTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true})
+	got, err := processRenderedTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true}, true)
 
 	require.NoError(t, err)
 	assert.Contains(t, got, `<p>{table header=accent sortable}</p>`)
@@ -86,7 +86,7 @@ func TestPostprocessTablesLeavesInactiveDirectiveParagraphVisible(t *testing.T) 
 
 	source := `<table><thead><tr><th>Service</th></tr></thead><tbody><tr><td>API</td></tr></tbody></table><p>{table sortable}</p>`
 
-	got, err := postprocessTables(source, tableOptions{Tables: true})
+	got, err := processRenderedTables(source, tableOptions{Tables: true}, true)
 
 	require.NoError(t, err)
 	assert.Contains(t, got, `<p>{table sortable}</p>`)
@@ -98,7 +98,7 @@ func TestPostprocessTablesStreamingPathPreservesExistingAttributes(t *testing.T)
 	source := `<table class="existing" data-test="yes"><thead><tr><th class="heading">Service</th><th>Status</th></tr></thead><tbody><tr><td>API</td><td>Healthy</td></tr></tbody></table>` +
 		`<div class="kumbuka-table-style-marker" data-table-style="{table header=accent col:2=info sortable filterable}"></div>`
 
-	got, err := postprocessTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true})
+	got, err := processRenderedTables(source, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true}, true)
 
 	require.NoError(t, err)
 	assert.Contains(t, got, `class="existing kumbuka-table-sortable kumbuka-table-filterable kumbuka-table-styled"`)

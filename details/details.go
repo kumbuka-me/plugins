@@ -9,6 +9,17 @@ import (
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
 
+func main() {}
+
+func init() { sdk.RegisterModule("details", transform) }
+
+func transform(request sdk.RenderRequest) sdk.RenderResult {
+	if request.Stage != "preprocess" {
+		return sdk.RenderResult{Error: "unsupported stage"}
+	}
+	return sdk.RenderResult{Parts: transformDetails(request.Source)}
+}
+
 // transformDetails replaces top-level ??? blocks while preserving bodies as host-rendered Markdown.
 func transformDetails(source string) []sdk.RenderPart {
 	lines := strings.Split(source, "\n")

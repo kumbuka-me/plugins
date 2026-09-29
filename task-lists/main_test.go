@@ -4,13 +4,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kumbuka-me/plugins/internal/listindent"
 	sdk "github.com/kumbuka-me/sdk"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPresentChecklistsOwnsInteractiveCheckboxPresentation(t *testing.T) {
 	source := `<ul><li><input disabled="" type="checkbox"/> pending</li><li><input checked="" disabled="" type="checkbox"/> done</li></ul>`
-	got, err := presentChecklists(source)
+	got, err := presentChecklists(source, listindent.Default)
 	require.NoError(t, err)
 
 	for _, want := range []string{`class="kumbuka-checklist-browser"`, `class="checklist-item"`, `checklist-checkbox checklist-action__toggle-0-0`, `aria-checked="false"`, `checklist-checkbox checked checklist-action__toggle-1-1`, `aria-checked="true"`, `>✓</button>`} {
@@ -21,7 +22,7 @@ func TestPresentChecklistsOwnsInteractiveCheckboxPresentation(t *testing.T) {
 
 func TestTaskListPresentationDoesNotRewriteUnrelatedInputs(t *testing.T) {
 	source := `<p><input disabled="" type="checkbox"/> ordinary HTML</p>`
-	got, err := presentChecklists(source)
+	got, err := presentChecklists(source, listindent.Default)
 	require.NoError(t, err)
 	require.Contains(t, got, "<input", "unrelated input was rewritten: %s", got)
 }
@@ -33,7 +34,7 @@ func TestTaskListPresentationKeepsLargeUnrelatedHTMLOutsideListItems(t *testing.
 	suffix := strings.Repeat(`<p>after content</p>`, 20_000)
 	source := prefix + `<ul><li><input checked="" disabled="" type="checkbox"/> done</li></ul>` + suffix
 
-	got, err := presentChecklists(source)
+	got, err := presentChecklists(source, listindent.Default)
 
 	require.NoError(t, err)
 	require.True(t, strings.HasPrefix(got, prefix), "large prefix changed")
@@ -46,7 +47,7 @@ func TestNestedTaskListsTransformOnce(t *testing.T) {
 	t.Parallel()
 
 	source := `<ul><li><input disabled="" type="checkbox"/> parent<ul><li><input checked="" disabled="" type="checkbox"/> child</li></ul></li></ul>`
-	got, err := presentChecklists(source)
+	got, err := presentChecklists(source, listindent.Default)
 
 	require.NoError(t, err)
 	require.Equal(t, 2, strings.Count(got, `class="checklist-item"`))

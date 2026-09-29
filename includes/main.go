@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kumbuka-me/plugins/internal/ascii"
 	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
@@ -29,16 +30,11 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 		return sdk.RenderResult{Parts: []sdk.RenderPart{{Text: request.Source}}}
 	}
 
-	markdown, err := expandIncludes(request.Source, loadPage, nil, 0, localize.For(request.Locale))
+	markdown, err := expandIncludes(request.Source, sdk.Pages().Content, nil, 0, localize.For(request.Locale))
 	if err != nil {
 		return sdk.RenderResult{Error: err.Error()}
 	}
 	return sdk.RenderResult{Parts: []sdk.RenderPart{{Text: markdown}}}
-}
-
-// loadPage resolves one page through Kumbuka's authorized page-content capability.
-func loadPage(slug string) (sdk.PageContent, error) {
-	return sdk.Pages().Content(slug)
 }
 
 // expandIncludes resolves includes outside fenced code blocks.
@@ -133,8 +129,9 @@ func parseInclude(line string) (includeMacro, bool) {
 
 // expandInclude resolves one whole-page or heading-section include recursively.
 func expandInclude(target string, load pageLoader, seen map[string]bool, depth int, localizer sdk.Localizer) (string, error) {
-	page, heading := splitHeadingTarget(target)
-	slug := strings.Trim(page, "/")
+	page, heading, _ := strings.Cut(strings.TrimSpace(target), "#")
+	slug := strings.Trim(strings.TrimSpace(page), "/")
+	heading = strings.TrimSpace(heading)
 	if slug == "" {
 		return "", fmt.Errorf("include requires a page path")
 	}
@@ -170,12 +167,6 @@ func includeBreadcrumb(slug, heading string, localizer sdk.Localizer) string {
 		parts[index] = html.EscapeString(parts[index])
 	}
 	return `<p class="breadcrumbs include-breadcrumbs">` + html.EscapeString(localizer.Text("include.from")) + ` · ` + strings.Join(parts, " / ") + "</p>\n\n"
-}
-
-// splitHeadingTarget separates a page path from an optional heading fragment.
-func splitHeadingTarget(target string) (string, string) {
-	page, heading, _ := strings.Cut(strings.TrimSpace(target), "#")
-	return strings.TrimSpace(page), strings.TrimSpace(heading)
 }
 
 // includeKey returns the recursion key for a complete page or heading section.
@@ -281,8 +272,8 @@ func headingID(value string) string {
 
 // isHeadingRune reports whether Kumbuka preserves a character in heading anchors.
 func isHeadingRune(character rune) bool {
-	return character >= 'a' && character <= 'z' ||
-		character >= 'A' && character <= 'Z' ||
-		character >= '0' && character <= '9' ||
-		character == '_' || character == '-'
+	if character < 0 || character > 0x7f {
+		return false
+	}
+	return ascii.IsAlphaNumeric(byte(character)) || character == '_' || character == '-'
 }

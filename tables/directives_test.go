@@ -13,7 +13,7 @@ func TestTableDirectiveMarkerUsesNearestPrecedingTable(t *testing.T) {
 	rendered := `<div class="table-wrapper"><table><thead><tr><th>Column 1</th></tr></thead><tbody><tr><td>Value</td></tr></tbody></table></div>` +
 		`<div class="marker-wrapper"><div class="kumbuka-table-style-marker" data-table-style="{table header=gray sortable filterable}"></div></div>`
 
-	got, err := applyTableDirectiveMarkers(rendered, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true})
+	got, err := processRenderedTables(rendered, tableOptions{Tables: true, TableStyles: true, TableSorting: true, TableFiltering: true}, false)
 
 	require.NoError(t, err)
 	assert.Contains(t, got, `class="kumbuka-table-sortable kumbuka-table-filterable kumbuka-table-styled"`)
@@ -24,7 +24,7 @@ func TestTableDirectiveMarkerUsesNearestPrecedingTable(t *testing.T) {
 func TestTableDimensions(t *testing.T) {
 	t.Run("uses fixed layout when every width is explicit", func(t *testing.T) {
 		rendered := `<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>C</td><td>D</td></tr></tbody></table><div class="kumbuka-table-style-marker" data-table-style="{table widths=120,180 heights=32,64 cell:1,1=blue}"></div>`
-		got, err := applyTableDirectiveMarkers(rendered, tableOptions{Tables: true, TableStyles: true})
+		got, err := processRenderedTables(rendered, tableOptions{Tables: true, TableStyles: true}, false)
 
 		require.NoError(t, err)
 		assert.Contains(t, got, `table-layout:fixed;width:300px`)
@@ -35,7 +35,7 @@ func TestTableDimensions(t *testing.T) {
 
 	t.Run("keeps zero width columns automatic", func(t *testing.T) {
 		rendered := `<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>C</td><td>D</td></tr></tbody></table><div class="kumbuka-table-style-marker" data-table-style="{table widths=120,0}"></div>`
-		got, err := applyTableDirectiveMarkers(rendered, tableOptions{Tables: true, TableStyles: true})
+		got, err := processRenderedTables(rendered, tableOptions{Tables: true, TableStyles: true}, false)
 
 		require.NoError(t, err)
 		assert.NotContains(t, got, `table-layout:fixed`)

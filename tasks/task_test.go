@@ -91,7 +91,7 @@ func TestTaskListWorkflowGroup(t *testing.T) {
 			"states": `[{"id":"draft","label":"Draft","color":"#64748b","completed":"false"},{"id":"review","label":"Review","color":"#2563eb","completed":"false"},{"id":"shipped","label":"Shipped","color":"#16a34a","completed":"true"}]`,
 		}}, nil
 	}
-	output := transformSourceWithWorkflows(`{{tasks workflow="release-flow" texts="Prepare release" ids="release" initials="review"}}`, nil, defaultTaskWorkflow(), readWorkflow, localize.For("en"))
+	output := transformSource(`{{tasks workflow="release-flow" texts="Prepare release" ids="release" initials="review"}}`, nil, defaultTaskWorkflow(), readWorkflow, localize.For("en"))
 	require.Contains(t, output, "kumbuka-task-state__review")
 	require.Contains(t, output, actionID("release", "shipped"))
 }
@@ -171,7 +171,7 @@ func TestTransformSource(t *testing.T) {
 	}
 
 	t.Run("renders legacy done task as configured state", func(t *testing.T) {
-		output := transformSource(`{{task id="deploy" text="Deploy API" description="Deploy after verification." assignee="@alice" due="2026-10-01"}}`, read, workflow, localize.For("en"))
+		output := transformSource(`{{task id="deploy" text="Deploy API" description="Deploy after verification." assignee="@alice" due="2026-10-01"}}`, read, workflow, nil, localize.For("en"))
 		assert.Contains(t, output, "kumbuka-task-completed")
 		assert.Contains(t, output, "kumbuka-task-state__done")
 		assert.Contains(t, output, actionID("deploy", "open"))
@@ -182,20 +182,20 @@ func TestTransformSource(t *testing.T) {
 	})
 
 	t.Run("renders unknown initial state as error", func(t *testing.T) {
-		output := transformSource(`{{task id="deploy" text="Deploy API" initial="review"}}`, nil, workflow, localize.For("en"))
+		output := transformSource(`{{task id="deploy" text="Deploy API" initial="review"}}`, nil, workflow, nil, localize.For("en"))
 		assert.Contains(t, output, "Task error:")
 		assert.Contains(t, output, "not configured")
 	})
 
 	t.Run("renders parse error", func(t *testing.T) {
-		output := transformSource(`{{task id="bad id" text="Broken"}}`, nil, workflow, localize.For("en"))
+		output := transformSource(`{{task id="bad id" text="Broken"}}`, nil, workflow, nil, localize.For("en"))
 		assert.Contains(t, output, "Task error:")
 	})
 
 	t.Run("renders visual editor task list", func(t *testing.T) {
 		separator := `\u001f`
 		source := `{{tasks texts="Prepare release` + separator + `Publish notes` + separator + `Verify production" ids="release` + separator + `notes` + separator + `verify" parents="` + separator + `release` + separator + `notes"}}`
-		output := transformSource(source, nil, workflow, localize.For("en"))
+		output := transformSource(source, nil, workflow, nil, localize.For("en"))
 		assert.Equal(t, 1, strings.Count(output, `class="kumbuka-task-browser"`))
 		assert.Contains(t, output, "kumbuka-task-depth__2")
 		assert.Contains(t, output, "kumbuka-task-children")
@@ -205,7 +205,7 @@ func TestTransformSource(t *testing.T) {
 
 	t.Run("preserves code", func(t *testing.T) {
 		source := "`{{task id=\"inline\" text=\"Inline\"}}`\n```text\n{{task id=\"fenced\" text=\"Fenced\"}}\n```"
-		assert.Equal(t, source, transformSource(source, nil, workflow, localize.For("en")))
+		assert.Equal(t, source, transformSource(source, nil, workflow, nil, localize.For("en")))
 	})
 }
 
@@ -235,7 +235,7 @@ func TestTaskListRendering(t *testing.T) {
 
 {{task id="announce" text="Announce the release"}}`
 
-	output := transformSource(source, read, workflow, localize.For("en"))
+	output := transformSource(source, read, workflow, nil, localize.For("en"))
 	assert.Equal(t, 1, strings.Count(output, `class="kumbuka-task-browser"`))
 	assert.Contains(t, output, `class="kumbuka-task-list-header"`)
 	assert.Contains(t, output, `class="kumbuka-task-progress-current">1</span>`)
@@ -249,7 +249,7 @@ func TestTaskListRendering(t *testing.T) {
 func TestTaskListInvalidParent(t *testing.T) {
 	workflow := defaultTaskWorkflow()
 	output := transformSource(`{{task id="release" text="Prepare release"}}
-{{task id="verify" parent="missing" text="Verify"}}`, nil, workflow, localize.For("en"))
+{{task id="verify" parent="missing" text="Verify"}}`, nil, workflow, nil, localize.For("en"))
 	require.Contains(t, output, "Task error:")
 	assert.Contains(t, output, "must appear before its subtask")
 }
@@ -274,12 +274,12 @@ func TestResolveAction(t *testing.T) {
 		{ID: "review", Label: "Review", Color: "#2563eb"},
 	}}
 	source := `{{task id="deploy" text="Deploy"}}`
-	task, state, ok := resolveAction(source, actionID("deploy", "review"), workflow)
+	task, state, ok := resolveAction(source, actionID("deploy", "review"), workflow, nil)
 	require.True(t, ok)
 	assert.Equal(t, "deploy", task.ID)
 	assert.Equal(t, "review", state.ID)
 
-	_, _, ok = resolveAction(source, actionID("deploy", "missing"), workflow)
+	_, _, ok = resolveAction(source, actionID("deploy", "missing"), workflow, nil)
 	assert.False(t, ok)
 }
 
@@ -321,8 +321,8 @@ func TestApplyTaskAction(t *testing.T) {
 	}
 
 	action := actionID("deploy", "done")
-	require.Error(t, applyTaskAction(page, source, action, workflow, services, localize.For("en")))
-	require.NoError(t, applyTaskAction(page, source, action, workflow, services, localize.For("en")))
+	require.Error(t, applyTaskAction(page, source, action, workflow, nil, services, localize.For("en")))
+	require.NoError(t, applyTaskAction(page, source, action, workflow, nil, services, localize.For("en")))
 	require.Len(t, sent, 2)
 	assert.NotEmpty(t, sent[0].IdempotencyKey)
 	assert.Equal(t, sent[0].IdempotencyKey, sent[1].IdempotencyKey)
@@ -347,6 +347,7 @@ func TestApplyTaskActionPropagatesReadFailure(t *testing.T) {
 		`{{task id="deploy" text="Deploy"}}`,
 		actionID("deploy", "done"),
 		workflow,
+		nil,
 		taskMutationServices{
 			Read: func(string) (sdk.StoredValue, error) { return sdk.StoredValue{}, failure },
 			Write: func(string, []byte) error {
@@ -436,7 +437,7 @@ func TestTaskStateNotification(t *testing.T) {
 
 func TestTaskPresentationAndNotificationsGerman(t *testing.T) {
 	workflow := defaultTaskWorkflow()
-	output := transformSource(`{{task id="deploy" text="Deploy" due="2026-10-01"}}`, nil, workflow, localize.For("de"))
+	output := transformSource(`{{task id="deploy" text="Deploy" due="2026-10-01"}}`, nil, workflow, nil, localize.For("de"))
 	require.Contains(t, output, "Offen")
 	require.Contains(t, output, "Fällig 2026-10-01")
 

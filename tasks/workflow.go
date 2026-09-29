@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/kumbuka-me/plugins/internal/ascii"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -204,15 +205,10 @@ func validTaskStateID(value string) bool {
 
 // taskStateIDByte reports whether character is allowed at one position in a workflow state ID.
 func taskStateIDByte(character byte, first bool) bool {
-	if asciiLowerLetterOrDigit(character) {
+	if ascii.IsLowerAlphaNumeric(character) {
 		return true
 	}
 	return !first && (character == '-' || character == '_' || character == '.')
-}
-
-// asciiLowerLetterOrDigit reports whether character is an ASCII lower-case letter or decimal digit.
-func asciiLowerLetterOrDigit(character byte) bool {
-	return character >= 'a' && character <= 'z' || character >= '0' && character <= '9'
 }
 
 // validTaskStateColor reports whether value is a canonical six-digit CSS hex color.
@@ -221,16 +217,11 @@ func validTaskStateColor(value string) bool {
 		return false
 	}
 	for index := 1; index < len(value); index++ {
-		if !asciiLowerHexDigit(value[index]) {
+		if !ascii.IsLowerHex(value[index]) {
 			return false
 		}
 	}
 	return true
-}
-
-// asciiLowerHexDigit reports whether character is a lower-case ASCII hexadecimal digit.
-func asciiLowerHexDigit(character byte) bool {
-	return character >= '0' && character <= '9' || character >= 'a' && character <= 'f'
 }
 
 // state returns one configured state by ID.

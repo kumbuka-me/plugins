@@ -18,21 +18,19 @@ func main() {}
 
 func init() {
 	sdk.RegisterModule("presentation", transform)
-	sdk.RegisterWidgetWithCommands("commands", renderCommands, commandChecklist)
+	sdk.RegisterWidgetWithCommands("commands", func(sdk.WidgetContext) (sdk.Result, error) { return sdk.Text(""), nil }, commandChecklist)
 }
 
 func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Module != "presentation" || request.Stage != "postprocess" {
 		return sdk.RenderResult{Error: "unsupported checklist render request"}
 	}
-	output, err := presentChecklistsWithIndent(request.Source, listindent.Load(sdk.Settings().Get))
+	output, err := presentChecklists(request.Source, listindent.Load(sdk.Settings().Get))
 	if err != nil {
 		return sdk.RenderResult{Error: err.Error()}
 	}
 	return sdk.RenderResult{Parts: []sdk.RenderPart{{Text: output}}}
 }
-
-func renderCommands(sdk.WidgetContext) (sdk.Result, error) { return sdk.Text(""), nil }
 
 func commandChecklist(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult, error) {
 	if context.Page == nil || context.Page.Slug == "" {
@@ -78,11 +76,7 @@ type openElement struct {
 
 // presentChecklists wraps each outer task list once so one sandboxed browser
 // module can own every checkbox in the list without creating an iframe per row.
-func presentChecklists(source string) (string, error) {
-	return presentChecklistsWithIndent(source, listindent.Default)
-}
-
-func presentChecklistsWithIndent(source, indent string) (string, error) {
+func presentChecklists(source, indent string) (string, error) {
 	spans, fingerprint, err := checklistSpans(source)
 	if err != nil || len(spans) == 0 {
 		return source, err

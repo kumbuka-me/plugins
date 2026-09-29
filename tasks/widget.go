@@ -120,11 +120,13 @@ func taskTokens(line string) []taskOptions {
 }
 
 // renderControls builds the page-details task summary and one non-JavaScript advance action per task.
-func renderControls(source string, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) sdk.Result {
-	return renderControlsWithWorkflows(source, readStorage, workflow, nil, localizer)
-}
-
-func renderControlsWithWorkflows(source string, readStorage storageReader, workflow taskWorkflow, readWorkflow workflowResourceReader, localizer sdk.Localizer) sdk.Result {
+func renderControls(
+	source string,
+	readStorage storageReader,
+	workflow taskWorkflow,
+	readWorkflow workflowResourceReader,
+	localizer sdk.Localizer,
+) sdk.Result {
 	tasks := discoverTasks(source)
 	if len(tasks) == 0 {
 		return sdk.Text("")
@@ -172,11 +174,7 @@ func renderControlsWithWorkflows(source string, readStorage storageReader, workf
 }
 
 // resolveAction maps a host command ID back to a currently declared task and configured target state.
-func resolveAction(source, action string, workflow taskWorkflow) (taskOptions, taskWorkflowState, bool) {
-	return resolveActionWithWorkflows(source, action, workflow, nil)
-}
-
-func resolveActionWithWorkflows(source, action string, workflow taskWorkflow, readWorkflow workflowResourceReader) (taskOptions, taskWorkflowState, bool) {
+func resolveAction(source, action string, workflow taskWorkflow, readWorkflow workflowResourceReader) (taskOptions, taskWorkflowState, bool) {
 	for _, task := range discoverTasks(source) {
 		active, err := resolveTaskWorkflow(task.Workflow, workflow, readWorkflow)
 		if err != nil {
@@ -192,12 +190,15 @@ func resolveActionWithWorkflows(source, action string, workflow taskWorkflow, re
 }
 
 // applyTaskAction persists one transition and delivers its retry-safe assignee notification.
-func applyTaskAction(page sdk.Page, source, action string, workflow taskWorkflow, services taskMutationServices, localizer sdk.Localizer) error {
-	return applyTaskActionWithWorkflows(page, source, action, workflow, nil, services, localizer)
-}
-
-func applyTaskActionWithWorkflows(page sdk.Page, source, action string, workflow taskWorkflow, readWorkflow workflowResourceReader, services taskMutationServices, localizer sdk.Localizer) error {
-	task, target, ok := resolveActionWithWorkflows(source, action, workflow, readWorkflow)
+func applyTaskAction(
+	page sdk.Page,
+	source, action string,
+	workflow taskWorkflow,
+	readWorkflow workflowResourceReader,
+	services taskMutationServices,
+	localizer sdk.Localizer,
+) error {
+	task, target, ok := resolveAction(source, action, workflow, readWorkflow)
 	if !ok {
 		return fmt.Errorf("task action is no longer available")
 	}
@@ -223,7 +224,12 @@ func applyTaskActionWithWorkflows(page sdk.Page, source, action string, workflow
 }
 
 // applyTaskTransition loads and persists a requested state change while preserving retry metadata.
-func applyTaskTransition(task taskOptions, target taskWorkflowState, workflow taskWorkflow, services taskMutationServices) (taskState, taskWorkflowState, error) {
+func applyTaskTransition(
+	task taskOptions,
+	target taskWorkflowState,
+	workflow taskWorkflow,
+	services taskMutationServices,
+) (taskState, taskWorkflowState, error) {
 	state, err := loadTaskState(task, services.Read, workflow)
 	if err != nil {
 		return taskState{}, taskWorkflowState{}, err
@@ -275,7 +281,15 @@ func acknowledgeUnassignedTask(taskID string, state taskState, write func(string
 }
 
 // notifyTaskTransition delivers one pending assignee notification and acknowledges it durably.
-func notifyTaskTransition(page sdk.Page, task taskOptions, previous, target taskWorkflowState, state taskState, services taskMutationServices, targetLabel string, localizer sdk.Localizer) error {
+func notifyTaskTransition(
+	page sdk.Page,
+	task taskOptions,
+	previous, target taskWorkflowState,
+	state taskState,
+	services taskMutationServices,
+	targetLabel string,
+	localizer sdk.Localizer,
+) error {
 	if services.ResolveMention == nil || services.SendNotification == nil {
 		return fmt.Errorf("task notification capability is unavailable")
 	}
@@ -343,7 +357,11 @@ func loadTaskState(task taskOptions, read storageReader, workflow taskWorkflow) 
 }
 
 // taskStateNotification creates a bounded notification for one configured state transition.
-func taskStateNotification(previous, target taskWorkflowState, text, pageTitle, targetLabel string, localizer sdk.Localizer) (string, string) {
+func taskStateNotification(
+	previous, target taskWorkflowState,
+	text, pageTitle, targetLabel string,
+	localizer sdk.Localizer,
+) (string, string) {
 	titleKey := "tasks.notification.changed_title"
 	bodyKey := "tasks.notification.changed_body"
 	switch {

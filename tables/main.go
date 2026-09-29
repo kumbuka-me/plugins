@@ -20,7 +20,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 		return sdk.RenderResult{Error: "unsupported tables render request"}
 	}
 
-	output, err := postprocessTables(request.Source, tableOptionsFromFeatures(request.Features))
+	output, err := processRenderedTables(request.Source, tableOptionsFromFeatures(request.Features), true)
 	if err != nil {
 		return sdk.Failure(err)
 	}
@@ -39,11 +39,6 @@ func tableOptionsFromFeatures(features map[string]bool) tableOptions {
 		TableSorting:   enabled("sorting"),
 		TableFiltering: enabled("filtering"),
 	}
-}
-
-// postprocessTables applies directives before wrapping rendered tables for browser modules.
-func postprocessTables(source string, options tableOptions) (string, error) {
-	return processRenderedTables(source, options, true)
 }
 
 // wrapTable moves one rendered table into the host plugin-block fallback wrapper.

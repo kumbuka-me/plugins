@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/kumbuka-me/plugins/internal/ascii"
 	"github.com/kumbuka-me/plugins/internal/macroargs"
 
 	sdk "github.com/kumbuka-me/sdk"
@@ -356,8 +357,7 @@ func validName(value string, maxBytes int) bool {
 	}
 	for index := 0; index < len(value); index++ {
 		char := value[index]
-		if char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char >= '0' && char <= '9' ||
-			char == '-' || char == '_' || char == '.' || char == '/' || char == ':' {
+		if ascii.IsAlphaNumeric(char) || char == '-' || char == '_' || char == '.' || char == '/' || char == ':' {
 			continue
 		}
 		return false
@@ -500,11 +500,10 @@ func normalizeStatusColor(value string) (string, bool) {
 	if len(value) != 7 || value[0] != '#' {
 		return "", false
 	}
-	for _, char := range value[1:] {
-		if char >= '0' && char <= '9' || char >= 'a' && char <= 'f' {
-			continue
+	for index := 1; index < len(value); index++ {
+		if !ascii.IsLowerHex(value[index]) {
+			return "", false
 		}
-		return "", false
 	}
 	return value, true
 }

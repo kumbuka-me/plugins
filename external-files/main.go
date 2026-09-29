@@ -91,8 +91,9 @@ func parse(line string) (options, bool) {
 	if !ok {
 		return options{}, false
 	}
+	invalid := options{Invalid: true}
 	if len(body) > 16384 {
-		return invalidOptions(), true
+		return invalid, true
 	}
 
 	result := options{}
@@ -100,33 +101,23 @@ func parse(line string) (options, bool) {
 	for strings.TrimSpace(body) != "" {
 		name, argument, remaining, parsed := macroargs.NextQuoted(body)
 		if !parsed {
-			return invalidOptions(), true
+			return invalid, true
 		}
-		if duplicateExternalFileOption(name, seen) {
-			return invalidOptions(), true
+		if name != "note" && seen[name] {
+			return invalid, true
 		}
 		seen[name] = true
 		body = remaining
 
 		if !applyOption(&result, name, argument) {
-			return invalidOptions(), true
+			return invalid, true
 		}
 	}
-	if !validExternalFileTarget(result) {
-		return invalidOptions(), true
+	if result.Source == "" || result.Path == "" || len(result.Source) > 128 || len(result.Path) > 1024 {
+		return invalid, true
 	}
 
 	return result, true
-}
-
-// duplicateExternalFileOption reports whether a single-value option has already appeared.
-func duplicateExternalFileOption(name string, seen map[string]bool) bool {
-	return name != "note" && seen[name]
-}
-
-// validExternalFileTarget validates the required bounded source and repository path.
-func validExternalFileTarget(value options) bool {
-	return value.Source != "" && value.Path != "" && len(value.Source) <= 128 && len(value.Path) <= 1024
 }
 
 // applyOption validates and stores one parsed external-file macro attribute.
@@ -229,9 +220,4 @@ func parseOptionalBool(value string) (optionalBool, bool) {
 	default:
 		return optionalBool{}, false
 	}
-}
-
-// invalidOptions returns a matching macro value that cannot perform any capability calls.
-func invalidOptions() options {
-	return options{Invalid: true}
 }

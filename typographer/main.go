@@ -190,7 +190,7 @@ func typographText(text string, state *quoteState, preserveOperators bool) strin
 
 // smartSingleQuote chooses an opening quote, closing quote, or apostrophe for one single-quote character.
 func smartSingleQuote(previous, next rune, state *quoteState) rune {
-	if isAlphaNumeric(previous) && unicode.IsLetter(next) {
+	if (unicode.IsLetter(previous) || unicode.IsDigit(previous)) && unicode.IsLetter(next) {
 		return '’'
 	}
 	if openingContext(previous) && (unicode.IsDigit(next) || isApostrophePrefix(next)) {
@@ -237,11 +237,6 @@ func openingContext(value rune) bool {
 // closingContext reports whether a rune ends or separates quoted text.
 func closingContext(value rune) bool {
 	return value == 0 || unicode.IsSpace(value)
-}
-
-// isAlphaNumeric reports whether a rune is a Unicode letter or digit.
-func isAlphaNumeric(value rune) bool {
-	return unicode.IsLetter(value) || unicode.IsDigit(value)
 }
 
 // isApostrophePrefix reports whether a rune begins a supported leading-apostrophe contraction.

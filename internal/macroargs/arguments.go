@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/kumbuka-me/plugins/internal/ascii"
 )
 
 // parser tracks one byte-oriented macro argument scan.
@@ -67,7 +69,7 @@ func (p *parser) readName() string {
 	start := p.index
 	for p.index < len(p.value) {
 		character := p.value[p.index]
-		if character >= 'a' && character <= 'z' || character == '_' {
+		if ascii.IsLowerAlphabetic(character) || character == '_' {
 			p.index++
 			continue
 		}

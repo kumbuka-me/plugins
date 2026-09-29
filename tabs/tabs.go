@@ -9,6 +9,17 @@ import (
 	pluginmarkdown "github.com/kumbuka-me/sdk/markdown"
 )
 
+func main() {}
+
+func init() { sdk.RegisterModule("tabs", transform) }
+
+func transform(request sdk.RenderRequest) sdk.RenderResult {
+	if request.Stage != "preprocess" {
+		return sdk.RenderResult{Error: "unsupported stage"}
+	}
+	return sdk.RenderResult{Parts: transformTabs(request.Source)}
+}
+
 // tabSection contains one parsed tab label and its de-indented Markdown body.
 type tabSection struct {
 	// title is the human-readable label shown by the tab button.

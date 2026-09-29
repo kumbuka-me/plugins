@@ -2,7 +2,6 @@
 package main
 
 import (
-	"context"
 	_ "embed"
 	"fmt"
 	"html/template"
@@ -10,8 +9,18 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kumbuka-me/plugins/internal/localize"
 	sdk "github.com/kumbuka-me/sdk"
 )
+
+func main() {}
+
+func init() { sdk.RegisterLocalizedMacro("page-report", parse, renderMacro) }
+
+func renderMacro(invocation sdk.LocalizedMacro[macroOptions]) (sdk.Result, error) {
+	html, err := renderReport(invocation.Value, localize.For(invocation.Locale))
+	return sdk.Text(html), err
+}
 
 const (
 	defaultLimit = 20
@@ -32,33 +41,23 @@ type macroOptions struct {
 	Limit int
 }
 
-// pageSource supplies page discovery and full page metadata for a report.
-type pageSource interface {
-	// Search returns pages matching a Kumbuka search expression.
-	Search(context.Context, string, int) ([]sdk.Page, error)
-	// GetPage returns complete metadata for one canonical page slug.
-	GetPage(context.Context, string) (sdk.Page, error)
-}
-
-// newRenderer returns a request-bound renderer backed by the page catalog.
-func newRenderer(ctx context.Context, source pageSource, localizer sdk.Localizer) func(macroOptions) (string, error) {
-	return func(options macroOptions) (string, error) {
-		pages, err := source.Search(ctx, options.Query, options.Limit)
-		if err != nil {
-			return "", err
-		}
-		if err := loadPageMetadata(ctx, source, pages); err != nil {
-			return "", err
-		}
-		sortPages(pages, options.Sort)
-		return render(options, pages, localizer)
+// renderReport loads, sorts, and renders one page report.
+func renderReport(options macroOptions, localizer sdk.Localizer) (string, error) {
+	pages, err := sdk.Pages().Search(sdk.PageQuery{Query: options.Query, Limit: options.Limit})
+	if err != nil {
+		return "", err
 	}
+	if err := loadPageMetadata(pages); err != nil {
+		return "", err
+	}
+	sortPages(pages, options.Sort)
+	return render(options, pages, localizer)
 }
 
 // loadPageMetadata replaces search summaries with complete page metadata in place.
-func loadPageMetadata(ctx context.Context, source pageSource, pages []sdk.Page) error {
+func loadPageMetadata(pages []sdk.Page) error {
 	for index := range pages {
-		page, err := source.GetPage(ctx, pages[index].Slug)
+		page, err := sdk.Pages().Get(pages[index].Slug)
 		if err != nil {
 			return err
 		}

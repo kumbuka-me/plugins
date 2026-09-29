@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/kumbuka-me/plugins/internal/ascii"
 	"github.com/kumbuka-me/plugins/internal/macroargs"
 
 	sdk "github.com/kumbuka-me/sdk"
@@ -65,13 +66,14 @@ type taskState struct {
 	LegacyDone *bool `json:"done,omitempty"`
 }
 
-// transformSource renders task declarations outside fenced and inline code.
-func transformSource(source string, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) string {
-	return transformSourceWithWorkflows(source, readStorage, workflow, nil, localizer)
-}
-
-// transformSourceWithWorkflows renders tasks using the default workflow or a referenced workflow group.
-func transformSourceWithWorkflows(source string, readStorage storageReader, workflow taskWorkflow, readWorkflow workflowResourceReader, localizer sdk.Localizer) string {
+// transformSource renders task declarations using the default workflow or a referenced workflow group.
+func transformSource(
+	source string,
+	readStorage storageReader,
+	workflow taskWorkflow,
+	readWorkflow workflowResourceReader,
+	localizer sdk.Localizer,
+) string {
 	lines := strings.Split(source, "\n")
 	output := make([]string, 0, len(lines))
 	fence := ""
@@ -108,7 +110,7 @@ func transformSourceWithWorkflows(source string, readStorage storageReader, work
 			continue
 		}
 
-		transformed, used := transformLineWithWorkflows(line, maxTaskDeclarations-count, readStorage, workflow, readWorkflow, localizer)
+		transformed, used := transformLine(line, maxTaskDeclarations-count, readStorage, workflow, readWorkflow, localizer)
 		count += used
 		output = append(output, transformed)
 		index++
@@ -167,11 +169,14 @@ func standaloneTask(line string) (taskOptions, bool) {
 }
 
 // transformLine renders task declarations on one non-fenced line while preserving inline code spans.
-func transformLine(line string, remaining int, readStorage storageReader, workflow taskWorkflow, localizer sdk.Localizer) (string, int) {
-	return transformLineWithWorkflows(line, remaining, readStorage, workflow, nil, localizer)
-}
-
-func transformLineWithWorkflows(line string, remaining int, readStorage storageReader, workflow taskWorkflow, readWorkflow workflowResourceReader, localizer sdk.Localizer) (string, int) {
+func transformLine(
+	line string,
+	remaining int,
+	readStorage storageReader,
+	workflow taskWorkflow,
+	readWorkflow workflowResourceReader,
+	localizer sdk.Localizer,
+) (string, int) {
 	if remaining <= 0 || !strings.Contains(line, "{{task") {
 		return line, 0
 	}
@@ -242,7 +247,7 @@ func transformLineWithWorkflows(line string, remaining int, readStorage storageR
 			} else if _, err := active.initialState(options.InitialState); err != nil {
 				output.WriteString(taskErrorHTML(err.Error(), localizer))
 			} else {
-				output.WriteString(renderTask(options, readStorage, active, localizer))
+				output.WriteString(renderTaskList([]taskOptions{options}, readStorage, active, localizer))
 			}
 			used++
 			index = end
@@ -455,16 +460,12 @@ func validMention(value string) bool {
 		return false
 	}
 	for index := 1; index < len(value); index++ {
-		if !mentionNameByte(value[index]) {
+		character := value[index]
+		if !ascii.IsAlphaNumeric(character) && character != '-' && character != '_' && character != '.' {
 			return false
 		}
 	}
 	return true
-}
-
-// mentionNameByte reports whether character is allowed in a Kumbuka username.
-func mentionNameByte(character byte) bool {
-	return asciiLetterOrDigit(character) || character == '-' || character == '_' || character == '.'
 }
 
 // validDueDate reports whether value is a canonical YYYY-MM-DD calendar date.
@@ -482,21 +483,12 @@ func validName(value string, maxBytes int) bool {
 		return false
 	}
 	for index := 0; index < len(value); index++ {
-		if !taskNameByte(value[index]) {
+		character := value[index]
+		if !ascii.IsAlphaNumeric(character) && character != '-' && character != '_' && character != '.' && character != '/' && character != ':' {
 			return false
 		}
 	}
 	return true
-}
-
-// taskNameByte reports whether character is allowed in a stable task identifier.
-func taskNameByte(character byte) bool {
-	return asciiLetterOrDigit(character) || character == '-' || character == '_' || character == '.' || character == '/' || character == ':'
-}
-
-// asciiLetterOrDigit reports whether character is an ASCII letter or decimal digit.
-func asciiLetterOrDigit(character byte) bool {
-	return character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' || character >= '0' && character <= '9'
 }
 
 // readTaskState resolves persisted state while accepting the original open/done storage formats.
@@ -547,11 +539,6 @@ func decodeTaskState(options taskOptions, stored sdk.StoredValue, workflow taskW
 	}
 	state.LegacyDone = nil
 	return state
-}
-
-// renderTask renders one task declaration into safe fallback HTML and browser-module metadata.
-func renderTask(options taskOptions, read storageReader, workflow taskWorkflow, localizer sdk.Localizer) string {
-	return renderTaskList([]taskOptions{options}, read, workflow, localizer)
 }
 
 // renderTaskList renders one or more tasks as a compact nested list.

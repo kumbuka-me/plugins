@@ -56,7 +56,7 @@ func parseTableDirective(line string) (tableStyle, bool) {
 		return tableStyle{}, false
 	}
 
-	style := newTableStyle()
+	style := tableStyle{}
 	for token := range strings.FieldsSeq(body) {
 		if !style.applyToken(token) {
 			return tableStyle{}, false
@@ -75,10 +75,6 @@ func tableDirectiveBody(line string) (string, bool) {
 	body = strings.TrimSpace(body)
 	return body, ok && body != ""
 }
-
-// newTableStyle returns an empty style. Indexed tone maps are allocated lazily
-// only when their corresponding directives are present.
-func newTableStyle() tableStyle { return tableStyle{} }
 
 // applyToken adds one directive token to the parsed style.
 func (s *tableStyle) applyToken(token string) bool {
@@ -214,11 +210,6 @@ func tableTone(value string) bool {
 	default:
 		return false
 	}
-}
-
-// applyTableDirectiveMarkers applies trusted directives to the nearest preceding rendered table.
-func applyTableDirectiveMarkers(rendered string, options tableOptions) (string, error) {
-	return processRenderedTables(rendered, options, false)
 }
 
 // applyTableDirective applies enabled colors and interaction classes to one rendered table.
