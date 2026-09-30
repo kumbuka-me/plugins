@@ -51,6 +51,20 @@
       ]
     },
     {
+      "id": "me.kumbuka.bulleted-lists",
+      "name": "Bulleted Lists",
+      "provider": "Kumbuka",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "api_version": 1,
+          "released_at": "2026-09-30T07:55:34Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/bulleted-lists/v1.0.0/bulleted-lists-1.0.0.kumbukaplugin",
+          "sha256": "fb9bb7d28b3212e62fee176e6353212f5b9fe4d708b97ffe164d8e3c331d9762"
+        }
+      ]
+    },
+    {
       "id": "me.kumbuka.callouts",
       "name": "Callouts",
       "provider": "Kumbuka",
@@ -783,6 +797,13 @@
       "name": "Page Report",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.6",
+          "api_version": 1,
+          "released_at": "2026-09-30T07:55:44Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/page-report/v1.2.6/page-report-1.2.6.kumbukaplugin",
+          "sha256": "b6c3aeb309194459bd57a9db2dd0ecdaaafb40ad88ca4f485f30ebad3f109ab6"
+        },
         {
           "version": "1.2.5",
           "api_version": 1,
