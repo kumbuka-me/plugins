@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	sdk "github.com/kumbuka-me/sdk"
 	xhtml "golang.org/x/net/html"
@@ -141,39 +142,48 @@ func blockBoundary(tag atom.Atom) bool {
 
 // typographText applies punctuation and smart-quote substitutions to one text node.
 func typographText(text string, state *quoteState, preserveOperators bool) string {
-	runes := []rune(text)
 	var output strings.Builder
-	for index := 0; index < len(runes); {
-		if hasRunes(runes, index, '.', '.', '.') {
+	output.Grow(len(text))
+	for offset := 0; offset < len(text); {
+		character := text[offset]
+		if character == '.' && offset+2 < len(text) && text[offset+1] == '.' && text[offset+2] == '.' {
 			writeRune(&output, state, '…')
-			index += 3
+			offset += 3
 			continue
 		}
-		if !preserveOperators && hasRunes(runes, index, '-', '-', '-') {
-			writeRune(&output, state, '—')
-			index += 3
+		if !preserveOperators && character == '-' && offset+1 < len(text) && text[offset+1] == '-' {
+			if offset+2 < len(text) && text[offset+2] == '-' {
+				writeRune(&output, state, '—')
+				offset += 3
+			} else {
+				writeRune(&output, state, '–')
+				offset += 2
+			}
 			continue
 		}
-		if !preserveOperators && hasRunes(runes, index, '-', '-') {
-			writeRune(&output, state, '–')
-			index += 2
-			continue
-		}
-		if !preserveOperators && hasRunes(runes, index, '<', '<') {
-			writeRune(&output, state, '«')
-			index += 2
-			continue
-		}
-		if !preserveOperators && hasRunes(runes, index, '>', '>') {
-			writeRune(&output, state, '»')
-			index += 2
+		if !preserveOperators && offset+1 < len(text) && text[offset+1] == character && (character == '<' || character == '>') {
+			if character == '<' {
+				writeRune(&output, state, '«')
+			} else {
+				writeRune(&output, state, '»')
+			}
+			offset += 2
 			continue
 		}
 
-		current := runes[index]
+		current := rune(character)
+		size := 1
+		if character >= utf8.RuneSelf {
+			current, size = utf8.DecodeRuneInString(text[offset:])
+		}
 		next := rune(0)
-		if index+1 < len(runes) {
-			next = runes[index+1]
+		if offset+size < len(text) {
+			nextByte := text[offset+size]
+			if nextByte < utf8.RuneSelf {
+				next = rune(nextByte)
+			} else {
+				next, _ = utf8.DecodeRuneInString(text[offset+size:])
+			}
 		}
 		switch current {
 		case '\'':
@@ -183,7 +193,7 @@ func typographText(text string, state *quoteState, preserveOperators bool) strin
 		default:
 			writeRune(&output, state, current)
 		}
-		index++
+		offset += size
 	}
 	return output.String()
 }
@@ -253,17 +263,4 @@ func isApostrophePrefix(value rune) bool {
 func writeRune(output *strings.Builder, state *quoteState, value rune) {
 	output.WriteRune(value)
 	state.previous = value
-}
-
-// hasRunes reports whether the source contains the requested rune sequence at an offset.
-func hasRunes(source []rune, offset int, values ...rune) bool {
-	if offset+len(values) > len(source) {
-		return false
-	}
-	for index, value := range values {
-		if source[offset+index] != value {
-			return false
-		}
-	}
-	return true
 }

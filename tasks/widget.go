@@ -42,35 +42,34 @@ type taskAssignmentServices struct {
 
 // discoverTasks returns unique valid task declarations from non-code Markdown in document order.
 func discoverTasks(source string) []taskOptions {
-	lines := strings.Split(source, "\n")
 	seen := make(map[string]bool)
 	result := make([]taskOptions, 0)
 	fence := ""
 
-	for _, line := range lines {
-		if len(result) >= maxControlledTasks {
-			break
-		}
+	for position := 0; position <= len(source) && len(result) < maxControlledTasks; {
+		line, next, done := sourceLine(source, position)
 		if fence != "" {
 			if pluginmarkdown.Closes(line, fence) {
 				fence = ""
 			}
-			continue
-		}
-		if marker := pluginmarkdown.Fence(line); marker != "" {
+		} else if marker := pluginmarkdown.Fence(line); marker != "" {
 			fence = marker
-			continue
-		}
-		for _, options := range taskTokens(line) {
-			if seen[options.ID] {
-				continue
+		} else {
+			for _, options := range taskTokens(line) {
+				if seen[options.ID] {
+					continue
+				}
+				seen[options.ID] = true
+				result = append(result, options)
+				if len(result) >= maxControlledTasks {
+					break
+				}
 			}
-			seen[options.ID] = true
-			result = append(result, options)
-			if len(result) >= maxControlledTasks {
-				break
-			}
 		}
+		if done {
+			break
+		}
+		position = next
 	}
 	return result
 }

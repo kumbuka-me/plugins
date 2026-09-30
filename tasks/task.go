@@ -693,16 +693,24 @@ func renderTaskItem(options taskOptions, definition taskWorkflowState, workflow 
 
 // taskChoiceClass encodes workflow metadata into one sanitizer-safe class token.
 func taskChoiceClass(taskID string, choice taskWorkflowState, label string) string {
-	completed := "0"
+	completed := byte('0')
 	if choice.Completed {
-		completed = "1"
+		completed = '1'
 	}
-	return "kumbuka-task-choice__" +
-		hex.EncodeToString([]byte(choice.ID)) + "__" +
-		actionID(taskID, choice.ID) + "__" +
-		strings.TrimPrefix(choice.Color, "#") + "__" +
-		completed + "__" +
-		hex.EncodeToString([]byte(label))
+
+	var output strings.Builder
+	output.Grow(len(choice.ID)*2 + len(label)*2 + len(choice.Color) + 96)
+	output.WriteString("kumbuka-task-choice__")
+	writeHexString(&output, choice.ID)
+	output.WriteString("__")
+	output.WriteString(actionID(taskID, choice.ID))
+	output.WriteString("__")
+	output.WriteString(strings.TrimPrefix(choice.Color, "#"))
+	output.WriteString("__")
+	output.WriteByte(completed)
+	output.WriteString("__")
+	writeHexString(&output, label)
+	return output.String()
 }
 
 // taskErrorHTML renders one escaped inline configuration error.
@@ -721,6 +729,28 @@ func storageKey(id string) string {
 func actionID(taskID, stateID string) string {
 	sum := sha256.Sum256([]byte(taskID + "\x00" + stateID))
 	return "task-" + hex.EncodeToString(sum[:12])
+}
+
+// sourceLine returns one line without its newline and the start position of the next line.
+func sourceLine(source string, position int) (line string, next int, done bool) {
+	if position > len(source) {
+		return "", position, true
+	}
+	if newline := strings.IndexByte(source[position:], '\n'); newline >= 0 {
+		end := position + newline
+		return source[position:end], end + 1, false
+	}
+	return source[position:], len(source) + 1, true
+}
+
+// writeHexString appends the lowercase hexadecimal representation of value without temporary byte or string allocations.
+func writeHexString(output *strings.Builder, value string) {
+	const digits = "0123456789abcdef"
+	for index := 0; index < len(value); index++ {
+		character := value[index]
+		output.WriteByte(digits[character>>4])
+		output.WriteByte(digits[character&0x0f])
+	}
 }
 
 // repeatedByte returns the length of the leading run of the requested byte.

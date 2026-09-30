@@ -15,36 +15,34 @@ const maxControlledStatuses = 8
 
 // discoverStatuses returns unique status declarations from non-code Markdown source in document order.
 func discoverStatuses(source string) []statusOptions {
-	lines := strings.Split(source, "\n")
 	seen := make(map[string]bool)
 	result := make([]statusOptions, 0)
 	fence := ""
 
-	for _, line := range lines {
-		if len(result) >= maxControlledStatuses {
-			break
-		}
+	for position := 0; position <= len(source) && len(result) < maxControlledStatuses; {
+		line, next, done := sourceLine(source, position)
 		if fence != "" {
 			if pluginmarkdown.Closes(line, fence) {
 				fence = ""
 			}
-			continue
-		}
-		if marker := pluginmarkdown.Fence(line); marker != "" {
+		} else if marker := pluginmarkdown.Fence(line); marker != "" {
 			fence = marker
-			continue
-		}
-
-		for _, options := range statusTokens(line) {
-			if seen[options.ID] {
-				continue
+		} else {
+			for _, options := range statusTokens(line) {
+				if seen[options.ID] {
+					continue
+				}
+				seen[options.ID] = true
+				result = append(result, options)
+				if len(result) >= maxControlledStatuses {
+					break
+				}
 			}
-			seen[options.ID] = true
-			result = append(result, options)
-			if len(result) >= maxControlledStatuses {
-				break
-			}
 		}
+		if done {
+			break
+		}
+		position = next
 	}
 	return result
 }

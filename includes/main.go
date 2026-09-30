@@ -5,7 +5,6 @@ import (
 	"html"
 	"maps"
 	"strings"
-	"unicode"
 
 	"github.com/kumbuka-me/plugins/internal/ascii"
 	"github.com/kumbuka-me/plugins/internal/localize"
@@ -45,32 +44,40 @@ func expandIncludes(source string, load pageLoader, seen map[string]bool, depth 
 	if seen == nil {
 		seen = map[string]bool{}
 	}
+	if !strings.Contains(source, "{{include:") {
+		return source, nil
+	}
 
-	lines := strings.Split(source, "\n")
+	var output strings.Builder
+	output.Grow(len(source))
 	fence := ""
-	for index, line := range lines {
+	for position := 0; position <= len(source); {
+		line, next, done := sourceLine(source, position)
+		transformed := line
+
 		if fence != "" {
 			if pluginmarkdown.Closes(line, fence) {
 				fence = ""
 			}
-			continue
-		}
-		if marker := pluginmarkdown.Fence(line); marker != "" {
+		} else if marker := pluginmarkdown.Fence(line); marker != "" {
 			fence = marker
-			continue
-		}
-		if !strings.Contains(line, "{{include:") {
-			continue
+		} else if strings.Contains(line, "{{include:") {
+			var err error
+			transformed, err = expandLine(line, load, seen, depth, localizer)
+			if err != nil {
+				return "", err
+			}
 		}
 
-		expanded, err := expandLine(line, load, seen, depth, localizer)
-		if err != nil {
-			return "", err
+		output.WriteString(transformed)
+		if done {
+			break
 		}
-		lines[index] = expanded
+		output.WriteByte('\n')
+		position = next
 	}
 
-	return strings.Join(lines, "\n"), nil
+	return output.String(), nil
 }
 
 // expandLine replaces every well-formed include macro in one source line.
@@ -192,41 +199,42 @@ func includedMarkdown(source, slug, heading string) (string, error) {
 // markdownSection returns an ATX heading through the next sibling or ancestor heading.
 func markdownSection(source, requested string) (string, error) {
 	requestedID := headingID(requested)
-	lines := strings.Split(source, "\n")
 	start := -1
 	level := 0
 	fence := ""
-	for index, line := range lines {
+
+	for position := 0; position <= len(source); {
+		lineStart := position
+		line, next, done := sourceLine(source, position)
+
 		if fence != "" {
 			if pluginmarkdown.Closes(line, fence) {
 				fence = ""
 			}
-			continue
-		}
-		if marker := pluginmarkdown.Fence(line); marker != "" {
+		} else if marker := pluginmarkdown.Fence(line); marker != "" {
 			fence = marker
-			continue
+		} else if headingLevel, title, ok := atxHeading(line); ok {
+			if start < 0 && headingID(title) == requestedID {
+				start = lineStart
+				level = headingLevel
+			} else if start >= 0 && headingLevel <= level {
+				end := lineStart
+				if end > start && source[end-1] == '\n' {
+					end--
+				}
+				return source[start:end], nil
+			}
 		}
-		headingLevel, title, ok := atxHeading(line)
-		if !ok {
-			continue
+
+		if done {
+			break
 		}
-		if start < 0 && headingID(title) != requestedID {
-			continue
-		}
-		if start < 0 {
-			start = index
-			level = headingLevel
-			continue
-		}
-		if headingLevel <= level {
-			return strings.Join(lines[start:index], "\n"), nil
-		}
+		position = next
 	}
 	if start < 0 {
 		return "", fmt.Errorf("heading %q not found", requested)
 	}
-	return strings.Join(lines[start:], "\n"), nil
+	return source[start:], nil
 }
 
 // atxHeading parses one Markdown ATX heading.
@@ -251,18 +259,21 @@ func atxHeading(line string) (level int, title string, ok bool) {
 
 // headingID mirrors Kumbuka's stable ASCII heading-anchor normalization.
 func headingID(value string) string {
-	value = strings.ReplaceAll(value, "/", " ")
 	value = strings.TrimSpace(value)
 	var output strings.Builder
+	output.Grow(len(value))
 	separator := false
-	for _, character := range value {
-		character = unicode.ToLower(character)
-		if isHeadingRune(character) {
+	for index := 0; index < len(value); index++ {
+		character := value[index]
+		if character >= 'A' && character <= 'Z' {
+			character += 'a' - 'A'
+		}
+		if ascii.IsAlphaNumeric(character) || character == '_' || character == '-' {
 			if separator && output.Len() > 0 {
 				output.WriteByte('-')
 			}
 			separator = false
-			output.WriteRune(character)
+			output.WriteByte(character)
 		} else {
 			separator = true
 		}
@@ -270,10 +281,14 @@ func headingID(value string) string {
 	return strings.Trim(output.String(), "-")
 }
 
-// isHeadingRune reports whether Kumbuka preserves a character in heading anchors.
-func isHeadingRune(character rune) bool {
-	if character < 0 || character > 0x7f {
-		return false
+// sourceLine returns one line without its newline and the start position of the next line.
+func sourceLine(source string, position int) (line string, next int, done bool) {
+	if position > len(source) {
+		return "", position, true
 	}
-	return ascii.IsAlphaNumeric(byte(character)) || character == '_' || character == '-'
+	if newline := strings.IndexByte(source[position:], '\n'); newline >= 0 {
+		end := position + newline
+		return source[position:end], end + 1, false
+	}
+	return source[position:], len(source) + 1, true
 }

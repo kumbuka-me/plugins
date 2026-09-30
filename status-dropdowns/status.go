@@ -89,34 +89,34 @@ type storageReader func(key string) (sdk.StoredValue, error)
 
 // transformSource renders status declarations outside fenced and inline code, including visible configuration errors.
 func transformSource(source string, readResource resourceReader, readStorage storageReader, localizer sdk.Localizer) string {
-	lines := strings.Split(source, "\n")
 	sets := make(map[string]statusSet)
 	var output strings.Builder
+	output.Grow(len(source))
 	fence := ""
 	count := 0
 
-	for index, line := range lines {
-		if index > 0 {
-			output.WriteByte('\n')
-		}
+	for position := 0; position <= len(source); {
+		line, next, done := sourceLine(source, position)
+		transformed := line
 
 		if fence != "" {
-			output.WriteString(line)
 			if pluginmarkdown.Closes(line, fence) {
 				fence = ""
 			}
-			continue
-		}
-
-		if marker := pluginmarkdown.Fence(line); marker != "" {
+		} else if marker := pluginmarkdown.Fence(line); marker != "" {
 			fence = marker
-			output.WriteString(line)
-			continue
+		} else {
+			var used int
+			transformed, used = transformLine(line, maxStatusDeclarations-count, sets, readResource, readStorage, localizer)
+			count += used
 		}
 
-		transformed, used := transformLine(line, maxStatusDeclarations-count, sets, readResource, readStorage, localizer)
-		count += used
 		output.WriteString(transformed)
+		if done {
+			break
+		}
+		output.WriteByte('\n')
+		position = next
 	}
 
 	return output.String()
@@ -423,20 +423,25 @@ func statusSetFromRecord(name string, record sdk.PluginResourceRecord) (statusSe
 // parseLegacyStatusSet accepts pre-structured Label|color records so existing sets remain readable after upgrade.
 func parseLegacyStatusSet(name, source string) (statusSet, error) {
 	choices := make([]statusChoice, 0)
-	for row, rawLine := range strings.Split(source, "\n") {
+	row := 0
+	for position := 0; position <= len(source); row++ {
+		rawLine, next, done := sourceLine(source, position)
 		line := strings.TrimSpace(rawLine)
-		if line == "" {
-			continue
+		if line != "" {
+			label, colorName, found := strings.Cut(line, "|")
+			if !found {
+				return statusSet{}, fmt.Errorf("row %d must contain Label|color", row+1)
+			}
+			color, ok := normalizeStatusColor(colorName)
+			if !ok {
+				return statusSet{}, fmt.Errorf("row %d uses invalid color %q", row+1, strings.TrimSpace(colorName))
+			}
+			choices = append(choices, statusChoice{Label: strings.TrimSpace(label), Color: color})
 		}
-		label, colorName, found := strings.Cut(line, "|")
-		if !found {
-			return statusSet{}, fmt.Errorf("row %d must contain Label|color", row+1)
+		if done {
+			break
 		}
-		color, ok := normalizeStatusColor(colorName)
-		if !ok {
-			return statusSet{}, fmt.Errorf("row %d uses invalid color %q", row+1, strings.TrimSpace(colorName))
-		}
-		choices = append(choices, statusChoice{Label: strings.TrimSpace(label), Color: color})
+		position = next
 	}
 	return validateStatusChoices(name, choices)
 }
@@ -566,11 +571,11 @@ func statusHTML(options statusOptions, set statusSet, choice statusChoice, local
 	output.WriteString(`<span class="kumbuka-status-options`)
 	for index, candidate := range set.Choices {
 		output.WriteString(` kumbuka-status-choice__`)
-		output.WriteString(hex.EncodeToString([]byte(candidate.Color)))
+		writeHexString(&output, candidate.Color)
 		output.WriteString(`__`)
 		output.WriteString(actionID(options.ID, index))
 		output.WriteString(`__`)
-		output.WriteString(hex.EncodeToString([]byte(statusChoiceLabel(set, candidate, localizer))))
+		writeHexString(&output, statusChoiceLabel(set, candidate, localizer))
 	}
 	output.WriteString(`"></span>`)
 	if options.Prefix != "" {
@@ -636,6 +641,29 @@ func statusToneForColor(color string) string {
 func storageKey(id string) string {
 	sum := sha256.Sum256([]byte(id))
 	return "status." + hex.EncodeToString(sum[:16])
+}
+
+// sourceLine returns one line without its newline and the start position of the next line.
+func sourceLine(source string, position int) (line string, next int, done bool) {
+	if position > len(source) {
+		return "", position, true
+	}
+	if newline := strings.IndexByte(source[position:], '\n'); newline >= 0 {
+		end := position + newline
+		return source[position:end], end + 1, false
+	}
+	return source[position:], len(source) + 1, true
+}
+
+// writeHexString appends the lowercase hexadecimal representation of value without temporary byte or string allocations.
+func writeHexString(output *strings.Builder, value string) {
+	const digits = "0123456789abcdef"
+	output.Grow(len(value) * 2)
+	for index := 0; index < len(value); index++ {
+		character := value[index]
+		output.WriteByte(digits[character>>4])
+		output.WriteByte(digits[character&0x0f])
+	}
 }
 
 // repeatedByte returns the length of the leading run of the requested byte.
