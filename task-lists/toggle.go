@@ -15,8 +15,7 @@ var (
 	taskMarker      = regexp.MustCompile(`^((?:[ \t]{0,3}>[ \t]?)*[ \t]*(?:[-+*]|[0-9]+[.)])[ \t]+\[)([ xX])(\])`)
 )
 
-// checklistFingerprint binds a rendered action to the task count, order, and
-// states that produced it. A stale page therefore cannot target a shifted row.
+// checklistFingerprint binds a rendered action to the task count, order, and states that produced it. A stale page therefore cannot target a shifted row.
 func checklistFingerprint(states []bool) string {
 	encoded := make([]byte, len(states))
 	for index, checked := range states {

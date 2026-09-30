@@ -36,10 +36,7 @@ type htmlReplacement struct {
 	text string
 }
 
-// processRenderedTables applies table directives and optional browser wrappers
-// without constructing a DOM for the complete rendered page. Individual table
-// fragments use a streaming rewrite; malformed fragments containing nested
-// legacy markers retain the DOM fallback for compatibility.
+// processRenderedTables applies table directives and optional browser wrappers without constructing a DOM for the complete rendered page. Individual table fragments use a streaming rewrite; malformed fragments containing nested legacy markers retain the DOM fallback for compatibility.
 func processRenderedTables(source string, options tableOptions, wrap bool) (string, error) {
 	tables, markers, err := scanRenderedTables(source, options)
 	if err != nil {
@@ -88,9 +85,7 @@ func processRenderedTables(source string, options tableOptions, wrap bool) (stri
 	return output.String(), nil
 }
 
-// scanRenderedTables records table and directive byte ranges using the streaming
-// HTML tokenizer. Rendered directive paragraphs are consumed only when they
-// immediately follow a table; legacy marker divs remain supported.
+// scanRenderedTables records table and directive byte ranges using the streaming HTML tokenizer. Rendered directive paragraphs are consumed only when they immediately follow a table; legacy marker divs remain supported.
 func scanRenderedTables(source string, options tableOptions) ([]renderedTableSpan, []htmlSpan, error) {
 	tokenizer := xhtml.NewTokenizer(strings.NewReader(source))
 	var tables []renderedTableSpan
@@ -213,8 +208,7 @@ func transformTableFragment(source string, directives []tableStyle, options tabl
 	return transformTableFragmentStreaming(source, directives, options, wrap, hasRows)
 }
 
-// transformTableFragmentStreaming applies trusted table changes while copying
-// all unmodified HTML tokens directly from the source.
+// transformTableFragmentStreaming applies trusted table changes while copying all unmodified HTML tokens directly from the source.
 func transformTableFragmentStreaming(source string, directives []tableStyle, options tableOptions, wrap, hasRows bool) (string, error) {
 	tokenizer := xhtml.NewTokenizer(strings.NewReader(source))
 	var output strings.Builder
@@ -443,8 +437,7 @@ func setTokenAttribute(token *xhtml.Token, key, value string) {
 	token.Attr = append(token.Attr, xhtml.Attribute{Key: key, Val: value})
 }
 
-// transformTableFragmentDOM parses and mutates one table for compatibility with
-// legacy markers nested inside the table fragment.
+// transformTableFragmentDOM parses and mutates one table for compatibility with legacy markers nested inside the table fragment.
 func transformTableFragmentDOM(source string, directives []tableStyle, options tableOptions, wrap bool) (string, error) {
 	root, err := htmlutil.ParseFragment(source)
 	if err != nil {

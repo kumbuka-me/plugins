@@ -86,8 +86,7 @@ type openElement struct {
 	firstIndex int
 }
 
-// presentChecklists wraps each outer task list once so one sandboxed browser
-// module can own every checkbox in the list without creating an iframe per row.
+// presentChecklists wraps each outer task list once so one sandboxed browser module can own every checkbox in the list without creating an iframe per row.
 func presentChecklists(source, indent string) (string, error) {
 	spans, fingerprint, err := checklistSpans(source)
 	if err != nil || len(spans) == 0 {
