@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -76,4 +77,15 @@ func TestToggleTaskMarkerRejectsStaleChecklistShape(t *testing.T) {
 func TestTaskListTransformRejectsWrongStage(t *testing.T) {
 	result := transform(sdk.RenderRequest{Module: "presentation", Stage: "preprocess"})
 	require.NotEmpty(t, result.Error, "expected unsupported-stage error")
+}
+
+func TestToggleTaskMarkerKeepsFenceLikeCodeInsideFence(t *testing.T) {
+	for _, newline := range []string{"\n", "\r\n"} {
+		t.Run(strconv.Quote(newline), func(t *testing.T) {
+			source := strings.Join([]string{"```md", "```not-a-closing-fence", "- [ ] example", "```", "- [ ] real", ""}, newline)
+			got, err := toggleTaskMarker(source, 0, false, checklistFingerprint([]bool{false}))
+			require.NoError(t, err)
+			require.Equal(t, strings.Replace(source, "- [ ] real", "- [x] real", 1), got)
+		})
+	}
 }
