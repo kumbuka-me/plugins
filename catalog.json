@@ -1351,6 +1351,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.7.0",
+          "api_version": 1,
+          "released_at": "2026-09-30T10:34:43Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/status-dropdowns/v1.7.0/status-dropdowns-1.7.0.kumbukaplugin",
+          "sha256": "b8e27bc383d35d31e3406edceba6cd240ff27b472279b2e2cb6762f4101dcf3c"
+        },
+        {
           "version": "1.6.7",
           "api_version": 1,
           "released_at": "2026-09-30T07:56:12Z",
@@ -1981,6 +1988,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.10.0",
+          "api_version": 1,
+          "released_at": "2026-09-30T10:34:47Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tasks/v1.10.0/tasks-1.10.0.kumbukaplugin",
+          "sha256": "0f424cca08a6dc90795f540e8bf78d9352a9da6686bea49cad2b953bc798c8b7"
+        },
+        {
           "version": "1.9.2",
           "api_version": 1,
           "released_at": "2026-09-30T07:56:49Z",
@@ -2057,6 +2071,13 @@
       "name": "Typographer",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.0",
+          "api_version": 1,
+          "released_at": "2026-09-30T10:34:40Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/typographer/v1.2.0/typographer-1.2.0.kumbukaplugin",
+          "sha256": "96cb688c8aa6d450819d874deb836b80803ba6efd4321406cf9eb564cf4801c5"
+        },
         {
           "version": "1.1.2",
           "api_version": 1,
