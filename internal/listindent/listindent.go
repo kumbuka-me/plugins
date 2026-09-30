@@ -70,7 +70,7 @@ func addClass(token *xhtml.Token, className string) {
 		if token.Attr[index].Key != "class" {
 			continue
 		}
-		for _, existing := range strings.Fields(token.Attr[index].Val) {
+		for existing := range strings.FieldsSeq(token.Attr[index].Val) {
 			if existing == className {
 				return
 			}

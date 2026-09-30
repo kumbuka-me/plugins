@@ -153,7 +153,7 @@ func render(value options, resources resourceReader, settings settingsReader, ht
 
 // annotationsWithinSelection reports whether every note range is contained by the displayed source.
 func annotationsWithinSelection(notes []annotation, file selectedFile) bool {
-	lineCount := len(strings.Split(file.Content, "\n"))
+	lineCount := strings.Count(file.Content, "\n") + 1
 	lastLine := file.Start + lineCount - 1
 	for _, note := range notes {
 		if note.Start < file.Start || note.End < note.Start || note.End > lastLine || len(note.Text) > maxAnnotationBytes {
@@ -217,8 +217,8 @@ func writeCode(output *strings.Builder, file selectedFile, notes []annotation, a
 	}
 
 	output.WriteString(`<pre class="external-file-code"><code>`)
-	lines := strings.Split(file.Content, "\n")
-	for index, line := range lines {
+	index := 0
+	for line := range strings.SplitSeq(file.Content, "\n") {
 		number := file.Start + index
 		lineMarkers := markers[number]
 		classes := "external-file-line"
@@ -235,6 +235,7 @@ func writeCode(output *strings.Builder, file selectedFile, notes []annotation, a
 			writeMarkerGutter(output, lineMarkers, localizer)
 		}
 		output.WriteString(`</span>`)
+		index++
 	}
 	output.WriteString(`</code></pre>`)
 }

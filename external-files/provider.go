@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -110,7 +111,7 @@ func validSource(value source) bool {
 	if !validProviderEndpoint(value.Endpoint) || !validRepository(value.Provider, value.Repository) {
 		return false
 	}
-	if value.Ref == "" || len(value.Ref) > 256 || strings.IndexFunc(value.Ref, unicode.IsControl) >= 0 || len(value.PrivateIPs) > 16 {
+	if value.Ref == "" || len(value.Ref) > 256 || strings.ContainsFunc(value.Ref, unicode.IsControl) || len(value.PrivateIPs) > 16 {
 		return false
 	}
 	for _, raw := range value.PrivateIPs {
@@ -119,7 +120,7 @@ func validSource(value source) bool {
 			return false
 		}
 	}
-	return len(value.Token) <= 4096 && strings.IndexFunc(value.Token, unicode.IsControl) < 0
+	return len(value.Token) <= 4096 && !strings.ContainsFunc(value.Token, unicode.IsControl)
 }
 
 // validProviderEndpoint accepts an unambiguous HTTPS API base without credentials, queries, or fragments.
@@ -155,10 +156,10 @@ func splitPrivateIPs(value string) []string {
 
 // validPath validates repository and file paths without interpreting traversal or encoded separators.
 func validPath(value string) bool {
-	if value == "" || len(value) > 1024 || strings.ContainsAny(value, "\\%?#") || strings.IndexFunc(value, unicode.IsControl) >= 0 {
+	if value == "" || len(value) > 1024 || strings.ContainsAny(value, "\\%?#") || strings.ContainsFunc(value, unicode.IsControl) {
 		return false
 	}
-	for _, part := range strings.Split(value, "/") {
+	for part := range strings.SplitSeq(value, "/") {
 		if part == "" || part == "." || part == ".." {
 			return false
 		}
@@ -278,12 +279,9 @@ func validContent(content string) bool {
 	if len(content) > maxFileBytes || !utf8.ValidString(content) {
 		return false
 	}
-	for _, r := range content {
-		if (unicode.IsControl(r) && r != '\n' && r != '\r' && r != '\t') || unicode.In(r, unicode.Cf) {
-			return false
-		}
-	}
-	return true
+	return !strings.ContainsFunc(content, func(r rune) bool {
+		return (unicode.IsControl(r) && r != '\n' && r != '\r' && r != '\t') || unicode.In(r, unicode.Cf)
+	})
 }
 
 // selectLines validates and extracts an inclusive one-based source range.
@@ -313,11 +311,9 @@ func allowSourceFetch(name string) bool {
 	defer sourceFetchRates.Unlock()
 
 	if len(sourceFetchRates.Values) >= 1024 {
-		for key, value := range sourceFetchRates.Values {
-			if now.Sub(value.Since) >= time.Minute {
-				delete(sourceFetchRates.Values, key)
-			}
-		}
+		maps.DeleteFunc(sourceFetchRates.Values, func(_ string, value sourceRate) bool {
+			return now.Sub(value.Since) >= time.Minute
+		})
 	}
 	rate, exists := sourceFetchRates.Values[name]
 	if !exists && len(sourceFetchRates.Values) >= 1024 {

@@ -342,9 +342,8 @@ func splitStatusList(value string) []string {
 	if strings.Contains(value, ";") {
 		separator = ";"
 	}
-	parts := strings.Split(value, separator)
-	result := make([]string, 0, len(parts))
-	for _, part := range parts {
+	result := make([]string, 0, strings.Count(value, separator)+1)
+	for part := range strings.SplitSeq(value, separator) {
 		result = append(result, strings.TrimSpace(part))
 	}
 	return result

@@ -1,9 +1,10 @@
 package main
 
 import (
+	"cmp"
 	"fmt"
 	"io"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -162,11 +163,11 @@ func checklistSpans(source string) ([]checklistSpan, string, error) {
 			}
 		}
 	}
-	sort.Slice(spans, func(i, j int) bool {
-		if spans[i].start == spans[j].start {
-			return spans[i].end > spans[j].end
+	slices.SortFunc(spans, func(left, right checklistSpan) int {
+		if result := cmp.Compare(left.start, right.start); result != 0 {
+			return result
 		}
-		return spans[i].start < spans[j].start
+		return cmp.Compare(right.end, left.end)
 	})
 	filtered := spans[:0]
 	for _, span := range spans {
@@ -202,12 +203,9 @@ func markChecklistLists(node *xhtml.Node, className string) {
 
 // taskCheckboxCheckedToken reports whether an input token has a checked attribute.
 func taskCheckboxCheckedToken(token xhtml.Token) bool {
-	for _, attribute := range token.Attr {
-		if attribute.Key == "checked" {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(token.Attr, func(attribute xhtml.Attribute) bool {
+		return attribute.Key == "checked"
+	})
 }
 
 // isTaskCheckboxToken recognizes disabled checkbox inputs emitted by Markdown task lists.

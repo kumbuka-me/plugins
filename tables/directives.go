@@ -90,7 +90,7 @@ func (s *tableStyle) applyToken(token string) bool {
 	key, tone, ok := strings.Cut(token, "=")
 	if ok && (key == "widths" || key == "heights") {
 		values := []int{}
-		for _, raw := range strings.Split(tone, ",") {
+		for raw := range strings.SplitSeq(tone, ",") {
 			value, err := strconv.Atoi(raw)
 			if err != nil || value < 0 || value > 4000 {
 				return false

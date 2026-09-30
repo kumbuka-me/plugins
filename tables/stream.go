@@ -1,8 +1,9 @@
 package main
 
 import (
+	"cmp"
 	"io"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -63,11 +64,11 @@ func processRenderedTables(source string, options tableOptions, wrap bool) (stri
 		}
 	}
 
-	sort.Slice(replacements, func(i, j int) bool {
-		if replacements[i].start == replacements[j].start {
-			return replacements[i].end > replacements[j].end
+	slices.SortFunc(replacements, func(left, right htmlReplacement) int {
+		if result := cmp.Compare(left.start, right.start); result != 0 {
+			return result
 		}
-		return replacements[i].start < replacements[j].start
+		return cmp.Compare(right.end, left.end)
 	})
 
 	var output strings.Builder
@@ -403,10 +404,8 @@ func writeTableWrapperEnd(output *strings.Builder) { output.WriteString(`</div><
 // addTokenClass adds one class to a parsed start tag when absent.
 func addTokenClass(token *xhtml.Token, className string) {
 	classes := strings.Fields(tokenAttribute(*token, "class"))
-	for _, existing := range classes {
-		if existing == className {
-			return
-		}
+	if slices.Contains(classes, className) {
+		return
 	}
 	classes = append(classes, className)
 	setTokenAttribute(token, "class", strings.Join(classes, " "))
@@ -416,12 +415,9 @@ func addTokenClass(token *xhtml.Token, className string) {
 func setTokenTone(token *xhtml.Token, tone string) {
 	const prefix = "table-tone-"
 	classes := strings.Fields(tokenAttribute(*token, "class"))
-	filtered := classes[:0]
-	for _, className := range classes {
-		if !strings.HasPrefix(className, prefix) {
-			filtered = append(filtered, className)
-		}
-	}
+	filtered := slices.DeleteFunc(classes, func(className string) bool {
+		return strings.HasPrefix(className, prefix)
+	})
 	filtered = append(filtered, prefix+tone)
 	setTokenAttribute(token, "class", strings.Join(filtered, " "))
 }
@@ -496,7 +492,7 @@ func tokenAttribute(token xhtml.Token, key string) string {
 
 // tokenHasClass reports whether one parsed token contains a class name.
 func tokenHasClass(token xhtml.Token, className string) bool {
-	for _, class := range strings.Fields(tokenAttribute(token, "class")) {
+	for class := range strings.FieldsSeq(tokenAttribute(token, "class")) {
 		if class == className {
 			return true
 		}

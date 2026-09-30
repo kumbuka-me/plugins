@@ -2,6 +2,7 @@
 package htmlutil
 
 import (
+	"slices"
 	"strings"
 
 	xhtml "golang.org/x/net/html"
@@ -46,12 +47,9 @@ func Attribute(node *xhtml.Node, key string) string {
 
 // HasAttribute reports whether an HTML node contains an attribute with the given key.
 func HasAttribute(node *xhtml.Node, key string) bool {
-	for _, attribute := range node.Attr {
-		if attribute.Key == key {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(node.Attr, func(attribute xhtml.Attribute) bool {
+		return attribute.Key == key
+	})
 }
 
 // SetAttribute replaces or appends one HTML node attribute.
@@ -68,10 +66,8 @@ func SetAttribute(node *xhtml.Node, key, value string) {
 // AddClass adds a class token when the element does not already contain it.
 func AddClass(node *xhtml.Node, className string) {
 	classes := strings.Fields(Attribute(node, "class"))
-	for _, existing := range classes {
-		if existing == className {
-			return
-		}
+	if slices.Contains(classes, className) {
+		return
 	}
 	classes = append(classes, className)
 	SetAttribute(node, "class", strings.Join(classes, " "))
