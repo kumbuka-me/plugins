@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.bulleted-lists
 name: Bulleted Lists
 icon: list-lucide
-version: 1.0.0
+version: 1.0.1
 description: Configure indentation for Markdown bulleted lists.
 default_enabled: true
 modules:
