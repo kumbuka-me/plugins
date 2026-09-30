@@ -13,26 +13,38 @@ import (
 
 const defaultTitle = "Pages in this section"
 
+// macroOptions stores parsed subpages macro options.
 type macroOptions struct {
-	Title        string
-	ShowTitle    bool
+	// Title is the heading specified by the macro.
+	Title string
+	// ShowTitle reports whether the heading should be rendered.
+	ShowTitle bool
+	// DefaultTitle reports whether the heading should be localized.
 	DefaultTitle bool
 }
 
+// renderData supplies localized subpages template data.
 type renderData struct {
-	Children  []sdk.NavigationNode
-	Title     string
+	// Children contains the visible navigation tree.
+	Children []sdk.NavigationNode
+	// Title is the resolved heading text.
+	Title string
+	// ShowTitle controls heading visibility.
 	ShowTitle bool
+	// AriaLabel is the localized accessible navigation label.
 	AriaLabel string
 }
 
 //go:embed template.gohtml
 var templateSource string
 
+// main provides the entry point required by the plugin executable.
 func main() {}
 
+// init registers the plugin's render and command handlers with the SDK.
 func init() { sdk.RegisterLocalizedMacro("subpages", parse, renderMacro) }
 
+// parse parses the subpages macro and its optional quoted title.
 func parse(line string) (macroOptions, bool) {
 	value := strings.TrimSpace(line)
 	if value == "{{subpages}}" {
@@ -65,6 +77,7 @@ func parse(line string) (macroOptions, bool) {
 	return macroOptions{Title: title, ShowTitle: title != ""}, true
 }
 
+// renderMacro renders the macro with the invocation's selected locale.
 func renderMacro(invocation sdk.LocalizedMacro[macroOptions]) (sdk.Result, error) {
 	options := invocation.Value
 	localizer := localize.For(invocation.Locale)
@@ -87,6 +100,7 @@ func renderMacro(invocation sdk.LocalizedMacro[macroOptions]) (sdk.Result, error
 	return sdk.Text(html), nil
 }
 
+// renderSubpages renders the visible navigation tree with a localized heading.
 func renderSubpages(
 	nodes []sdk.NavigationNode,
 	options macroOptions,

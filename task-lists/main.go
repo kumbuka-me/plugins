@@ -14,13 +14,16 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
+// main provides the entry point required by the plugin executable.
 func main() {}
 
+// init registers the plugin's render and command handlers with the SDK.
 func init() {
 	sdk.RegisterModule("presentation", transform)
 	sdk.RegisterWidgetWithCommands("commands", func(sdk.WidgetContext) (sdk.Result, error) { return sdk.Text(""), nil }, commandChecklist)
 }
 
+// transform converts rendered task lists into interactive checklist controls.
 func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if request.Module != "presentation" || request.Stage != "postprocess" {
 		return sdk.RenderResult{Error: "unsupported checklist render request"}
@@ -32,6 +35,7 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	return sdk.RenderResult{Parts: []sdk.RenderPart{{Text: output}}}
 }
 
+// commandChecklist validates and applies a version-guarded checklist toggle.
 func commandChecklist(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult, error) {
 	if context.Page == nil || context.Page.Slug == "" {
 		return sdk.WidgetCommandResult{}, fmt.Errorf("checklist command requires a page")
@@ -62,15 +66,23 @@ func commandChecklist(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult
 	return sdk.WidgetCommandResult{Redirect: "/pages/" + context.Page.Slug}, nil
 }
 
+// checklistSpan identifies one complete task-list fragment.
 type checklistSpan struct {
+	// start and end delimit the task-list fragment in the original HTML bytes.
 	start, end int
+	// firstIndex is the document-wide index of the first checkbox in the fragment.
 	firstIndex int
 }
 
+// openElement tracks a pending HTML element during task-list scanning.
 type openElement struct {
-	name       string
-	start      int
-	task       bool
+	// name is the open element's HTML tag name.
+	name string
+	// start is the opening tag's byte offset in the original HTML.
+	start int
+	// task reports whether this element contains a task checkbox.
+	task bool
+	// firstIndex is the first descendant checkbox's document-wide index.
 	firstIndex int
 }
 
@@ -99,6 +111,7 @@ func presentChecklists(source, indent string) (string, error) {
 	return output.String(), nil
 }
 
+// checklistSpans locates outer task-list fragments and fingerprints their checkbox states.
 func checklistSpans(source string) ([]checklistSpan, string, error) {
 	tokenizer := xhtml.NewTokenizer(strings.NewReader(source))
 	var stack []openElement
@@ -166,6 +179,7 @@ func checklistSpans(source string) ([]checklistSpan, string, error) {
 	return filtered, checklistFingerprint(states), nil
 }
 
+// presentChecklistFragment converts a task-list fragment into interactive checkbox controls.
 func presentChecklistFragment(source string, firstIndex int, fingerprint, indentClass string) (string, error) {
 	root, err := htmlutil.ParseFragment(source)
 	if err != nil {
@@ -177,6 +191,7 @@ func presentChecklistFragment(source string, firstIndex int, fingerprint, indent
 	return htmlutil.RenderChildren(root)
 }
 
+// markChecklistLists applies the configured indentation class to nested list elements.
 func markChecklistLists(node *xhtml.Node, className string) {
 	for child := node.FirstChild; child != nil; child = child.NextSibling {
 		if child.Type == xhtml.ElementNode && (child.DataAtom == atom.Ul || child.DataAtom == atom.Ol) {
@@ -186,6 +201,7 @@ func markChecklistLists(node *xhtml.Node, className string) {
 	}
 }
 
+// taskCheckboxCheckedToken reports whether an input token has a checked attribute.
 func taskCheckboxCheckedToken(token xhtml.Token) bool {
 	for _, attribute := range token.Attr {
 		if attribute.Key == "checked" {
@@ -195,6 +211,7 @@ func taskCheckboxCheckedToken(token xhtml.Token) bool {
 	return false
 }
 
+// isTaskCheckboxToken recognizes disabled checkbox inputs emitted by Markdown task lists.
 func isTaskCheckboxToken(token xhtml.Token) bool {
 	checkbox, disabled := false, false
 	for _, attribute := range token.Attr {
@@ -208,6 +225,7 @@ func isTaskCheckboxToken(token xhtml.Token) bool {
 	return checkbox && disabled
 }
 
+// htmlVoidElement reports whether an HTML element has no closing tag.
 func htmlVoidElement(name string) bool {
 	switch name {
 	case "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr":
@@ -217,6 +235,7 @@ func htmlVoidElement(name string) bool {
 	}
 }
 
+// walkChecklist replaces task checkboxes in document order without revisiting new controls.
 func walkChecklist(node *xhtml.Node, index *int, fingerprint string) {
 	for child := node.FirstChild; child != nil; {
 		next := child.NextSibling
@@ -230,12 +249,14 @@ func walkChecklist(node *xhtml.Node, index *int, fingerprint string) {
 	}
 }
 
+// isTaskCheckbox recognizes a disabled checkbox directly inside a list item.
 func isTaskCheckbox(node *xhtml.Node) bool {
 	return node.Type == xhtml.ElementNode && node.DataAtom == atom.Input && node.Parent != nil &&
 		node.Parent.DataAtom == atom.Li && strings.EqualFold(htmlutil.Attribute(node, "type"), "checkbox") &&
 		htmlutil.HasAttribute(node, "disabled")
 }
 
+// replaceTaskCheckbox replaces a task input with an accessible version-bound command button.
 func replaceTaskCheckbox(node *xhtml.Node, index int, fingerprint string) {
 	checked := htmlutil.HasAttribute(node, "checked")
 	state, mark, label := "0", "✓", "Mark complete"

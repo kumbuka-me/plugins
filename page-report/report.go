@@ -13,10 +13,13 @@ import (
 	sdk "github.com/kumbuka-me/sdk"
 )
 
+// main provides the entry point required by the plugin executable.
 func main() {}
 
+// init registers the plugin's render and command handlers with the SDK.
 func init() { sdk.RegisterLocalizedMacro("page-report", parse, renderMacro) }
 
+// renderMacro renders the macro with the invocation's selected locale.
 func renderMacro(invocation sdk.LocalizedMacro[macroOptions]) (sdk.Result, error) {
 	html, err := renderReport(invocation.Value, localize.For(invocation.Locale))
 	return sdk.Text(html), err

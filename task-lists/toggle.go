@@ -75,6 +75,7 @@ func toggleTaskMarker(source string, target int, expectedChecked bool, expectedF
 	return "", fmt.Errorf("checklist item no longer exists")
 }
 
+// taskMarkerStates collects task marker states outside fenced code blocks.
 func taskMarkerStates(lines []string) []bool {
 	var states []bool
 	fence := byte(0)
@@ -100,6 +101,7 @@ func taskMarkerStates(lines []string) []bool {
 	return states
 }
 
+// fenceMarker returns the opening marker and run length of a possible code fence.
 func fenceMarker(line string) (byte, int) {
 	if len(line) < 3 || (line[0] != '`' && line[0] != '~') {
 		return 0, 0

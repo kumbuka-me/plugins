@@ -20,6 +20,7 @@ type htmlSpan struct {
 
 // renderedTableSpan records one table and the directives associated with it.
 type renderedTableSpan struct {
+	// htmlSpan bounds the complete table in the source HTML.
 	htmlSpan
 	// directives contains markers applied in document order.
 	directives []tableStyle
@@ -29,6 +30,7 @@ type renderedTableSpan struct {
 
 // htmlReplacement describes one bounded source replacement.
 type htmlReplacement struct {
+	// htmlSpan bounds the source bytes replaced by text.
 	htmlSpan
 	// text replaces the range; an empty value removes it.
 	text string
