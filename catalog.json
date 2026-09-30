@@ -749,13 +749,6 @@
           "sha256": "3d173f6f5f84c9b81f81c3fae8f7f7adc5153dbc8eea90d3b88912c1e606a4e4"
         },
         {
-          "version": "1.0.7",
-          "api_version": 1,
-          "released_at": "2026-09-20T17:53:35Z",
-          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/includes/v1.0.7/includes-1.0.7.kumbukaplugin",
-          "sha256": "3d173f6f5f84c9b81f81c3fae8f7f7adc5153dbc8eea90d3b88912c1e606a4e4"
-        },
-        {
           "version": "1.0.4",
           "api_version": 1,
           "released_at": "2026-09-19T19:00:14Z",
@@ -1707,6 +1700,13 @@
       "name": "Tables",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.3",
+          "api_version": 1,
+          "released_at": "2026-09-30T22:01:20Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tables/v1.2.3/tables-1.2.3.kumbukaplugin",
+          "sha256": "30496cbe92eece5d65c1d1c089a99a7c3cae6a7c3c00f4fb5ba24895bb9f08f8"
+        },
         {
           "version": "1.2.2",
           "api_version": 1,
