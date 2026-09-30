@@ -22,3 +22,5 @@ coverage.out
 
 # Python helper bytecode
 __pycache__/
+
+.projectatlas
