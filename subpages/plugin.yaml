@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.subpages
 name: Subpages
 description: Show child pages as generated navigation.
-version: 1.3.3
+version: 1.3.4
 default_enabled: true
 modules:
   - type: macro
