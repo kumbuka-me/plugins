@@ -56,6 +56,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.0.1",
+          "api_version": 1,
+          "released_at": "2026-09-30T22:01:06Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/bulleted-lists/v1.0.1/bulleted-lists-1.0.1.kumbukaplugin",
+          "sha256": "88a122f9589e57a40a8053869a11153e92a61a5cd6eca928427e03cdcf2acd26"
+        },
+        {
           "version": "1.0.0",
           "api_version": 1,
           "released_at": "2026-09-30T07:55:34Z",
@@ -413,6 +420,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.10.5",
+          "api_version": 1,
+          "released_at": "2026-09-30T22:01:03Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/external-files/v1.10.5/external-files-1.10.5.kumbukaplugin",
+          "sha256": "98029a4df996b33edd532627abbdca0a71604483904a53d7a7d86add436b066e"
+        },
+        {
           "version": "1.10.4",
           "api_version": 1,
           "released_at": "2026-09-29T13:51:08Z",
@@ -735,6 +749,13 @@
           "sha256": "3d173f6f5f84c9b81f81c3fae8f7f7adc5153dbc8eea90d3b88912c1e606a4e4"
         },
         {
+          "version": "1.0.7",
+          "api_version": 1,
+          "released_at": "2026-09-20T17:53:35Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/includes/v1.0.7/includes-1.0.7.kumbukaplugin",
+          "sha256": "3d173f6f5f84c9b81f81c3fae8f7f7adc5153dbc8eea90d3b88912c1e606a4e4"
+        },
+        {
           "version": "1.0.4",
           "api_version": 1,
           "released_at": "2026-09-19T19:00:14Z",
@@ -818,6 +839,13 @@
       "name": "Numbered Lists",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.0.1",
+          "api_version": 1,
+          "released_at": "2026-09-30T22:01:13Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/numbered-lists/v1.0.1/numbered-lists-1.0.1.kumbukaplugin",
+          "sha256": "2ff13268461dcf74fc2618d1725d592124a5dc11c877fe17f15ba29040c5ef5f"
+        },
         {
           "version": "1.0.0",
           "api_version": 1,
@@ -1351,6 +1379,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.7.1",
+          "api_version": 1,
+          "released_at": "2026-09-30T22:01:11Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/status-dropdowns/v1.7.1/status-dropdowns-1.7.1.kumbukaplugin",
+          "sha256": "c4aa2ae42b46b597505ff8d13463b25bda41b4d7df63b5e36a1412c0e03da05f"
+        },
+        {
           "version": "1.7.0",
           "api_version": 1,
           "released_at": "2026-09-30T10:34:43Z",
@@ -1875,6 +1910,13 @@
       "name": "Checklists",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.4.3",
+          "api_version": 1,
+          "released_at": "2026-09-30T22:01:13Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/task-lists/v1.4.3/task-lists-1.4.3.kumbukaplugin",
+          "sha256": "8c667d339591052ea5d716057eb0e2dbe404dac16f70adeb199a6f1b24d381fb"
+        },
         {
           "version": "1.4.2",
           "api_version": 1,
