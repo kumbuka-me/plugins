@@ -50,16 +50,21 @@ func MarkTags(source, tag, className string) (string, error) {
 			}
 			return "", tokenizer.Err()
 		}
-		if tokenType != xhtml.StartTagToken || tokenizer.Token().Data != tag {
+		if tokenType != xhtml.StartTagToken {
 			output.Write(tokenizer.Raw())
 			continue
 		}
 		token := tokenizer.Token()
+		if token.Data != tag {
+			output.Write(tokenizer.Raw())
+			continue
+		}
 		addClass(&token, className)
 		output.WriteString(token.String())
 	}
 }
 
+// addClass appends a CSS class without duplicating existing classes.
 func addClass(token *xhtml.Token, className string) {
 	for index := range token.Attr {
 		if token.Attr[index].Key != "class" {
