@@ -3,7 +3,7 @@ provider: Kumbuka
 id: me.kumbuka.numbered-lists
 name: Numbered Lists
 icon: list-ordered-lucide
-version: 1.0.0
+version: 1.0.1
 description: Configure indentation for Markdown numbered lists.
 default_enabled: true
 modules:
