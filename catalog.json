@@ -224,6 +224,20 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.3.1",
+          "api_version": 1,
+          "released_at": "2026-10-01T12:55:16Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/continue-working/v1.3.1/continue-working-1.3.1.kumbukaplugin",
+          "sha256": "15740e296a49eb5c69b47b538148fa8ea79ba27aa905a2f726af4380331fca2b"
+        },
+        {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-10-01T12:52:41Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/continue-working/v1.3.0/continue-working-1.3.0.kumbukaplugin",
+          "sha256": "0464a5c2a11078934bddfe0d9f8647c93cde95ccfb2b1afadb33f19f36f94d9e"
+        },
+        {
           "version": "1.2.0",
           "api_version": 1,
           "released_at": "2026-10-01T12:25:46Z",
@@ -1007,6 +1021,13 @@
       "name": "Recent Changes",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-10-01T12:52:41Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/recent-changes/v1.3.0/recent-changes-1.3.0.kumbukaplugin",
+          "sha256": "b252a6253ef389667a00eb61e5d19fa9f8134eaf6f487d9fa68fe0e7e84dcafc"
+        },
         {
           "version": "1.2.0",
           "api_version": 1,
@@ -2274,6 +2295,20 @@
       "name": "Wiki Links",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.4.1",
+          "api_version": 1,
+          "released_at": "2026-10-01T12:55:04Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/wiki-links/v1.4.1/wiki-links-1.4.1.kumbukaplugin",
+          "sha256": "85012d144ad1dabbc9059622b4e3ea3443d48134babf6c5d99f2234f9fc4aa35"
+        },
+        {
+          "version": "1.4.0",
+          "api_version": 1,
+          "released_at": "2026-10-01T12:52:34Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/wiki-links/v1.4.0/wiki-links-1.4.0.kumbukaplugin",
+          "sha256": "d5bd1edfaf6285bdd53d40954a0d54965d0b8b3aa5b53397bc9c55fc27daa98c"
+        },
         {
           "version": "1.3.0",
           "api_version": 1,
