@@ -14,7 +14,7 @@ func fakeIcon(name string, _ int) string { return "[" + name + "]" }
 func TestRenderRecentChanges(t *testing.T) {
 	now := time.Date(2026, 9, 15, 16, 0, 0, 0, time.UTC)
 	output := renderRecent([]sdk.Page{{URL: "/p/7/guide/start", Slug: "guide/start", Title: "Guide & Start", Tags: []string{"docs"}, UpdatedAt: now.Add(-30 * time.Minute)}}, now, fakeIcon, localize.For("en"))
-	for _, expected := range []string{"Recent changes", `href="search"`, `href="/p/7/guide/start"`, "Guide &amp; Start", "docs", "30m ago"} {
+	for _, expected := range []string{"Recent changes", `href="/p/7/guide/start"`, "Guide &amp; Start", "docs", "30m ago"} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 }

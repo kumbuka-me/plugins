@@ -13,11 +13,11 @@ func TestRenderLinksEscapesAndMarksMissingTargets(t *testing.T) {
 		Backlinks: []sdk.Page{{URL: "/p/7/guide/start", Slug: "guide/start", Title: `<Guide>`}},
 		Outgoing: []sdk.PageLink{
 			{TargetURL: "/p/8/api/auth", TargetSlug: "api/auth", TargetTitle: `Auth & Login`, Exists: true},
-			{CreateURL: "/kumbuka/pages/new?slug=missing+page", TargetSlug: `missing page`, Exists: false},
+			{TargetSlug: `missing page`, Exists: false},
 		},
 	}, localize.For("en"))
 
-	for _, expected := range []string{`href="/p/7/guide/start"`, `href="/p/8/api/auth"`, `&lt;Guide&gt;`, `Auth &amp; Login`, `href="/kumbuka/pages/new?slug=missing+page"`, `class="widget-row broken"`} {
+	for _, expected := range []string{`href="/p/7/guide/start"`, `href="/p/8/api/auth"`, `&lt;Guide&gt;`, `Auth &amp; Login`, `href="/pages/new?slug=missing+page"`, `class="widget-row broken"`} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 	require.NotContains(t, output, `<Guide>`, "unescaped title in output: %s", output)
@@ -30,7 +30,7 @@ func TestRenderLinksEmptyStates(t *testing.T) {
 }
 
 func TestRenderLinksGerman(t *testing.T) {
-	output := renderLinks(sdk.PageLinks{Outgoing: []sdk.PageLink{{CreateURL: "/kumbuka/pages/new?slug=missing", TargetSlug: "missing", Exists: false}}}, localize.For("de"))
+	output := renderLinks(sdk.PageLinks{Outgoing: []sdk.PageLink{{TargetSlug: "missing", Exists: false}}}, localize.For("de"))
 	for _, expected := range []string{"Verlinkt von", "Noch keine Seiten verlinken hierher.", "Links von dieser Seite", "Fehlende Seite"} {
 		require.Contains(t, output, expected)
 	}

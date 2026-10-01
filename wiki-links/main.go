@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"html"
+	"net/url"
 	"strings"
 
 	"github.com/kumbuka-me/plugins/internal/localize"
@@ -62,8 +63,8 @@ func renderLinks(links sdk.PageLinks, localizer sdk.Localizer) string {
 				output.WriteString(`</span></a>`)
 				continue
 			}
-			output.WriteString(`<a class="widget-row broken" href="`)
-			output.WriteString(html.EscapeString(link.CreateURL))
+			output.WriteString(`<a class="widget-row broken" href="/pages/new?slug=`)
+			output.WriteString(url.QueryEscape(link.TargetSlug))
 			output.WriteString(`"><strong>`)
 			output.WriteString(html.EscapeString(link.TargetSlug))
 			output.WriteString(`</strong><span class="widget-meta">` + localizer.Text("wiki.missing") + `</span></a>`)
