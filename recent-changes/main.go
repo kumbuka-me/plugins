@@ -27,7 +27,7 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 // renderRecent renders the Recent Changes dashboard panel.
 func renderRecent(pages []sdk.Page, now time.Time, icon widgetui.IconRenderer, localizer sdk.Localizer) string {
 	var output strings.Builder
-	output.WriteString(`<div class="panel-title"><h2>` + localizer.Text("recent.title") + `</h2><a href="/search">` + localizer.Text("recent.view_all") + `</a></div>`)
+	output.WriteString(`<div class="panel-title"><h2>` + localizer.Text("recent.title") + `</h2><a href="search">` + localizer.Text("recent.view_all") + `</a></div>`)
 	if len(pages) == 0 {
 		output.WriteString(`<div class="empty"><strong>` + localizer.Text("recent.ready") + `</strong><p>` + localizer.Text("recent.empty") + `</p></div>`)
 		return output.String()

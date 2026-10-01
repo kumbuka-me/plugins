@@ -14,13 +14,13 @@ func fakeIcon(name string, _ int) string { return "[" + name + "]" }
 func TestRenderContinueWorking(t *testing.T) {
 	now := time.Date(2026, 9, 15, 16, 0, 0, 0, time.UTC)
 	output := renderContinueWorking(
-		[]sdk.PageDraft{{PageID: 1, PageSlug: "guide/start", Title: "Draft & Guide", Stale: true, UpdatedAt: now.Add(-10 * time.Minute)}},
-		[]sdk.RecentEdit{{Page: sdk.Page{Slug: "api", Title: "API", UpdatedAt: now.Add(-2 * time.Hour)}, RevisionMessage: "Fix & polish"}},
+		[]sdk.PageDraft{{URL: "/kumbuka/edit/guide/start", PageID: 1, PageSlug: "guide/start", Title: "Draft & Guide", Stale: true, UpdatedAt: now.Add(-10 * time.Minute)}},
+		[]sdk.RecentEdit{{Page: sdk.Page{EditURL: "/kumbuka/edit/api", Slug: "api", Title: "API", UpdatedAt: now.Add(-2 * time.Hour)}, RevisionMessage: "Fix & polish"}},
 		now,
 		fakeIcon,
 		localize.For("en"),
 	)
-	for _, expected := range []string{"Continue working", `href="/edit/guide/start"`, "Draft &amp; Guide", "10m ago", "Page changed since draft started", "Fix &amp; polish", "2h ago"} {
+	for _, expected := range []string{"Continue working", `href="/kumbuka/edit/guide/start"`, `href="/kumbuka/edit/api"`, "Draft &amp; Guide", "10m ago", "Page changed since draft started", "Fix &amp; polish", "2h ago"} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 }
@@ -28,7 +28,7 @@ func TestRenderContinueWorking(t *testing.T) {
 func TestRenderContinueWorkingGerman(t *testing.T) {
 	now := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
 	output := renderContinueWorking(
-		[]sdk.PageDraft{{Title: "", Stale: true, UpdatedAt: now.Add(-10 * time.Minute)}},
+		[]sdk.PageDraft{{URL: "/kumbuka/pages/new", Title: "", Stale: true, UpdatedAt: now.Add(-10 * time.Minute)}},
 		nil,
 		now,
 		fakeIcon,

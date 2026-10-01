@@ -66,12 +66,8 @@ func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, ico
 	if title == "" {
 		title = localizer.Text("common.untitled")
 	}
-	editURL := "/pages/new"
-	if draft.PageID > 0 && draft.PageSlug != "" {
-		editURL = "/edit/" + widgetui.PagePath(draft.PageSlug)
-	}
 	output.WriteString(`<a class="widget-item" href="`)
-	output.WriteString(editURL)
+	output.WriteString(html.EscapeString(draft.URL))
 	output.WriteString(`"><span class="widget-item-icon">`)
 	output.WriteString(icon("pencil-line-lucide", 16))
 	output.WriteString(`</span><span><strong>`)
@@ -88,8 +84,8 @@ func writeDraft(output *strings.Builder, draft sdk.PageDraft, now time.Time, ico
 
 // writeEdit appends one recently edited page entry to the widget markup.
 func writeEdit(output *strings.Builder, edit sdk.RecentEdit, now time.Time, icon widgetui.IconRenderer, localizer sdk.Localizer) {
-	output.WriteString(`<a class="widget-item" href="/edit/`)
-	output.WriteString(widgetui.PagePath(edit.Slug))
+	output.WriteString(`<a class="widget-item" href="`)
+	output.WriteString(html.EscapeString(edit.EditURL))
 	output.WriteString(`"><span class="widget-item-icon">`)
 	output.WriteString(widgetui.PageIcon(edit.Page, 16, icon))
 	output.WriteString(`</span><span><strong>`)

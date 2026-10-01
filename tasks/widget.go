@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
-	"net/url"
 	"strings"
 	"unicode/utf8"
 
@@ -409,13 +408,4 @@ func taskAssignmentNotificationKey(page sdk.Page, task taskOptions) string {
 	value := fmt.Sprintf("%s\x00%s\x00%s\x00%d", page.Slug, task.ID, task.Assignee, page.UpdatedAt.UnixNano())
 	sum := sha256.Sum256([]byte(value))
 	return "task-assignment-" + hex.EncodeToString(sum[:16])
-}
-
-// pagePath escapes each canonical page slug segment for use in a local application URL.
-func pagePath(slug string) string {
-	parts := strings.Split(slug, "/")
-	for index := range parts {
-		parts[index] = url.PathEscape(parts[index])
-	}
-	return strings.Join(parts, "/")
 }
