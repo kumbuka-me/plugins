@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/kumbuka-me/plugins/internal/localize"
-	"github.com/kumbuka-me/plugins/internal/widgetui"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -54,8 +53,8 @@ func renderRelated(pages []sdk.Page, localizer sdk.Localizer) string {
 	}
 	output.WriteString(`<div class="widget-list">`)
 	for _, page := range pages {
-		output.WriteString(`<a class="widget-row" href="/pages/`)
-		output.WriteString(widgetui.PagePath(page.Slug))
+		output.WriteString(`<a class="widget-row" href="`)
+		output.WriteString(html.EscapeString(page.URL))
 		output.WriteString(`"><strong>`)
 		output.WriteString(html.EscapeString(page.Title))
 		output.WriteString(`</strong><span class="widget-meta">`)

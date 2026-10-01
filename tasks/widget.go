@@ -302,7 +302,7 @@ func notifyTaskTransition(
 		RecipientUserID: assignee.ID,
 		Title:           title,
 		Body:            body,
-		URL:             "/pages/" + pagePath(page.Slug),
+		URL:             page.URL,
 		IdempotencyKey:  taskNotificationKey(page.Slug, task.ID, state),
 	})
 	if err != nil {
@@ -336,7 +336,7 @@ func notifyTaskAssignments(context sdk.ContentChangeContext, services taskAssign
 			RecipientUserID: assignee.ID,
 			Title:           boundedUTF8(localizer.Textf("tasks.notification.assigned_title", task.Text), maxTaskNotificationTitleBytes),
 			Body:            boundedUTF8(localizer.Textf("tasks.notification.assigned_body", context.Page.Title), maxTaskNotificationBodyBytes),
-			URL:             "/pages/" + pagePath(context.Page.Slug),
+			URL:             context.Page.URL,
 			IdempotencyKey:  taskAssignmentNotificationKey(context.Page, task),
 		})
 		if err != nil {

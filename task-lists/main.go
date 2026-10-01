@@ -64,7 +64,7 @@ func commandChecklist(context sdk.WidgetCommandContext) (sdk.WidgetCommandResult
 	if err != nil {
 		return sdk.WidgetCommandResult{}, err
 	}
-	return sdk.WidgetCommandResult{Redirect: "/pages/" + context.Page.Slug}, nil
+	return sdk.WidgetCommandResult{Redirect: context.Page.URL}, nil
 }
 
 // checklistSpan identifies one complete task-list fragment.

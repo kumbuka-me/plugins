@@ -11,8 +11,8 @@ import (
 func fakeIcon(name string, _ int) string { return "[" + name + "]" }
 
 func TestRenderHomeFavorites(t *testing.T) {
-	output := renderHome([]sdk.Page{{Slug: "guide/start", Title: "Guide & Start", Icon: "book-lucide", ViewCount: 9}}, fakeIcon, localize.For("en"))
-	for _, expected := range []string{"Favorites", `href="/pages/guide/start"`, "Guide &amp; Start", "9 views", "[book-lucide]"} {
+	output := renderHome([]sdk.Page{{URL: "/p/7/guide/start", Slug: "guide/start", Title: "Guide & Start", Icon: "book-lucide", ViewCount: 9}}, fakeIcon, localize.For("en"))
+	for _, expected := range []string{"Favorites", `href="/p/7/guide/start"`, "Guide &amp; Start", "9 views", "[book-lucide]"} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 }

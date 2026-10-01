@@ -107,8 +107,8 @@ type columnData struct {
 
 // rowData contains one page-report table row.
 type rowData struct {
-	// Slug is the canonical page path for this report row.
-	Slug string
+	// URL is the host-prepared canonical page destination for this report row.
+	URL string
 	// Cells contains rendered cell values in column order.
 	Cells []string
 }
@@ -143,7 +143,7 @@ func buildTableData(columns []string, pages []sdk.Page, localizer sdk.Localizer)
 		for _, column := range columns {
 			cells = append(cells, pageValue(page, column))
 		}
-		data.Rows = append(data.Rows, rowData{Slug: page.Slug, Cells: cells})
+		data.Rows = append(data.Rows, rowData{URL: page.URL, Cells: cells})
 	}
 	return data
 }

@@ -13,8 +13,8 @@ func fakeIcon(name string, _ int) string { return "[" + name + "]" }
 
 func TestRenderHomeRecentlyViewed(t *testing.T) {
 	now := time.Date(2026, 9, 15, 16, 0, 0, 0, time.UTC)
-	output := renderHome([]sdk.Page{{Slug: "guide", Title: "Guide", UpdatedAt: now.Add(-2 * time.Hour)}}, now, fakeIcon, localize.For("en"))
-	for _, expected := range []string{"Recently viewed", `href="/pages/guide"`, "2h ago"} {
+	output := renderHome([]sdk.Page{{URL: "/p/7/guide", Slug: "guide", Title: "Guide", UpdatedAt: now.Add(-2 * time.Hour)}}, now, fakeIcon, localize.For("en"))
+	for _, expected := range []string{"Recently viewed", `href="/p/7/guide"`, "2h ago"} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 }
@@ -30,7 +30,7 @@ func TestWithoutFavorites(t *testing.T) {
 
 func TestRenderRecentlyViewedGerman(t *testing.T) {
 	now := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
-	output := renderHome([]sdk.Page{{Slug: "guide", Title: "Guide", UpdatedAt: now.Add(-2 * time.Hour)}}, now, fakeIcon, localize.For("de"))
+	output := renderHome([]sdk.Page{{URL: "/p/7/guide", Slug: "guide", Title: "Guide", UpdatedAt: now.Add(-2 * time.Hour)}}, now, fakeIcon, localize.For("de"))
 	require.Contains(t, output, "Zuletzt angesehen")
 	require.Contains(t, output, "vor 2 Std.")
 }

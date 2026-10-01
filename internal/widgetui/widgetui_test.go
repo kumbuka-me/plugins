@@ -103,35 +103,35 @@ func TestWritePageRow(t *testing.T) {
 	now := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
 	var output strings.Builder
 	output.WriteString("prefix")
-	WritePageRow(&output, sdk.Page{Slug: "guide/a b", Title: "<Title>&", Tags: []string{"<tag>", "a&b"}, UpdatedAt: now.Add(-time.Hour)}, now, func(name string, size int) string {
+	WritePageRow(&output, sdk.Page{URL: "/p/4/guide/a%20b", Slug: "guide/a b", Title: "<Title>&", Tags: []string{"<tag>", "a&b"}, UpdatedAt: now.Add(-time.Hour)}, now, func(name string, size int) string {
 		require.Equal(t, "file-text-lucide", name)
 		assert.Equal(t, 17, size)
 		return "<svg/>"
 	}, localize.For("en"))
-	assert.Equal(t, `prefix<a class="page-row" href="/pages/guide/a%20b"><span class="doc-icon"><svg/></span><span><strong>&lt;Title&gt;&amp;</strong><small>guide/a b · &lt;tag&gt;, a&amp;b</small></span><time>1h ago</time></a>`, output.String())
+	assert.Equal(t, `prefix<a class="page-row" href="/p/4/guide/a%20b"><span class="doc-icon"><svg/></span><span><strong>&lt;Title&gt;&amp;</strong><small>guide/a b · &lt;tag&gt;, a&amp;b</small></span><time>1h ago</time></a>`, output.String())
 }
 
 func TestWritePageRowWithoutTagsOrTimestamp(t *testing.T) {
 	t.Parallel()
 	var output strings.Builder
-	WritePageRow(&output, sdk.Page{Slug: "a&b", Title: "Page"}, time.Time{}, func(string, int) string { return "" }, localize.For("en"))
-	assert.Equal(t, `<a class="page-row" href="/pages/a&b"><span class="doc-icon"></span><span><strong>Page</strong><small>a&amp;b</small></span><time></time></a>`, output.String())
+	WritePageRow(&output, sdk.Page{URL: "/p/5/a&b", Slug: "a&b", Title: "Page"}, time.Time{}, func(string, int) string { return "" }, localize.For("en"))
+	assert.Equal(t, `<a class="page-row" href="/p/5/a&amp;b"><span class="doc-icon"></span><span><strong>Page</strong><small>a&amp;b</small></span><time></time></a>`, output.String())
 }
 
 func TestWriteCompactPageRow(t *testing.T) {
 	t.Parallel()
 	var output strings.Builder
-	WriteCompactPageRow(&output, sdk.Page{Slug: "a b", Title: "<Page>", ViewCount: 42}, func(name string, size int) string {
+	WriteCompactPageRow(&output, sdk.Page{URL: "/p/6/a%20b", Slug: "a b", Title: "<Page>", ViewCount: 42}, func(name string, size int) string {
 		require.Equal(t, "file-text-lucide", name)
 		assert.Equal(t, 15, size)
 		return "<svg/>"
 	}, localize.For("en"))
-	assert.Equal(t, `<a class="compact-row" href="/pages/a%20b"><span><svg/></span><strong>&lt;Page&gt;</strong><small>42 views</small></a>`, output.String())
+	assert.Equal(t, `<a class="compact-row" href="/p/6/a%20b"><span><svg/></span><strong>&lt;Page&gt;</strong><small>42 views</small></a>`, output.String())
 }
 
 func TestWriteSidebarShortcut(t *testing.T) {
 	t.Parallel()
 	var output strings.Builder
-	WriteSidebarShortcut(&output, sdk.Page{Slug: "a b", Title: `"<Page>&`}, "<svg/>")
-	assert.Equal(t, `<a class="sidebar-shortcut-link" href="/pages/a%20b" title="&#34;&lt;Page&gt;&amp;"><svg/><span>&#34;&lt;Page&gt;&amp;</span></a>`, output.String())
+	WriteSidebarShortcut(&output, sdk.Page{URL: "/p/6/a%20b", Slug: "a b", Title: `"<Page>&`}, "<svg/>")
+	assert.Equal(t, `<a class="sidebar-shortcut-link" href="/p/6/a%20b" title="&#34;&lt;Page&gt;&amp;"><svg/><span>&#34;&lt;Page&gt;&amp;</span></a>`, output.String())
 }

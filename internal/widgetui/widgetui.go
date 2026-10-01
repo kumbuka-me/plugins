@@ -62,8 +62,8 @@ func RelativeTime(value, now time.Time, localizer sdk.Localizer) string {
 
 // WritePageRow appends the standard timestamped page row used by dashboard widgets.
 func WritePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon IconRenderer, localizer sdk.Localizer) {
-	output.WriteString(`<a class="page-row" href="/pages/`)
-	output.WriteString(PagePath(page.Slug))
+	output.WriteString(`<a class="page-row" href="`)
+	output.WriteString(html.EscapeString(page.URL))
 	output.WriteString(`"><span class="doc-icon">`)
 	output.WriteString(PageIcon(page, 17, icon))
 	output.WriteString(`</span><span><strong>`)
@@ -81,8 +81,8 @@ func WritePageRow(output *strings.Builder, page sdk.Page, now time.Time, icon Ic
 
 // WriteCompactPageRow appends the standard compact page row with its view count.
 func WriteCompactPageRow(output *strings.Builder, page sdk.Page, icon IconRenderer, localizer sdk.Localizer) {
-	output.WriteString(`<a class="compact-row" href="/pages/`)
-	output.WriteString(PagePath(page.Slug))
+	output.WriteString(`<a class="compact-row" href="`)
+	output.WriteString(html.EscapeString(page.URL))
 	output.WriteString(`"><span>`)
 	output.WriteString(PageIcon(page, 15, icon))
 	output.WriteString(`</span><strong>`)
@@ -94,8 +94,8 @@ func WriteCompactPageRow(output *strings.Builder, page sdk.Page, icon IconRender
 
 // WriteSidebarShortcut appends one escaped sidebar shortcut with a pre-rendered icon.
 func WriteSidebarShortcut(output *strings.Builder, page sdk.Page, icon string) {
-	output.WriteString(`<a class="sidebar-shortcut-link" href="/pages/`)
-	output.WriteString(PagePath(page.Slug))
+	output.WriteString(`<a class="sidebar-shortcut-link" href="`)
+	output.WriteString(html.EscapeString(page.URL))
 	output.WriteString(`" title="`)
 	output.WriteString(html.EscapeString(page.Title))
 	output.WriteString(`">`)

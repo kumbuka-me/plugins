@@ -290,7 +290,7 @@ func TestApplyTaskAction(t *testing.T) {
 		{ID: "review", Label: "Review", Color: "#2563eb"},
 		{ID: "done", Label: "Done", Color: "#16a34a", Completed: true},
 	}}
-	page := sdk.Page{Slug: "release/checklist", Title: "Release checklist"}
+	page := sdk.Page{URL: "/p/7/release/checklist", Slug: "release/checklist", Title: "Release checklist"}
 	source := `{{task id="deploy" text="Deploy API" assignee="@alice" initial="review"}}`
 	values := make(map[string][]byte)
 	var sent []sdk.NotificationInput
@@ -329,7 +329,7 @@ func TestApplyTaskAction(t *testing.T) {
 	assert.Equal(t, "Task completed: Deploy API", sent[0].Title)
 	assert.Equal(t, sent[0].Title, sent[1].Title)
 	assert.Equal(t, int64(42), sent[0].RecipientUserID)
-	assert.Equal(t, "/pages/release/checklist", sent[0].URL)
+	assert.Equal(t, "/p/7/release/checklist", sent[0].URL)
 
 	state := readTaskState(taskOptions{ID: "deploy", InitialState: "review"}, services.Read, workflow)
 	assert.Equal(t, "done", state.State)
@@ -365,6 +365,7 @@ func TestApplyTaskActionPropagatesReadFailure(t *testing.T) {
 func TestNotifyTaskAssignments(t *testing.T) {
 	context := sdk.ContentChangeContext{
 		Page: sdk.Page{
+			URL:       "/p/7/release/checklist",
 			Slug:      "release/checklist",
 			Title:     "Release checklist",
 			UpdatedAt: time.Date(2026, time.September, 25, 9, 30, 0, 0, time.UTC),
@@ -392,7 +393,7 @@ func TestNotifyTaskAssignments(t *testing.T) {
 	assert.Equal(t, []string{"@bob", "@carol"}, resolved)
 	require.Len(t, sent, 2)
 	assert.Equal(t, "Task assigned: Changed", sent[0].Title)
-	assert.Equal(t, "/pages/release/checklist", sent[0].URL)
+	assert.Equal(t, "/p/7/release/checklist", sent[0].URL)
 	assert.NotEmpty(t, sent[0].IdempotencyKey)
 	assert.NotEqual(t, sent[0].IdempotencyKey, sent[1].IdempotencyKey)
 

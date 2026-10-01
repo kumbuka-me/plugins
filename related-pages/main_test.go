@@ -9,8 +9,8 @@ import (
 )
 
 func TestRenderRelated(t *testing.T) {
-	output := renderRelated([]sdk.Page{{Slug: "guide/start", Title: `Guide & Start`}}, localize.For("en"))
-	for _, expected := range []string{"Related pages", `href="/pages/guide/start"`, `Guide &amp; Start`} {
+	output := renderRelated([]sdk.Page{{URL: "/p/7/guide/start", Slug: "guide/start", Title: `Guide & Start`}}, localize.For("en"))
+	for _, expected := range []string{"Related pages", `href="/p/7/guide/start"`, `Guide &amp; Start`} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 }

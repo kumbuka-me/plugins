@@ -10,14 +10,14 @@ import (
 
 func TestRenderLinksEscapesAndMarksMissingTargets(t *testing.T) {
 	output := renderLinks(sdk.PageLinks{
-		Backlinks: []sdk.Page{{Slug: "guide/start", Title: `<Guide>`}},
+		Backlinks: []sdk.Page{{URL: "/p/7/guide/start", Slug: "guide/start", Title: `<Guide>`}},
 		Outgoing: []sdk.PageLink{
-			{TargetSlug: "api/auth", TargetTitle: `Auth & Login`, Exists: true},
+			{TargetURL: "/p/8/api/auth", TargetSlug: "api/auth", TargetTitle: `Auth & Login`, Exists: true},
 			{TargetSlug: `missing page`, Exists: false},
 		},
 	}, localize.For("en"))
 
-	for _, expected := range []string{`href="/pages/guide/start"`, `&lt;Guide&gt;`, `Auth &amp; Login`, `href="/pages/new?slug=missing+page"`, `class="widget-row broken"`} {
+	for _, expected := range []string{`href="/p/7/guide/start"`, `href="/p/8/api/auth"`, `&lt;Guide&gt;`, `Auth &amp; Login`, `href="/pages/new?slug=missing+page"`, `class="widget-row broken"`} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 	require.NotContains(t, output, `<Guide>`, "unescaped title in output: %s", output)
