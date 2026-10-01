@@ -1022,6 +1022,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.3.1",
+          "api_version": 1,
+          "released_at": "2026-10-01T12:55:40Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/recent-changes/v1.3.1/recent-changes-1.3.1.kumbukaplugin",
+          "sha256": "6be3176740ec72607d00a47089305b364f8221a3908deb70e9b0b6981c8bc08f"
+        },
+        {
           "version": "1.3.0",
           "api_version": 1,
           "released_at": "2026-10-01T12:52:41Z",
