@@ -917,13 +917,6 @@
           "sha256": "dfe3396e05fe0d1704895fab8a764b51a8721dc3baec75e0cdcd4e542e090a18"
         },
         {
-          "version": "1.0.9",
-          "api_version": 1,
-          "released_at": "2026-09-20T17:53:30Z",
-          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/page-report/v1.0.9/page-report-1.0.9.kumbukaplugin",
-          "sha256": "dfe3396e05fe0d1704895fab8a764b51a8721dc3baec75e0cdcd4e542e090a18"
-        },
-        {
           "version": "1.0.6",
           "api_version": 1,
           "released_at": "2026-09-20T15:28:53Z",
@@ -1014,6 +1007,13 @@
       "name": "Recent Changes",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.0",
+          "api_version": 1,
+          "released_at": "2026-10-01T12:26:08Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/recent-changes/v1.2.0/recent-changes-1.2.0.kumbukaplugin",
+          "sha256": "3ebe049c2e1893790efcca1dcad57476f88057ab12a3b01674bfcc84bf6090c1"
+        },
         {
           "version": "1.1.2",
           "api_version": 1,
