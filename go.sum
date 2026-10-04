@@ -6,8 +6,8 @@ github.com/alecthomas/repr v0.5.2 h1:SU73FTI9D1P5UNtvseffFSGmdNci/O6RsqzeXJtP0Qs
 github.com/alecthomas/repr v0.5.2/go.mod h1:Fr0507jx4eOXV7AlPV6AVZLYrLIuIeSOWtW57eE/O/4=
 github.com/dlclark/regexp2/v2 v2.2.1 h1:mf4KkFUj0gJuarK8P+LgiS+Lit7m9N1yAwEfPbee7R0=
 github.com/dlclark/regexp2/v2 v2.2.1/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
-github.com/go-icons/simple-icons v0.1.0 h1:/y6A+NLIgUHcU3oHKtGzPBavxVdQXUbio7rE4T2B3JI=
-github.com/go-icons/simple-icons v0.1.0/go.mod h1:YMpdCqmmsDBSX/FAQbef1H5eTjP/5Mv/GvsYRE1FvSU=
+github.com/go-icons/simple-icons v0.1.1 h1:WnnGCxDT9LatUI6Jgbu+AZx32GlN5D26pkvKKZIzrCU=
+github.com/go-icons/simple-icons v0.1.1/go.mod h1:YMpdCqmmsDBSX/FAQbef1H5eTjP/5Mv/GvsYRE1FvSU=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
 github.com/kumbuka-me/sdk v0.27.1 h1:WpaZEmZ7lmuygo75RO9Qb56kcsaZ3scOodTArquilYc=
