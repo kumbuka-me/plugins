@@ -1302,6 +1302,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.1.2",
+          "api_version": 1,
+          "released_at": "2026-10-04T14:32:20Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/simple-icons/v1.1.2/simple-icons-1.1.2.kumbukaplugin",
+          "sha256": "b84330391c263942c3381bf39044e5b1c76a6915725d38c20feb9b77a44378b9"
+        },
+        {
           "version": "1.1.1",
           "api_version": 1,
           "released_at": "2026-09-25T15:02:45Z",
