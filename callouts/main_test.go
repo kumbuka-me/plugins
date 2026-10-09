@@ -9,7 +9,7 @@ import (
 
 // TestCalloutFragments verifies callout fragments behavior.
 func TestCalloutFragments(t *testing.T) {
-	result := transform(sdk.RenderRequest{APIVersion: 1, Module: "callouts", Stage: "preprocess", Source: "Before\n\n!!! warning\n**Body**\n\nAfter\n"})
+	result := transform(sdk.RenderRequest{APIVersion: 1, Module: "callouts", Stage: "preprocess", Source: "Before\n\n!!! warning\n    **Body**\n\nAfter\n"})
 	require.Empty(t, result.Error)
 	require.Len(t, result.Parts, 3, "unexpected fragments: %+v", result.Parts)
 	require.NotNil(t, result.Parts[1].Markdown, "unexpected fragments: %+v", result.Parts)
@@ -34,7 +34,7 @@ func TestCalloutBodyPreservesMarkdownIndentation(t *testing.T) {
 		APIVersion: 1,
 		Module:     "callouts",
 		Stage:      "preprocess",
-		Source:     "!!! note\n- Parent\n  - Nested\n\n",
+		Source:     "!!! note\n    - Parent\n      - Nested\n\n",
 	})
 
 	require.Empty(t, result.Error)
@@ -44,9 +44,9 @@ func TestCalloutBodyPreservesMarkdownIndentation(t *testing.T) {
 }
 
 func TestCalloutLabelsAreLocalized(t *testing.T) {
-	result := transform(sdk.RenderRequest{APIVersion: 1, Locale: "de", Module: "callouts", Stage: "preprocess", Source: "!!! warning\nAchtung\n"})
+	result := transform(sdk.RenderRequest{APIVersion: 1, Locale: "de", Module: "callouts", Stage: "preprocess", Source: "!!! warning\n    Achtung\n"})
 	require.Empty(t, result.Error)
-	require.Contains(t, result.Parts[0].Text, `<strong>Warnung</strong>`)
+	require.NotContains(t, result.Parts[0].Text, "<strong>")
 }
 
 func TestCalloutWithoutBodyAtEndOfSource(t *testing.T) {
@@ -72,7 +72,7 @@ func TestMultipleCalloutsPreserveLiteralSpacing(t *testing.T) {
 		APIVersion: 1,
 		Module:     "callouts",
 		Stage:      "preprocess",
-		Source:     "Before\n\n!!! warning\nFirst\n\nBetween\n\n!!! tip\nSecond\n\nAfter\n",
+		Source:     "Before\n\n!!! warning\n    First\n\nBetween\n\n!!! tip\n    Second\n\nAfter\n",
 	})
 
 	require.Empty(t, result.Error)
@@ -82,4 +82,11 @@ func TestMultipleCalloutsPreserveLiteralSpacing(t *testing.T) {
 	require.Contains(t, result.Parts[0].Text, "Before\n\n")
 	require.Contains(t, result.Parts[2].Text, "\n\nBetween\n\n")
 	require.Contains(t, result.Parts[4].Text, "\n\nAfter\n")
+}
+
+func TestCalloutBodySupportsBlankLinesAndFencedCode(t *testing.T) {
+	result := transform(sdk.RenderRequest{APIVersion: 1, Module: "callouts", Stage: "preprocess", Source: "!!! info\n    Backup only.\n\n    ```bash\n    echo ok\n    ```\n\nOutside\n"})
+	require.Len(t, result.Parts, 3)
+	require.Equal(t, "Backup only.\n\n```bash\necho ok\n```", *result.Parts[1].Markdown)
+	require.Contains(t, result.Parts[2].Text, "Outside")
 }

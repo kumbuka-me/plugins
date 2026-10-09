@@ -16,42 +16,42 @@ modules:
     id: note
     name: Note
     description: Insert a note callout block.
-    markdown: "!!! note\nImportant information."
+    markdown: "!!! note\n    Important information."
     icon: triangle-alert-lucide
 
   - type: editor-insert
     id: info
     name: Info
     description: Insert an informational callout block.
-    markdown: "!!! info\nInformation."
+    markdown: "!!! info\n    Information."
     icon: info-lucide
 
   - type: editor-insert
     id: tip
     name: Tip
     description: Insert a tip callout block.
-    markdown: "!!! tip\nHelpful tip."
+    markdown: "!!! tip\n    Helpful tip."
     icon: lightbulb-lucide
 
   - type: editor-insert
     id: success
     name: Success
     description: Insert a success callout block.
-    markdown: "!!! success\nCompleted successfully."
+    markdown: "!!! success\n    Completed successfully."
     icon: circle-check-lucide
 
   - type: editor-insert
     id: warning
     name: Warning
     description: Insert a warning callout block.
-    markdown: "!!! warning\nImportant warning."
+    markdown: "!!! warning\n    Important warning."
     icon: triangle-alert-lucide
 
   - type: editor-insert
     id: danger
     name: Danger
     description: Insert a danger callout block.
-    markdown: "!!! danger\nDangerous operation."
+    markdown: "!!! danger\n    Dangerous operation."
     icon: octagon-alert-lucide
 
   - type: editor-menu
