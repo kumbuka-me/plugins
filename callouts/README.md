@@ -14,7 +14,7 @@ Supported kinds are `note`, `info`, `tip`, `success`, `warning`, `danger`, and `
 
 ## Visual editor
 
-In Visual mode, callouts render as their colored panel with the selected kind and content. Select a callout to edit its type and body or switch to source editing.
+In Visual mode, callouts render as their colored panel with the selected kind and content. Select a callout to edit its type and body. The content field supports rich Markdown editing with code blocks, lists, and a Markdown source switch.
 
 ## Permissions
 

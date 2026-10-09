@@ -37,7 +37,7 @@
           "attribute": "kind"
         },
         {
-          "type": "textarea",
+          "type": "markdown",
           "label": "Content",
           "attribute": "body",
           "placeholder": "Important information."

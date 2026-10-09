@@ -22,7 +22,7 @@ Tab declarations must start at the beginning of a line. Panel content is indente
 
 ## Visual editor
 
-In Visual mode, tab groups render with their published tab controls and panel content. Select the group to edit tab titles and bodies in a structured table or edit the source directly.
+In Visual mode, tab groups render with their published tab controls and panel content. Select the group to edit tab titles and rich Markdown bodies in a structured table. Each body can switch between Visual and Markdown editing.
 
 ## Permissions
 

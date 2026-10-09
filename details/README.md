@@ -22,7 +22,7 @@ The declaration must start at the beginning of a line. Body content is indented 
 
 ## Visual editor
 
-In Visual mode, details blocks render as native collapsible details with their current title, open state, and content. Select the block to edit those settings or its Markdown source.
+In Visual mode, details blocks render as native collapsible details with their current title, open state, and content. Select the block to edit its settings and rich Markdown content, or switch the content field to Markdown source.
 
 ## Permissions
 

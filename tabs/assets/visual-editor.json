@@ -41,7 +41,7 @@
             },
             {
               "label": "Content",
-              "type": "textarea"
+              "type": "markdown"
             }
           ]
         }

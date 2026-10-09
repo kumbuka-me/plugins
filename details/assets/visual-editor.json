@@ -44,7 +44,7 @@
           "attribute": "open"
         },
         {
-          "type": "textarea",
+          "type": "markdown",
           "label": "Content",
           "attribute": "body",
           "placeholder": "Hidden details."
