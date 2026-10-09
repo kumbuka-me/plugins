@@ -57,21 +57,8 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 			continue
 		}
 
-		var body strings.Builder
-		position = next
-		for !done && position <= len(request.Source) {
-			bodyLine, bodyNext, bodyDone := sourceLine(request.Source, position)
-			if strings.TrimSpace(bodyLine) != "" && !isIndented(bodyLine) {
-				break
-			}
-			if body.Len() > 0 {
-				body.WriteByte('\n')
-			}
-			body.WriteString(deindent(bodyLine))
-			position = bodyNext
-			done = bodyDone
-		}
-		markdown := strings.TrimRight(body.String(), "\n")
+		markdown, nextPosition, atEnd := calloutBody(request.Source, next, done)
+		position, done = nextPosition, atEnd
 
 		output.line(`<aside class="callout ` + kind + `"><div class="callout-body">`)
 		output.flush()
@@ -86,18 +73,37 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	return sdk.RenderResult{Parts: output.parts}
 }
 
-func isIndented(line string) bool {
-	return strings.HasPrefix(line, "    ") || strings.HasPrefix(line, "\t")
+// calloutBody collects the indented Markdown body without losing empty lines.
+func calloutBody(source string, position int, done bool) (string, int, bool) {
+	var body strings.Builder
+	firstLine := true
+
+	for !done && position <= len(source) {
+		line, next, lineDone := sourceLine(source, position)
+		content, indented := deindent(line)
+		if !indented && strings.TrimSpace(line) != "" {
+			break
+		}
+		if !firstLine {
+			body.WriteByte('\n')
+		}
+		body.WriteString(content)
+		firstLine = false
+		position, done = next, lineDone
+	}
+
+	return strings.TrimRight(body.String(), "\n"), position, done
 }
 
-func deindent(line string) string {
-	if strings.HasPrefix(line, "    ") {
-		return line[4:]
+// deindent removes one callout-body indentation level and reports whether it was present.
+func deindent(line string) (string, bool) {
+	if content, ok := strings.CutPrefix(line, "    "); ok {
+		return content, true
 	}
-	if strings.HasPrefix(line, "\t") {
-		return line[1:]
+	if content, ok := strings.CutPrefix(line, "\t"); ok {
+		return content, true
 	}
-	return line
+	return line, false
 }
 
 // possibleFence cheaply rejects ordinary lines before invoking the Markdown fence parser.

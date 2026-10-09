@@ -1,2 +1,3 @@
+<!-- prettier-ignore -->
 !!! warning
-Back up the database before continuing.
+    Back up the database before continuing.

@@ -90,3 +90,35 @@ func TestCalloutBodySupportsBlankLinesAndFencedCode(t *testing.T) {
 	require.Equal(t, "Backup only.\n\n```bash\necho ok\n```", *result.Parts[1].Markdown)
 	require.Contains(t, result.Parts[2].Text, "Outside")
 }
+
+func TestCalloutBodyPreservesLeadingBlankLines(t *testing.T) {
+	t.Parallel()
+
+	result := transform(sdk.RenderRequest{
+		APIVersion: 1,
+		Module:     "callouts",
+		Stage:      "preprocess",
+		Source:     "!!! tip\n\n    First paragraph\n\n    Second paragraph\nOutside",
+	})
+
+	require.Empty(t, result.Error)
+	require.Len(t, result.Parts, 3)
+	require.Equal(t, "\nFirst paragraph\n\nSecond paragraph", *result.Parts[1].Markdown)
+	require.Contains(t, result.Parts[2].Text, "Outside")
+}
+
+func TestCalloutBodyPreservesNestedMarkdownAndTabs(t *testing.T) {
+	t.Parallel()
+
+	result := transform(sdk.RenderRequest{
+		APIVersion: 1,
+		Module:     "callouts",
+		Stage:      "preprocess",
+		Source:     "!!! note\n\t- First\n\t  - Nested\n\t\tFurther nested\nOutside",
+	})
+
+	require.Empty(t, result.Error)
+	require.Len(t, result.Parts, 3)
+	require.Equal(t, "- First\n  - Nested\n\tFurther nested", *result.Parts[1].Markdown)
+	require.Contains(t, result.Parts[2].Text, "Outside")
+}
