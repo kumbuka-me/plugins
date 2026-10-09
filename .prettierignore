@@ -3,3 +3,6 @@ dist/
 */dist/
 */assets/*.min.js
 */assets/LICENSE
+
+# Callout previews use custom indentation-sensitive Markdown syntax.
+callouts/preview.md
