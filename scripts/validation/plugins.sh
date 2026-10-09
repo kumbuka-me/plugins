@@ -1,16 +1,15 @@
 #!/bin/sh
 set -eu
 
-found=0
-for manifest in */plugin.yaml; do
-  [ -f "$manifest" ] || continue
-  found=1
+# validate_plugin checks the identity, version, and preview of one plugin.
+validate_plugin() (
+  manifest=$1
   plugin=${manifest%/plugin.yaml}
   provider=$(awk '$1 == "provider:" { print $2; exit }' "$manifest")
   id=$(awk '$1 == "id:" { print $2; exit }' "$manifest")
-  ./scripts/version/read.sh "$plugin" >/dev/null
 
-  if [ "$provider" != "Kumbuka" ]; then
+  ./scripts/version/read.sh "$plugin" >/dev/null
+  if [ "$provider" != 'Kumbuka' ]; then
     echo "$manifest: provider must be Kumbuka" >&2
     exit 1
   fi
@@ -26,9 +25,21 @@ for manifest in */plugin.yaml; do
     echo "$plugin/assets/preview.png: plugin preview is required" >&2
     exit 1
   fi
-done
+)
 
-if [ "$found" -eq 0 ]; then
-  echo "no plugin manifests found" >&2
-  exit 1
-fi
+# main validates every first-party plugin manifest in the checkout.
+main() {
+  found=0
+  for manifest in */plugin.yaml; do
+    [ -f "$manifest" ] || continue
+    found=1
+    validate_plugin "$manifest"
+  done
+
+  if [ "$found" -eq 0 ]; then
+    echo 'no plugin manifests found' >&2
+    exit 1
+  fi
+}
+
+main "$@"

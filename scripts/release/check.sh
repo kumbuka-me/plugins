@@ -6,21 +6,26 @@ GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-kumbuka-me/plugins}
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$script_dir/common.sh"
 
-tags="$("$GH" api --paginate "repos/$GITHUB_REPOSITORY/tags" --jq '.[].name')"
-releases="$("$GH" api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[].tag_name')"
-latest=$(printf '%s\n' "$tags" | latest_plugin_tags)
-if [ -z "$latest" ]; then
-  echo "No plugin release tags found."
-  exit 0
-fi
-
-tab=$(printf '\t')
-while IFS="$tab" read -r plugin tag; do
-  if printf '%s\n' "$releases" | grep -Fqx "$tag"; then
-    printf "%-22s %-10s OK\n" "$plugin" "${tag#*/}"
-  else
-    printf "%-22s %-10s MISSING RELEASE\n" "$plugin" "${tag#*/}"
+# main reports whether the latest tag of each plugin has a GitHub release.
+main() {
+  latest=$(plugin_release_tags)
+  if [ -z "$latest" ]; then
+    echo 'No plugin release tags found.'
+    return
   fi
-done <<EOF_TAGS
+
+  releases=$(plugin_published_releases)
+  tab=$(printf '\t')
+  while IFS="$tab" read -r plugin tag; do
+    if published_release "$releases" "$tag"; then
+      status='OK'
+    else
+      status='MISSING RELEASE'
+    fi
+    printf '%-22s %-10s %s\n' "$plugin" "${tag#*/}" "$status"
+  done <<EOF_TAGS
 $latest
 EOF_TAGS
+}
+
+main "$@"

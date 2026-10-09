@@ -9,6 +9,7 @@ usage() {
   exit 2
 }
 
+# split_version parses a strict three-component semantic version.
 split_version() {
   current=$1
   major=${current%%.*}
@@ -31,7 +32,8 @@ split_version() {
   return 0
 }
 
-next_version() {
+# next_version computes a version without modifying any files.
+next_version() (
   current=$1
   bump=$2
 
@@ -55,17 +57,18 @@ next_version() {
     exit 1
     ;;
   esac
-}
+)
 
-write_version() {
+# write_version replaces the manifest on the same filesystem, preserving its mode.
+write_version() (
   plugin=$1
   version=$2
   manifest="$plugin/plugin.yaml"
 
-  tmp=$(mktemp "${TMPDIR:-/tmp}/kumbuka-plugin-version.XXXXXX")
-  trap 'rm -f "$tmp"' EXIT INT TERM
+  tmp=$(mktemp "$plugin/.plugin-version.XXXXXX")
+  trap 'rm -f "$tmp"' 0
+  trap 'exit 1' 1 2 3 15
 
-  # Preserve the manifest mode while keeping the replacement atomic.
   cp -p "$manifest" "$tmp"
 
   awk -v version="$version" '
@@ -83,10 +86,11 @@ write_version() {
   ' "$manifest" >"$tmp"
 
   mv "$tmp" "$manifest"
-  trap - EXIT INT TERM
-}
+  trap - 0 1 2 3 15
+)
 
-bump_plugin() {
+# bump_plugin applies one version bump to a single manifest.
+bump_plugin() (
   plugin=$1
   bump=$2
   manifest="$plugin/plugin.yaml"
@@ -102,8 +106,9 @@ bump_plugin() {
   write_version "$plugin" "$next"
 
   printf '%s: %s -> %s\n' "$plugin" "$current" "$next"
-}
+)
 
+# version_all applies the same bump to every plugin.
 version_all() {
   bump=$1
 
@@ -127,6 +132,7 @@ version_all() {
   fi
 }
 
+# wizard interactively selects one plugin and bump.
 wizard() {
   set -- */plugin.yaml
 
@@ -202,18 +208,19 @@ wizard() {
   bump_plugin "$selected" "$bump"
 }
 
-case $# in
-0)
-  wizard
-  ;;
-2)
-  if [ "$1" = "--all" ]; then
-    version_all "$2"
-  else
-    bump_plugin "$1" "$2"
-  fi
-  ;;
-*)
-  usage
-  ;;
-esac
+# main selects interactive, single-plugin, or all-plugin mode.
+main() {
+  case $# in
+  0) wizard ;;
+  2)
+    if [ "$1" = '--all' ]; then
+      version_all "$2"
+    else
+      bump_plugin "$1" "$2"
+    fi
+    ;;
+  *) usage ;;
+  esac
+}
+
+main "$@"
