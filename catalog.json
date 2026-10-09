@@ -77,6 +77,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.5.0",
+          "api_version": 1,
+          "released_at": "2026-10-09T14:35:34Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/callouts/v1.5.0/callouts-1.5.0.kumbukaplugin",
+          "sha256": "8822a4e0bfe23d6817f7e83b31a2d3edfc1f4263196c6f7d76fbf436db4956b1"
+        },
+        {
           "version": "1.4.1",
           "api_version": 1,
           "released_at": "2026-09-30T07:56:01Z",
