@@ -77,6 +77,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.7.0",
+          "api_version": 1,
+          "released_at": "2026-10-09T15:51:26Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/callouts/v1.7.0/callouts-1.7.0.kumbukaplugin",
+          "sha256": "5da4624371d0f7b24529f8b9c07ca13cbedd9bbbab2286cfc7441807b36dd78f"
+        },
+        {
           "version": "1.5.0",
           "api_version": 1,
           "released_at": "2026-10-09T14:35:34Z",
@@ -363,6 +370,13 @@
       "name": "Collapsible Details",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.5.0",
+          "api_version": 1,
+          "released_at": "2026-10-09T15:51:30Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/details/v1.5.0/details-1.5.0.kumbukaplugin",
+          "sha256": "a4425e571f6c5c0bc07d8738af720fa679107a1978ab2952a4802bb2d6881caa"
+        },
         {
           "version": "1.3.3",
           "api_version": 1,
@@ -1882,6 +1896,13 @@
       "name": "Tabs",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.5.0",
+          "api_version": 1,
+          "released_at": "2026-10-09T15:51:26Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/tabs/v1.5.0/tabs-1.5.0.kumbukaplugin",
+          "sha256": "2a3dd8e17ee89c8da83877e57e02283399ba96fae4963454ad34d06bcb33aedb"
+        },
         {
           "version": "1.3.3",
           "api_version": 1,
