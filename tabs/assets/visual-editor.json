@@ -66,7 +66,8 @@
           "panel_class": "markdown-tab-panel",
           "hidden_class": "markdown-tab-panel-hidden",
           "titles_attribute": "titles",
-          "bodies_attribute": "bodies"
+          "bodies_attribute": "bodies",
+          "body_format": "markdown"
         }
       }
     }
