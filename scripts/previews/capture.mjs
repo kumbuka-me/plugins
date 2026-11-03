@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { mkdir, readdir, readFile, stat } from "node:fs/promises";
 import {
@@ -211,6 +212,33 @@ async function assertIncludes(page) {
   await warning.waitFor({ state: "visible" });
 }
 
+async function assertRunbook(page) {
+  const frame = page.frameLocator("iframe.kumbuka-plugin-frame");
+  const graph = frame.getByRole("list", { name: "Decision runbook" });
+  await graph.waitFor({ state: "visible" });
+  assert.equal(await graph.locator(".decision").count(), 3);
+  assert.equal(await graph.locator(".end").count(), 2);
+  assert.equal(
+    await graph.getByText("Contact Marco", { exact: true }).count(),
+    1,
+  );
+  const diagnostic = await graph.evaluate(() => {
+    const root = document.createElement("div");
+    globalThis.kumbukaPlugin.render(root, {
+      source: "start: Start\n  -> missing",
+      theme: "dark",
+    });
+    return [
+      root.querySelector("p")?.textContent,
+      root.querySelector("pre")?.textContent,
+    ];
+  });
+  assert.deepEqual(diagnostic, [
+    'Runbook: Line 2: unknown step "missing".',
+    "start: Start\n  -> missing",
+  ]);
+}
+
 async function capturePreview(page, plugin) {
   const path = `/${plugin}/`;
   const response = await page.goto(new URL(path, baseURL).toString(), {
@@ -227,6 +255,7 @@ async function capturePreview(page, plugin) {
   if (plugin === "includes") {
     await assertIncludes(page);
   }
+  if (plugin === "runbook") await assertRunbook(page);
   if (assertOnly) return;
 
   await page.addStyleTag({ content: previewCSS });

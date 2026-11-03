@@ -1,0 +1,18 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.runbook
+name: Runbook
+version: 1.0.0
+description: Show decisions, actions, and shared handoffs as a compact branch-and-merge graph.
+default_enabled: true
+modules:
+  - type: renderer-extension
+    id: fences
+    stage: postprocess
+    usage:
+      - fence: runbook
+  - type: browser-module
+    id: graph
+    javascript: plugin.js
+    css: plugin.css
+permissions: [browser:render]
