@@ -476,6 +476,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.10.6",
+          "api_version": 1,
+          "released_at": "2026-11-03T15:06:05Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/external-files/v1.10.6/external-files-1.10.6.kumbukaplugin",
+          "sha256": "19848df2078a3c4f901f1c3c0a8b3ee9dc39fe0671a1131287fb19ea9381372f"
+        },
+        {
           "version": "1.10.5",
           "api_version": 1,
           "released_at": "2026-09-30T22:01:03Z",
