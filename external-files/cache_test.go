@@ -152,3 +152,17 @@ func TestSourceFingerprintChangesWithConnection(t *testing.T) {
 func testCacheSource() source {
 	return source{Provider: "gitlab", Endpoint: "https://gitlab.com/api/v4", Repository: "team/docs", Ref: "main"}
 }
+
+func TestOlderFetchCannotReplaceNewerCacheEntry(t *testing.T) {
+	resetExternalFileCache()
+	t.Cleanup(resetExternalFileCache)
+	const key = "out-of-order-fetch"
+	now := time.Now().UTC()
+	newer := cacheEntry{SourceFingerprint: "new", FetchedAt: now, Content: "new content"}
+	writeFileCache(key, newer)
+	writeFileCache(key, cacheEntry{SourceFingerprint: "old", FetchedAt: now.Add(-time.Second), Content: "old content"})
+	got, usable, _ := readFileCache(key, "new", now, time.Hour)
+	if !usable || got.Content != newer.Content {
+		t.Fatalf("newer content lost after older fetch completed: %v", got)
+	}
+}

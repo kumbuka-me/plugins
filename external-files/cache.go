@@ -113,7 +113,11 @@ func writeFileCache(key string, entry cacheEntry) {
 
 	externalFileCache.Lock()
 	defer externalFileCache.Unlock()
-	if _, exists := externalFileCache.Entries[key]; !exists && len(externalFileCache.Entries) >= maxCacheEntries {
+	previous, exists := externalFileCache.Entries[key]
+	if exists && previous.FetchedAt.After(entry.FetchedAt) {
+		return
+	}
+	if !exists && len(externalFileCache.Entries) >= maxCacheEntries {
 		evictOldestCacheEntry()
 	}
 	externalFileCache.Entries[key] = entry
@@ -141,8 +145,7 @@ func evictOldestCacheEntry() {
 // cacheEntryFresh reports whether an entry is inside the configured TTL and global refresh boundary.
 func cacheEntryFresh(entry cacheEntry, now time.Time, ttl time.Duration, refreshAfter time.Time) bool {
 	fetchedAt := entry.FetchedAt.UTC()
-	if fetchedAt.After(now.Add(time.Minute)) ||
-		(!refreshAfter.IsZero() && !fetchedAt.After(refreshAfter)) {
+	if !refreshAfter.IsZero() && !fetchedAt.After(refreshAfter) {
 		return false
 	}
 	age := now.Sub(fetchedAt)
