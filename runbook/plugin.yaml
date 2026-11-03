@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.runbook
 name: Runbook
-version: 1.0.0
+version: 1.0.1
 description: Show decisions, actions, and shared handoffs as a compact branch-and-merge graph.
 default_enabled: true
 modules:
