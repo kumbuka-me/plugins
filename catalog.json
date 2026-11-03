@@ -1339,6 +1339,20 @@
       ]
     },
     {
+      "id": "me.kumbuka.runbook",
+      "name": "Runbook",
+      "provider": "Kumbuka",
+      "versions": [
+        {
+          "version": "1.0.1",
+          "api_version": 1,
+          "released_at": "2026-11-03T15:32:26Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/runbook/v1.0.1/runbook-1.0.1.kumbukaplugin",
+          "sha256": "8da6962a4b917d90d3d6c73333df6696951dbb7384da8ec3a3b0a619068fb8bf"
+        }
+      ]
+    },
+    {
       "id": "me.kumbuka.simple-icons",
       "name": "Simple Icons",
       "provider": "Kumbuka",
