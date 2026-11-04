@@ -28,3 +28,26 @@ func TestRenderRevisionGerman(t *testing.T) {
 	require.Contains(t, output, "Letzte Version")
 	require.Contains(t, output, "Seite erstellt")
 }
+
+// TestRevisionResultOpensExactRevision verifies the host owns the dialog action URL.
+func TestRevisionResultOpensExactRevision(t *testing.T) {
+	t.Parallel()
+
+	history := sdk.RevisionHistory{Revisions: []sdk.Revision{{Number: 3, Author: "Alice"}}}
+	result := revisionResult(history, "guide/notes", localize.For("en"))
+
+	require.Len(t, result.Actions, 1)
+	require.Equal(t, "dialog", result.Actions[0].Kind)
+	require.Equal(t, "View changes", result.Actions[0].Label)
+	require.Equal(t, "/revisions/guide/notes?revision=3", result.Actions[0].URL)
+}
+
+// TestRevisionResultOmitsEmptyAction verifies no comparison is offered without revisions.
+func TestRevisionResultOmitsEmptyAction(t *testing.T) {
+	t.Parallel()
+
+	result := revisionResult(sdk.RevisionHistory{}, "guide", localize.For("de"))
+
+	require.Empty(t, result.Actions)
+	require.Contains(t, result.Parts[0].Text, "Kein Versionsverlauf verfügbar.")
+}

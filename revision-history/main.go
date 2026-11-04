@@ -26,7 +26,24 @@ func renderWidget(context sdk.WidgetContext) (sdk.Result, error) {
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	return sdk.Text(renderRevision(history, localize.For(context.Locale))), nil
+	return revisionResult(history, context.Page.Slug, localize.For(context.Locale)), nil
+}
+
+// revisionResult returns the widget summary and a host-rendered comparison dialog action.
+func revisionResult(history sdk.RevisionHistory, slug string, localizer sdk.Localizer) sdk.Result {
+	result := sdk.Text(renderRevision(history, localizer))
+	if len(history.Revisions) == 0 {
+		return result
+	}
+
+	result.Actions = []sdk.WidgetAction{{
+		ID:    "compare",
+		Kind:  "dialog",
+		Label: localizer.Text("revision.view_changes"),
+		Icon:  "git-compare-lucide",
+		URL:   fmt.Sprintf("/revisions/%s?revision=%d", slug, history.Revisions[0].Number),
+	}}
+	return result
 }
 
 // renderRevision renders the latest revision metadata and diff summary.
