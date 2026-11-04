@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "diagram",
+      "name": "Mermaid",
+      "inline": false,
+      "syntax": {
+        "kind": "fence",
+        "name": "mermaid"
+      },
+      "attributes": [
+        {
+          "name": "body",
+          "type": "string",
+          "required": true,
+          "max_bytes": 65536,
+          "default": "flowchart TD\n  A[Start] --> B[Finish]"
+        }
+      ],
+      "settings": [
+        {
+          "type": "browser",
+          "label": "Mermaid",
+          "attribute": "body",
+          "browser_module_id": "diagrams"
+        }
+      ],
+      "preview": {
+        "kind": "card",
+        "card": {
+          "class": "mermaid-editor-card",
+          "title": "Mermaid diagram",
+          "subtitle_attribute": "body",
+          "body_text": "Edit the diagram source and alignment."
+        }
+      }
+    }
+  ]
+}

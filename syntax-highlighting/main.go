@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
@@ -13,12 +14,16 @@ import (
 var (
 	highlightFormatter = chromahtml.New(chromahtml.WithClasses(true))
 	highlightStyle     = styles.Get("github-dark")
-	highlightLanguages = func() map[string]struct{} {
+	highlightLanguages = func() map[string]string {
 		names := lexers.Names(true)
-		languages := make(map[string]struct{}, len(names))
+		identifier := regexp.MustCompile(`[^a-z0-9+#]+`)
+		languages := make(map[string]string, len(names))
 		for _, name := range names {
-			languages[strings.ToLower(name)] = struct{}{}
+			languages[strings.ToLower(name)] = name
+			languages[strings.Trim(identifier.ReplaceAllString(strings.ToLower(name), "_"), "_")] = name
 		}
+		languages["rpm_spec"] = "RPMSpec"
+		languages["yml"] = "YAML"
 		return languages
 	}()
 )
@@ -44,13 +49,14 @@ func transform(request sdk.RenderRequest) sdk.RenderResult {
 	if language == "" {
 		return sdk.RenderResult{}
 	}
-	if _, ok := highlightLanguages[language]; !ok {
+	lexerName, ok := highlightLanguages[language]
+	if !ok {
 		return sdk.RenderResult{}
 	}
 
 	// Get selects only the explicitly supplied Chroma name or alias. Do not use
 	// Match or Analyse here: fenced code is never language-detected from content.
-	lexer := lexers.Get(language)
+	lexer := lexers.Get(lexerName)
 	if lexer == nil {
 		return sdk.RenderResult{}
 	}

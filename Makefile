@@ -132,7 +132,8 @@ test-race: check-plugins vet ## Run executable plugin tests with the race detect
 	go test -race -count=1 -timeout=3m ./...
 
 .PHONY: test-browser
-test-browser: $(NODE_MODULES) $(KUMBUKA_CLI) $(KUMBUKA_PLUGIN) $(SCRIPT_REQUIREMENTS) ## Run focused Playwright plugin behavior tests.
+test-browser: browser $(NODE_MODULES) $(KUMBUKA_CLI) $(KUMBUKA_PLUGIN) $(SCRIPT_REQUIREMENTS) ## Run focused Playwright plugin behavior tests.
+	node --test test/browser/*.test.mjs
 	@SCRIPT_PYTHON="$(SCRIPT_PYTHON)" \
 		PREVIEW_BROWSER_CHANNEL="$(PREVIEW_BROWSER_CHANNEL)" \
 		PREVIEW_SKIP_BROWSER_INSTALL="$(PREVIEW_SKIP_BROWSER_INSTALL)" \

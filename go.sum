@@ -12,6 +12,8 @@ github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUq
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
 github.com/kumbuka-me/sdk v0.28.0 h1:3a/XAD63WU9hHKMPj8iKC635BF7RZWRcPEGIoCZJ3XA=
 github.com/kumbuka-me/sdk v0.28.0/go.mod h1:tjfokW8dnaOSToNwgsbtS+ZbjMvvxB09QV3Weaf8KfI=
+github.com/kumbuka-me/sdk v0.29.0 h1:I4fyxoY+TIB9o+c67nTzG9RYptz4OIwiKlZ5vAfI3QY=
+github.com/kumbuka-me/sdk v0.29.0/go.mod h1:tjfokW8dnaOSToNwgsbtS+ZbjMvvxB09QV3Weaf8KfI=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 go.yaml.in/yaml/v3 v3.0.6 h1:zcDfvjXEqTQmpjniUBLc91xYJMB2c4QOFxEF/LCEckM=

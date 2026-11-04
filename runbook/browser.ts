@@ -9,7 +9,7 @@ interface Step {
   routes: Route[];
 }
 
-function parseRunbook(source: string): Step[] {
+function parseRunbook(source: string, validate = true): Step[] {
   const steps: Step[] = [];
   const positions = new Map<string, number>();
   function fail(line: number, message: string): never {
@@ -24,7 +24,7 @@ function parseRunbook(source: string): Step[] {
     const line = index + 1;
     if (!raw.trim()) continue;
     const text = raw.trim();
-    const header = /^([a-z][a-z0-9_-]*):\s*(.+)$/i.exec(text);
+    const header = /^([a-z][a-z0-9_-]*):\s*(.*)$/i.exec(text);
     if (header && !/^\s/.test(raw)) {
       const [, id, title] = header;
       if (positions.has(id)) fail(line, `duplicate step "${id}".`);
@@ -39,8 +39,10 @@ function parseRunbook(source: string): Step[] {
     step.routes.push({ label: route[1].trim(), target: route[2], line });
   }
   if (!steps.length) throw new Error("Add a starting step.");
+  if (!validate) return steps;
   const reached = new Set([steps[0].id]);
   for (const [index, step] of steps.entries()) {
+    if (!step.title.trim()) throw new Error(`Give step "${step.id}" a title.`);
     if (!reached.has(step.id))
       throw new Error(`No route reaches "${step.id}".`);
     const labels = new Set<string>();
@@ -213,7 +215,12 @@ function serializeRunbook(steps: Step[]): string {
 // editRunbook mounts plugin-owned controls inside Kumbuka's isolated editor frame.
 function editRunbook(
   root: HTMLElement,
-  context: { source: string; theme: string; onChange: (value: string) => void },
+  context: {
+    source: string;
+    theme: string;
+    onChange: (value: string) => void;
+    onValidity?: (state: { valid: boolean; message?: string }) => void;
+  },
 ): void {
   root.dataset.theme = context.theme;
   root.classList.add("runbook-editor");
@@ -250,8 +257,8 @@ function editRunbook(
 
   const publish = (value: string) => {
     source.value = value;
-    context.onChange(value);
     render();
+    context.onChange(value);
   };
 
   const render = () => {
@@ -260,14 +267,23 @@ function editRunbook(
     error.textContent = "";
     let steps: Step[];
     try {
-      steps = parseRunbook(source.value);
-      preview.append(drawGraph(graphRows(steps)));
+      steps = parseRunbook(source.value, false);
     } catch (reason) {
       error.textContent =
         reason instanceof Error ? reason.message : "Invalid runbook";
       sourceLabel.hidden = false;
       showSource.textContent = "Hide source";
+      context.onValidity?.({ valid: false, message: error.textContent });
       return;
+    }
+    try {
+      parseRunbook(source.value);
+      preview.append(drawGraph(graphRows(steps)));
+      context.onValidity?.({ valid: true });
+    } catch (reason) {
+      error.textContent =
+        reason instanceof Error ? reason.message : "Invalid runbook";
+      context.onValidity?.({ valid: false, message: error.textContent });
     }
     for (const [index, step] of steps.entries()) {
       const card = document.createElement("fieldset");
@@ -332,8 +348,8 @@ function editRunbook(
     publish(serializeRunbook(steps));
   });
   source.addEventListener("input", () => {
-    context.onChange(source.value);
     render();
+    context.onChange(source.value);
   });
   render();
 }

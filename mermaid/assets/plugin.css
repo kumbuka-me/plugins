@@ -2,3 +2,7 @@ html, body { margin: 0; padding: 0; background: transparent; }
 body { font: 14px system-ui, sans-serif; }
 .mermaid { text-align: center; overflow: auto; }
 .mermaid svg { max-width: 100%; height: auto; }
+
+.mermaid-editor label { display: grid; gap: 6px; margin-bottom: 14px; }
+.mermaid-editor select, .mermaid-editor textarea { width: 100%; box-sizing: border-box; padding: 8px; font: inherit; color: CanvasText; background: Canvas; border: 1px solid GrayText; border-radius: 6px; }
+.mermaid-editor textarea { font-family: monospace; resize: vertical; }

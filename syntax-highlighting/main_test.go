@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/kumbuka-me/sdk/editorlanguage"
+	"os"
 	"testing"
 
 	"github.com/alecthomas/chroma/v2/lexers"
@@ -87,6 +89,20 @@ func BenchmarkTransformWarmBash(b *testing.B) {
 		result := transform(request)
 		if result.Error != "" || !result.Matched {
 			b.Fatalf("unexpected result: %#v", result)
+		}
+	}
+}
+
+func TestLanguageCatalogMatchesHighlighter(t *testing.T) {
+	data, err := os.ReadFile("assets/code-languages.json")
+	require.NoError(t, err)
+	document, err := editorlanguage.Parse(data)
+	require.NoError(t, err)
+	require.Greater(t, len(document.Languages), 200)
+	for _, language := range document.Languages {
+		assert.NotNil(t, lexers.Get(highlightLanguages[language.Value]), language.Value)
+		for _, alias := range language.Aliases {
+			assert.NotNil(t, lexers.Get(highlightLanguages[alias]), alias)
 		}
 	}
 }
