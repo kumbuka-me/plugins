@@ -13,7 +13,7 @@ func TestRenderRevision(t *testing.T) {
 	output := renderRevision(sdk.RevisionHistory{Count: 3, Revisions: []sdk.Revision{{
 		Number: 3, Author: `<Alice>`, Message: `Changed & fixed`, CreatedAt: time.Date(2026, 9, 15, 14, 30, 0, 0, time.UTC), AddedLines: 4, RemovedLines: 2,
 	}}}, localize.For("en"))
-	for _, expected := range []string{"Revision history", `&lt;Alice&gt;`, `Changed &amp; fixed`, "r3", "+4", "−2"} {
+	for _, expected := range []string{"Latest revision", `&lt;Alice&gt;`, `Changed &amp; fixed`, "r3", "+4", "−2"} {
 		require.Contains(t, output, expected, "output does not contain %q: %s", expected, output)
 	}
 }
@@ -25,6 +25,6 @@ func TestRenderRevisionEmpty(t *testing.T) {
 
 func TestRenderRevisionGerman(t *testing.T) {
 	output := renderRevision(sdk.RevisionHistory{Revisions: []sdk.Revision{{Number: 1, Author: "Alice"}}}, localize.For("de"))
-	require.Contains(t, output, "Versionsverlauf")
+	require.Contains(t, output, "Letzte Version")
 	require.Contains(t, output, "Seite erstellt")
 }
