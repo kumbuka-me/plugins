@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ func TestRenderRevisionKeepsOnlyCompactSummary(t *testing.T) {
 	}}}, localize.For("en"))
 
 	for _, expected := range []string{
-		"Latest revision", `class="widget-entry widget-entry--clickable"`, `&lt;Alice&gt;`,
+		"Latest revision", `class="widget-entry--clickable"`, `class="prose"`, `class="kumbuka-revision-card"`, `&lt;Alice&gt;`,
 		"r3", "2026-11-04 · 16:09", "+23", "−19", "lines",
 	} {
 		require.Contains(t, output, expected)
@@ -27,6 +28,7 @@ func TestRenderRevisionKeepsOnlyCompactSummary(t *testing.T) {
 	require.NotContains(t, output, `class="widget-message"`)
 	require.NotContains(t, output, "Markdown changed")
 	require.NotContains(t, output, "Markdown changed &amp; more")
+	require.NotContains(t, output, "widget-revision-")
 }
 
 // TestRenderRevisionEmpty verifies the summary is not clickable without revision history.
@@ -98,4 +100,20 @@ func TestRevisionResultOmitsEmptyAction(t *testing.T) {
 	result := revisionResult(sdk.RevisionHistory{}, "guide", localize.For("de"))
 	require.Empty(t, result.Actions)
 	require.Contains(t, result.Parts[0].Text, "Kein Versionsverlauf verfügbar.")
+}
+
+// TestPresentationIsPackagedAsContentStyle ensures the widget owns its layout asset.
+func TestPresentationIsPackagedAsContentStyle(t *testing.T) {
+	t.Parallel()
+
+	manifest, err := os.ReadFile("plugin.yaml")
+	require.NoError(t, err)
+	require.Contains(t, string(manifest), "- type: content-style\n    id: presentation\n    css: revision-history.css")
+
+	stylesheet, err := os.ReadFile("assets/revision-history.css")
+	require.NoError(t, err)
+	require.Contains(t, string(stylesheet), ".prose .kumbuka-revision-card")
+	require.Contains(t, string(stylesheet), ".prose .kumbuka-revision-added")
+	require.NotContains(t, string(stylesheet), "@import")
+	require.NotContains(t, string(stylesheet), "position:")
 }

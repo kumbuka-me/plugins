@@ -55,33 +55,35 @@ func renderRevision(history sdk.RevisionHistory, localizer sdk.Localizer) string
 	}
 
 	revision := history.Revisions[0]
-	output.WriteString(`<div class="widget-entry widget-entry--clickable">`)
-	output.WriteString(`<div class="widget-entry-heading"><strong>`)
+	// The host owns the full-surface dialog action. The plugin owns the card
+	// presentation through its scoped, sanitized content-style contribution.
+	output.WriteString(`<div class="widget-entry--clickable"><div class="prose"><div class="kumbuka-revision-card">`)
+	output.WriteString(`<div class="kumbuka-revision-heading"><strong class="kumbuka-revision-author">`)
 	output.WriteString(html.EscapeString(revision.Author))
-	output.WriteString(`</strong><span class="widget-revision-number">r`)
+	output.WriteString(`</strong><span class="kumbuka-revision-number">r`)
 	fmt.Fprint(&output, revision.Number)
 	output.WriteString(`</span></div>`)
 
-	output.WriteString(`<div class="widget-revision-meta">`)
+	output.WriteString(`<div class="kumbuka-revision-meta">`)
 	if !revision.CreatedAt.IsZero() {
-		output.WriteString(`<span class="widget-revision-date">`)
+		output.WriteString(`<span class="kumbuka-revision-date">`)
 		output.WriteString(revisionDate(revision, localizer))
 		output.WriteString(`</span>`)
 	}
 	if revision.AddedLines != 0 || revision.RemovedLines != 0 {
-		output.WriteString(`<span class="widget-revision-diff"><span class="widget-added">+`)
+		output.WriteString(`<span class="kumbuka-revision-diff"><span class="kumbuka-revision-added">+`)
 		fmt.Fprint(&output, revision.AddedLines)
-		output.WriteString(`</span><span class="widget-removed">−`)
+		output.WriteString(`</span><span class="kumbuka-revision-removed">−`)
 		fmt.Fprint(&output, revision.RemovedLines)
-		output.WriteString(`</span><span class="widget-revision-unit">`)
+		output.WriteString(`</span><span class="kumbuka-revision-unit">`)
 		output.WriteString(localizer.Text("revision.lines"))
 		output.WriteString(`</span></span>`)
 	} else {
-		output.WriteString(`<span class="widget-revision-fields">`)
+		output.WriteString(`<span class="kumbuka-revision-fields">`)
 		output.WriteString(html.EscapeString(revisionFields(revision, localizer)))
 		output.WriteString(`</span>`)
 	}
-	output.WriteString(`</div></div>`)
+	output.WriteString(`</div></div></div></div>`)
 	return output.String()
 }
 
