@@ -2,8 +2,8 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.revision-history
 name: Revision History
-version: 1.2.0
-description: Show recent revision metadata and expose the full history as a page action.
+version: 1.2.1
+description: Show the latest revision and open a color-coded comparison dialog.
 default_enabled: true
 modules:
   - type: widget
