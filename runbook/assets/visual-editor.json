@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "runbook",
+      "name": "Runbook",
+      "inline": false,
+      "syntax": {
+        "kind": "fence",
+        "name": "runbook"
+      },
+      "attributes": [
+        {
+          "name": "body",
+          "type": "string",
+          "required": true,
+          "max_bytes": 65536,
+          "default": "start: Receive alert\n  -> decision\ndecision: Does this need attention?\n  Yes -> action\n  No -> done\naction: Contact the on-call engineer\n  -> done\ndone: Finish"
+        }
+      ],
+      "settings": [
+        {
+          "type": "graph",
+          "label": "Runbook",
+          "attribute": "body"
+        }
+      ],
+      "preview": {
+        "kind": "card",
+        "card": {
+          "class": "runbook-editor-card",
+          "title": "Runbook",
+          "body_text": "Edit steps, decisions, and shared destinations.",
+          "subtitle_attribute": "body"
+        }
+      }
+    }
+  ]
+}
