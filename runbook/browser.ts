@@ -197,6 +197,147 @@ function drawGraph(rows: Row[]): HTMLOListElement {
   return list;
 }
 
+// serializeRunbook writes the plugin's fenced-code grammar from its structured editor state.
+function serializeRunbook(steps: Step[]): string {
+  return steps
+    .flatMap((step) => [
+      `${step.id}: ${step.title}`,
+      ...step.routes.map(
+        (route) =>
+          `  ${route.label ? `${route.label} ` : ""}-> ${route.target}`,
+      ),
+    ])
+    .join("\n");
+}
+
+// editRunbook mounts plugin-owned controls inside Kumbuka's isolated editor frame.
+function editRunbook(
+  root: HTMLElement,
+  context: { source: string; theme: string; onChange: (value: string) => void },
+): void {
+  root.dataset.theme = context.theme;
+  root.classList.add("runbook-editor");
+  const heading = document.createElement("h3");
+  heading.textContent = "Runbook steps";
+  const rows = document.createElement("div");
+  rows.className = "runbook-editor-steps";
+  const error = document.createElement("p");
+  error.className = "runbook-editor-error";
+  error.setAttribute("role", "status");
+  const preview = document.createElement("div");
+  preview.className = "runbook-editor-preview";
+  const sourceLabel = document.createElement("label");
+  sourceLabel.textContent = "Runbook source";
+  const source = document.createElement("textarea");
+  source.rows = 7;
+  source.value = context.source;
+  sourceLabel.append(source);
+  const addStep = document.createElement("button");
+  addStep.type = "button";
+  addStep.textContent = "+ Add step";
+  const showSource = document.createElement("button");
+  showSource.type = "button";
+  showSource.textContent = "Edit source";
+  sourceLabel.hidden = true;
+  showSource.addEventListener("click", () => {
+    sourceLabel.hidden = !sourceLabel.hidden;
+    showSource.textContent = sourceLabel.hidden ? "Edit source" : "Hide source";
+  });
+  const actions = document.createElement("div");
+  actions.className = "runbook-editor-actions";
+  actions.append(addStep, showSource);
+  root.replaceChildren(heading, rows, actions, error, preview, sourceLabel);
+
+  const publish = (value: string) => {
+    source.value = value;
+    context.onChange(value);
+    render();
+  };
+
+  const render = () => {
+    rows.replaceChildren();
+    preview.replaceChildren();
+    error.textContent = "";
+    let steps: Step[];
+    try {
+      steps = parseRunbook(source.value);
+      preview.append(drawGraph(graphRows(steps)));
+    } catch (reason) {
+      error.textContent =
+        reason instanceof Error ? reason.message : "Invalid runbook";
+      sourceLabel.hidden = false;
+      showSource.textContent = "Hide source";
+      return;
+    }
+    for (const [index, step] of steps.entries()) {
+      const card = document.createElement("fieldset");
+      const legend = document.createElement("legend");
+      legend.textContent = `${index + 1}. ${step.id}`;
+      card.append(legend);
+      const title = document.createElement("input");
+      title.type = "text";
+      title.value = step.title;
+      title.setAttribute("aria-label", `Title for ${step.id}`);
+      title.addEventListener("change", () => {
+        steps[index].title = title.value;
+        publish(serializeRunbook(steps));
+      });
+      card.append(title);
+      for (const [routeIndex, route] of step.routes.entries()) {
+        const routeRow = document.createElement("div");
+        routeRow.className = "runbook-editor-route";
+        const label = document.createElement("input");
+        label.value = route.label;
+        label.placeholder = "Choice label (optional)";
+        label.setAttribute("aria-label", `Choice label from ${step.id}`);
+        const target = document.createElement("select");
+        target.setAttribute("aria-label", `Destination from ${step.id}`);
+        for (const candidate of steps.slice(index + 1)) {
+          const option = document.createElement("option");
+          option.value = candidate.id;
+          option.textContent = candidate.title;
+          target.append(option);
+        }
+        target.value = route.target;
+        const update = () => {
+          steps[index].routes[routeIndex].label = label.value.trim();
+          steps[index].routes[routeIndex].target = target.value;
+          publish(serializeRunbook(steps));
+        };
+        label.addEventListener("change", update);
+        target.addEventListener("change", update);
+        routeRow.append(label, target);
+        card.append(routeRow);
+      }
+      rows.append(card);
+    }
+  };
+
+  addStep.addEventListener("click", () => {
+    let steps: Step[];
+    try {
+      steps = parseRunbook(source.value);
+    } catch {
+      sourceLabel.hidden = false;
+      return;
+    }
+    const ids = new Set(steps.map((step) => step.id));
+    let number = steps.length + 1;
+    while (ids.has(`step-${number}`)) number++;
+    const id = `step-${number}`;
+    const last = steps.at(-1)!;
+    if (last.routes.length === 0)
+      last.routes.push({ label: "", target: id, line: 0 });
+    steps.push({ id, title: "New step", routes: [] });
+    publish(serializeRunbook(steps));
+  });
+  source.addEventListener("input", () => {
+    context.onChange(source.value);
+    render();
+  });
+  render();
+}
+
 Object.assign(globalThis, {
   kumbukaPlugin: {
     render(root: HTMLElement, context: { source: string; theme: string }) {
@@ -215,5 +356,6 @@ Object.assign(globalThis, {
         root.replaceChildren(message, source);
       }
     },
+    edit: editRunbook,
   },
 });

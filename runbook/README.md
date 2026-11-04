@@ -31,3 +31,12 @@ IDs start with a letter and can contain letters, digits, underscores, and hyphen
 ## Permissions
 
 The plugin uses `browser:render` to draw inside Kumbuka’s isolated browser frame. Without the browser module, readers see the fenced source.
+
+## Visual editor
+
+When enabled, Runbook contributes the `runbook` code language and a visual editor
+implemented inside the plugin's isolated browser module. The editor supports
+step labels, routing destinations, adding steps, a live graph preview, and a
+source view. Kumbuka only hosts the frame and validates the returned Markdown.
+Disabling this plugin removes the editor language option without altering saved
+`runbook` fences.

@@ -20,9 +20,10 @@
       ],
       "settings": [
         {
-          "type": "graph",
+          "type": "browser",
           "label": "Runbook",
-          "attribute": "body"
+          "attribute": "body",
+          "browser_module_id": "graph"
         }
       ],
       "preview": {
