@@ -2,8 +2,8 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.revision-history
 name: Revision History
-version: 1.2.1
-description: Show the latest revision and open a color-coded comparison dialog.
+version: 1.2.2
+description: Show a compact latest-revision card with a color-coded comparison dialog.
 default_enabled: true
 modules:
   - type: widget
