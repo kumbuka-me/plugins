@@ -11,6 +11,8 @@ flowchart LR
 ```
 ````
 
+The plugin declares `mermaid` as a selectable fenced code-block language using the SDK code-language contract.
+
 Use `mermaid` as the fenced code-block language. Mermaid source is rendered only in the browser module and remains normal code when the plugin is unavailable.
 
 ## Permissions

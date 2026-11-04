@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "languages": [
+    {
+      "value": "mermaid",
+      "label": "Mermaid"
+    }
+  ]
+}

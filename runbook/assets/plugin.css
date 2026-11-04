@@ -19,3 +19,26 @@
 }
 .runbook .badge { margin-right: .5rem; }
 .runbook .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+.runbook-editor {
+  color: var(--ink, #213642);
+  font: 14px/1.5 system-ui, sans-serif;
+  padding: 12px;
+}
+.runbook-editor h3 { font-size: 1rem; margin: 0 0 12px; }
+.runbook-editor-steps { display: grid; gap: 8px; }
+.runbook-editor fieldset { border: 1px solid #a6b7b4; border-radius: 8px; padding: 8px 12px; min-width: 0; }
+.runbook-editor legend { font-weight: 650; }
+.runbook-editor input, .runbook-editor select, .runbook-editor textarea {
+  font: inherit; min-width: 0; padding: 6px; border: 1px solid #9aa7a5;
+  border-radius: 5px; box-sizing: border-box; background: Canvas; color: CanvasText;
+}
+.runbook-editor fieldset > input, .runbook-editor textarea { display: block; width: 100%; }
+.runbook-editor-route { display: flex; gap: 6px; margin-top: 6px; }
+.runbook-editor-route input { flex: 1; }
+.runbook-editor-route select { flex: 1; }
+.runbook-editor-actions { display: flex; gap: 8px; margin: 12px 0; }
+.runbook-editor button { font: inherit; border: 1px solid #9aa7a5; padding: 5px 10px; border-radius: 6px; cursor: pointer; background: Canvas; color: CanvasText; }
+.runbook-editor-error { color: #ad3d37; }
+.runbook-editor-preview { border-top: 1px solid #a6b7b4; padding-top: 8px; }
+.runbook-editor label { display: block; }
