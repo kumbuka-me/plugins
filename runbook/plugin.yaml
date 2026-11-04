@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.runbook
 name: Runbook
-version: 1.0.1
+version: 1.1.0
 description: Show decisions, actions, and shared handoffs as a compact branch-and-merge graph.
 default_enabled: true
 modules:
@@ -15,4 +15,22 @@ modules:
     id: graph
     javascript: plugin.js
     css: plugin.css
+  - type: editor-insert
+    id: insert
+    name: Runbook
+    description: Insert a runbook with editable steps, decisions, and shared destinations.
+    icon: git-branch-lucide
+    group: insert
+    allowed_groups: [insert, blocks, plugins]
+    markdown: |
+      ```runbook
+      start: Receive alert
+        -> decision
+      decision: Does this need attention?
+        Yes -> action
+        No -> done
+      action: Contact the on-call engineer
+        -> done
+      done: Finish
+      ```
 permissions: [browser:render]
