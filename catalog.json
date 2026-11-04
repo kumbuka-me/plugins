@@ -854,6 +854,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.2.0",
+          "api_version": 1,
+          "released_at": "2026-11-04T14:18:05Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/mermaid/v1.2.0/mermaid-1.2.0.kumbukaplugin",
+          "sha256": "b175b0b85b77af0a3ac4fd40e962b8158bb00b1ac298de4ee9396e9b01c1611d"
+        },
+        {
           "version": "1.1.1",
           "api_version": 1,
           "released_at": "2026-09-25T15:02:36Z",
@@ -1357,6 +1364,13 @@
       "name": "Runbook",
       "provider": "Kumbuka",
       "versions": [
+        {
+          "version": "1.2.0",
+          "api_version": 1,
+          "released_at": "2026-11-04T14:18:12Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/runbook/v1.2.0/runbook-1.2.0.kumbukaplugin",
+          "sha256": "c4c36329f1fc4b3cdcc204c27c50095f75007384277ed5851c8a6c2b91373e0f"
+        },
         {
           "version": "1.0.1",
           "api_version": 1,
