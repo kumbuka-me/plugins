@@ -230,12 +230,12 @@ async function assertRunbook(page) {
     });
     return [
       root.querySelector("p")?.textContent,
-      root.querySelector("pre")?.textContent,
+      Boolean(root.querySelector("pre")),
     ];
   });
   assert.deepEqual(diagnostic, [
     'Runbook: Line 2: unknown step "missing".',
-    "start: Start\n  -> missing",
+    false,
   ]);
 }
 
