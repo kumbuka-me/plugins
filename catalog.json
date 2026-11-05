@@ -1400,6 +1400,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.3.0",
+          "api_version": 1,
+          "released_at": "2026-11-05T07:12:26Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/runbook/v1.3.0/runbook-1.3.0.kumbukaplugin",
+          "sha256": "d2679502e809739997675f5a03e273e7e6bad16452d6982ee3a2d366cf9cfcf6"
+        },
+        {
           "version": "1.2.1",
           "api_version": 1,
           "released_at": "2026-11-04T18:25:31Z",
