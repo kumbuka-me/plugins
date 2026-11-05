@@ -33,12 +33,11 @@ test('Runbook retains structured controls through invalid titles and choices', a
     await page.getByLabel('Choice label from start').first().fill('Yes');
     await page.getByLabel('Choice label from start').first().press('Tab');
     assert.equal(await page.evaluate(()=>globalThis.validity.valid),true);
-    await page.getByRole('button',{name:'Edit source',exact:true}).click();
-    await page.getByLabel('Runbook source').fill('broken syntax');
-    assert.equal(await page.evaluate(()=>globalThis.validity.valid),false);
-    await page.getByLabel('Runbook source').fill('start: Restored');
-    assert.equal(await page.locator('fieldset').count(),1);
+    assert.equal(await page.locator('textarea').count(),0);
+    await page.getByRole('button',{name:'Add answer'}).first().click();
+    assert.equal(await page.getByLabel('Choice label from start').count(),3);
     assert.equal(await page.evaluate(()=>globalThis.validity.valid),true);
+    assert.equal(await page.locator('.answer-link').count(),3);
   });
 });
 

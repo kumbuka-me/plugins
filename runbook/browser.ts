@@ -161,6 +161,9 @@ function drawGraph(rows: Row[]): HTMLOListElement {
       const end = laneX(next);
       path(`M ${x} 18 Q ${end} 18 ${end} 36`);
     }
+    const width = laneX(Math.max(lanes.length - 1, lane)) + 18;
+    if (row.badge || row.kind === "choice")
+      path(`M ${x} 18 H ${width}`, "answer-link");
     if (row.kind === "decision") {
       path(`M ${x} 11 l 7 7 -7 7 -7 -7 Z`, "marker");
     } else {
@@ -171,7 +174,7 @@ function drawGraph(rows: Row[]): HTMLOListElement {
       dot.setAttribute("class", "marker");
       svg.append(dot);
     }
-    const width = laneX(Math.max(lanes.length - 1, lane)) + 12;
+
     svg.setAttribute("width", String(width));
     svg.setAttribute("height", "36");
     svg.setAttribute("viewBox", `0 0 ${width} 36`);
@@ -212,6 +215,15 @@ function serializeRunbook(steps: Step[]): string {
     .join("\n");
 }
 
+function appendStep(steps: Step[]): Step {
+  const ids = new Set(steps.map((step) => step.id));
+  let number = steps.length + 1;
+  while (ids.has(`step-${number}`)) number++;
+  const step = { id: `step-${number}`, title: "New step", routes: [] };
+  steps.push(step);
+  return step;
+}
+
 // editRunbook mounts plugin-owned controls inside Kumbuka's isolated editor frame.
 function editRunbook(
   root: HTMLElement,
@@ -233,30 +245,17 @@ function editRunbook(
   error.setAttribute("role", "status");
   const preview = document.createElement("div");
   preview.className = "runbook-editor-preview";
-  const sourceLabel = document.createElement("label");
-  sourceLabel.textContent = "Runbook source";
-  const source = document.createElement("textarea");
-  source.rows = 7;
-  source.value = context.source;
-  sourceLabel.append(source);
+  let source = context.source;
   const addStep = document.createElement("button");
   addStep.type = "button";
   addStep.textContent = "+ Add step";
-  const showSource = document.createElement("button");
-  showSource.type = "button";
-  showSource.textContent = "Edit source";
-  sourceLabel.hidden = true;
-  showSource.addEventListener("click", () => {
-    sourceLabel.hidden = !sourceLabel.hidden;
-    showSource.textContent = sourceLabel.hidden ? "Edit source" : "Hide source";
-  });
   const actions = document.createElement("div");
   actions.className = "runbook-editor-actions";
-  actions.append(addStep, showSource);
-  root.replaceChildren(heading, rows, actions, error, preview, sourceLabel);
+  actions.append(addStep);
+  root.replaceChildren(heading, rows, actions, error, preview);
 
   const publish = (value: string) => {
-    source.value = value;
+    source = value;
     render();
     context.onChange(value);
   };
@@ -267,17 +266,16 @@ function editRunbook(
     error.textContent = "";
     let steps: Step[];
     try {
-      steps = parseRunbook(source.value, false);
+      steps = parseRunbook(source, false);
     } catch (reason) {
       error.textContent =
         reason instanceof Error ? reason.message : "Invalid runbook";
-      sourceLabel.hidden = false;
-      showSource.textContent = "Hide source";
+      error.textContent += " Edit this block in Markdown view to repair it.";
       context.onValidity?.({ valid: false, message: error.textContent });
       return;
     }
     try {
-      parseRunbook(source.value);
+      parseRunbook(source);
       preview.append(drawGraph(graphRows(steps)));
       context.onValidity?.({ valid: true });
     } catch (reason) {
@@ -325,6 +323,36 @@ function editRunbook(
         routeRow.append(label, target);
         card.append(routeRow);
       }
+      const addAnswer = document.createElement("button");
+      addAnswer.type = "button";
+      addAnswer.textContent = "Add answer";
+      addAnswer.addEventListener("click", () => {
+        const destination =
+          steps
+            .slice(index + 1)
+            .find(
+              (candidate) =>
+                !step.routes.some((route) => route.target === candidate.id),
+            ) ?? appendStep(steps);
+        if (step.routes.length === 1 && !step.routes[0].label)
+          step.routes[0].label = "Answer 1";
+        let number = step.routes.length + 1;
+        while (step.routes.some((route) => route.label === `Answer ${number}`))
+          number++;
+        step.routes.push({
+          label: `Answer ${number}`,
+          target: destination.id,
+          line: 0,
+        });
+        publish(serializeRunbook(steps));
+        const field = rows
+          .querySelectorAll("fieldset")
+          [index]?.querySelectorAll<HTMLInputElement>(
+            ".runbook-editor-route input",
+          );
+        field?.[field.length - 1]?.select();
+      });
+      card.append(addAnswer);
       rows.append(card);
     }
   };
@@ -332,24 +360,14 @@ function editRunbook(
   addStep.addEventListener("click", () => {
     let steps: Step[];
     try {
-      steps = parseRunbook(source.value);
+      steps = parseRunbook(source);
     } catch {
-      sourceLabel.hidden = false;
       return;
     }
-    const ids = new Set(steps.map((step) => step.id));
-    let number = steps.length + 1;
-    while (ids.has(`step-${number}`)) number++;
-    const id = `step-${number}`;
     const last = steps.at(-1)!;
-    if (last.routes.length === 0)
-      last.routes.push({ label: "", target: id, line: 0 });
-    steps.push({ id, title: "New step", routes: [] });
+    const next = appendStep(steps);
+    last.routes.push({ label: "", target: next.id, line: 0 });
     publish(serializeRunbook(steps));
-  });
-  source.addEventListener("input", () => {
-    render();
-    context.onChange(source.value);
   });
   render();
 }
@@ -367,9 +385,7 @@ Object.assign(globalThis, {
         message.textContent =
           "Runbook: " +
           (error instanceof Error ? error.message : "Invalid graph.");
-        const source = document.createElement("pre");
-        source.textContent = context.source;
-        root.replaceChildren(message, source);
+        root.replaceChildren(message);
       }
     },
     edit: editRunbook,

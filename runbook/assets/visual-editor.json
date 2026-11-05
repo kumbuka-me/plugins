@@ -31,8 +31,7 @@
         "card": {
           "class": "runbook-editor-card",
           "title": "Runbook",
-          "body_text": "Edit steps, decisions, and shared destinations.",
-          "subtitle_attribute": "body"
+          "body_text": "Edit steps, decisions, and shared destinations."
         }
       }
     }
