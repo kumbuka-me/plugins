@@ -252,7 +252,15 @@ function editRunbook(
   const actions = document.createElement("div");
   actions.className = "runbook-editor-actions";
   actions.append(addStep);
-  root.replaceChildren(heading, rows, actions, error, preview);
+  const questions = document.createElement("section");
+  questions.setAttribute("aria-label", "Runbook steps");
+  questions.append(heading, rows, actions, error);
+  const previewHeading = document.createElement("h3");
+  previewHeading.textContent = "Preview";
+  const previewPane = document.createElement("section");
+  previewPane.className = "runbook-editor-preview-pane";
+  previewPane.append(previewHeading, preview);
+  root.replaceChildren(questions, previewPane);
 
   const publish = (value: string) => {
     source = value;

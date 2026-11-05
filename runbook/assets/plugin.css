@@ -40,8 +40,28 @@
 .runbook-editor-actions { display: flex; gap: 8px; margin: 12px 0; }
 .runbook-editor button { font: inherit; border: 1px solid #9aa7a5; padding: 5px 10px; border-radius: 6px; cursor: pointer; background: Canvas; color: CanvasText; }
 .runbook-editor-error { color: #ad3d37; }
-.runbook-editor-preview { border-top: 1px solid #a6b7b4; padding-top: 8px; }
+.runbook-editor-preview-pane { border-top: 1px solid #a6b7b4; padding-top: 12px; }
 .runbook-editor label { display: block; }
 
 .runbook li:has(.answer-link) { gap: 0; }
 .runbook-editor fieldset > button { margin-top: 8px; }
+
+/* The media query uses the editor frame's width, independently of the page. */
+@media (min-width: 600px) {
+  .runbook-editor {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+  .runbook-editor > section {
+    max-height: 27rem;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .runbook-editor-preview-pane {
+    border-top: 0;
+    border-inline-start: 1px solid #a6b7b4;
+    padding: 0 0 0 12px;
+  }
+}
