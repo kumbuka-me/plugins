@@ -191,6 +191,20 @@
       ]
     },
     {
+      "id": "me.kumbuka.code-annotations",
+      "name": "Code Annotations",
+      "provider": "Kumbuka",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "api_version": 1,
+          "released_at": "2026-11-10T16:00:43Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/code-annotations/v1.0.0/code-annotations-1.0.0.kumbukaplugin",
+          "sha256": "b2329d365951d7763b2c38734d452cc105b522da51997837ed6e0e2db37f55fd"
+        }
+      ]
+    },
+    {
       "id": "me.kumbuka.coding-ligatures",
       "name": "Coding Ligatures",
       "provider": "Kumbuka",
