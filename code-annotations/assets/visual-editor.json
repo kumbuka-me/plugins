@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "widgets": [
+    {
+      "id": "annotated-code",
+      "name": "Annotated code",
+      "inline": false,
+      "syntax": {
+        "kind": "macro",
+        "name": "annotated-code"
+      },
+      "attributes": [
+        { "name": "language", "type": "string", "required": true, "max_bytes": 40, "default": "go" },
+        { "name": "source", "type": "string", "required": true, "max_bytes": 65536 },
+        { "name": "highlight", "type": "string", "max_bytes": 512 },
+        { "name": "note", "type": "list", "max_bytes": 2048, "max_items": 32, "separator": "\u001f", "repeat": true },
+        { "name": "reference-position", "type": "enum", "values": ["right", "left"] },
+        { "name": "reference-color", "type": "enum", "values": ["accent", "blue", "green", "yellow", "orange", "red", "purple", "gray"] },
+        { "name": "highlight-references", "type": "enum", "values": ["true", "false"] },
+        { "name": "line-numbers", "type": "enum", "values": ["true", "false"] }
+      ],
+      "settings": [
+        { "type": "text", "label": "Language", "attribute": "language", "placeholder": "go" },
+        { "type": "textarea", "label": "Code", "attribute": "source", "placeholder": "Source code" },
+        { "type": "text", "label": "Highlighted lines", "attribute": "highlight", "placeholder": "2,4-6" },
+        {
+          "type": "table",
+          "label": "Annotations",
+          "attributes": ["note"],
+          "row_separator": ":",
+          "columns": [
+            { "label": "Line(s)", "type": "text" },
+            { "label": "Note", "type": "textarea" }
+          ]
+        },
+        { "type": "select", "label": "Reference position", "attribute": "reference-position" },
+        { "type": "select", "label": "Reference color", "attribute": "reference-color" },
+        { "type": "select", "label": "Highlight referenced lines", "attribute": "highlight-references" },
+        { "type": "select", "label": "Line numbers", "attribute": "line-numbers" }
+      ],
+      "preview": {
+        "kind": "card",
+        "card": {
+          "class": "code-annotation",
+          "title": "Annotated code",
+          "subtitle_attribute": "language",
+          "body_text": "Select code lines to add notes.",
+          "rendered": true,
+          "line_annotations": {
+            "attribute": "note",
+            "line_class": "code-annotation-line",
+            "line_number_class": "code-annotation-number"
+          }
+        }
+      }
+    }
+  ]
+}

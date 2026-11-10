@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kumbuka-me/plugins/internal/codepresentation"
 	sdk "github.com/kumbuka-me/sdk"
 )
 
@@ -105,20 +106,11 @@ func applyPresentationOverrides(base presentation, value options) presentation {
 	return base
 }
 
-// validReferencePosition reports whether value is a supported annotation-gutter side.
-func validReferencePosition(value string) bool {
-	return value == "left" || value == "right"
-}
+// validReferencePosition checks the shared code presentation gutter choices.
+func validReferencePosition(value string) bool { return codepresentation.ValidPosition(value) }
 
-// validReferenceColor reports whether value is a supported theme-safe annotation color.
-func validReferenceColor(value string) bool {
-	switch value {
-	case "accent", "blue", "green", "yellow", "orange", "red", "purple", "gray":
-		return true
-	default:
-		return false
-	}
-}
+// validReferenceColor checks the shared code presentation color choices.
+func validReferenceColor(value string) bool { return codepresentation.ValidColor(value) }
 
 // message returns one escaped user-facing external-file error box.
 func message(text string) sdk.Result {
@@ -151,35 +143,39 @@ func render(value options, resources resourceReader, settings settingsReader, ht
 	return sdk.Text(renderExternalFile(value, source, file, appearance, localizer))
 }
 
-// annotationsWithinSelection reports whether every note range is contained by the displayed source.
+// annotationsWithinSelection checks notes against the selected original lines.
 func annotationsWithinSelection(notes []annotation, file selectedFile) bool {
-	lineCount := strings.Count(file.Content, "\n") + 1
-	lastLine := file.Start + lineCount - 1
-	for _, note := range notes {
-		if note.Start < file.Start || note.End < note.Start || note.End > lastLine || len(note.Text) > maxAnnotationBytes {
-			return false
-		}
-	}
-	return true
+	return codepresentation.NotesWithin(notes, file.Start, strings.Count(file.Content, "\n")+1, maxAnnotationBytes)
 }
 
-// renderExternalFile builds the provider header, source rows, gutters, and note legend.
+// renderExternalFile builds the provider header, shared source rows, and note legend.
 func renderExternalFile(value options, source source, file selectedFile, appearance presentation, localizer sdk.Localizer) string {
 	var output strings.Builder
 	lineNumbersClass := ""
 	if !appearance.ShowLineNumbers {
 		lineNumbersClass = " external-file-hide-line-numbers"
 	}
-	fmt.Fprintf(
-		&output,
-		`<div class="external-file external-file-reference-%s external-file-color-%s%s">`,
-		appearance.ReferencePosition,
-		appearance.ReferenceColor,
-		lineNumbersClass,
-	)
+	fmt.Fprintf(&output, `<div class="external-file external-file-reference-%s external-file-color-%s%s">`, appearance.ReferencePosition, appearance.ReferenceColor, lineNumbersClass)
 	writeHeader(&output, value.Path, source, appearance)
-	writeCode(&output, file, value.Notes, appearance, localizer)
-	writeNotes(&output, value.Notes, localizer)
+	block := codepresentation.Block{
+		ClassPrefix: "external-file",
+		Source:      file.Content,
+		StartLine:   file.Start,
+		Notes:       value.Notes,
+		Appearance: codepresentation.Appearance{
+			ReferencePosition:   appearance.ReferencePosition,
+			ReferenceColor:      appearance.ReferenceColor,
+			HighlightReferences: appearance.HighlightReferences,
+			ShowLineNumbers:     appearance.ShowLineNumbers,
+		},
+		Labels: codepresentation.Labels{
+			Line:       localizer.Text("external.line"),
+			Lines:      localizer.Text("external.lines"),
+			Annotation: func(number int) string { return localizer.Textf("external.annotation", number) },
+		},
+	}
+	codepresentation.WriteCode(&output, block)
+	codepresentation.WriteNotes(&output, block)
 	output.WriteString(`</div>`)
 	return output.String()
 }
@@ -203,81 +199,6 @@ func writeHeader(output *strings.Builder, path string, source source, appearance
 		output.WriteString(`</span>`)
 	}
 	output.WriteString(`</div>`)
-}
-
-// writeCode appends escaped source lines with a dedicated configurable annotation gutter.
-func writeCode(output *strings.Builder, file selectedFile, notes []annotation, appearance presentation, localizer sdk.Localizer) {
-	markers := make(map[int][]int)
-	annotated := make(map[int]bool)
-	for index, note := range notes {
-		markers[note.Start] = append(markers[note.Start], index+1)
-		for line := note.Start; line <= note.End; line++ {
-			annotated[line] = true
-		}
-	}
-
-	output.WriteString(`<pre class="external-file-code"><code>`)
-	index := 0
-	for line := range strings.SplitSeq(file.Content, "\n") {
-		number := file.Start + index
-		lineMarkers := markers[number]
-		classes := "external-file-line"
-		if appearance.HighlightReferences && annotated[number] {
-			classes += " external-file-line-annotated"
-		}
-		output.WriteString(`<span class="` + classes + `">`)
-		output.WriteString(`<span class="external-file-number">` + strconv.Itoa(number) + `</span>`)
-		if appearance.ReferencePosition == "left" {
-			writeMarkerGutter(output, lineMarkers, localizer)
-		}
-		output.WriteString(`<span class="external-file-source">` + html.EscapeString(line) + `</span>`)
-		if appearance.ReferencePosition == "right" {
-			writeMarkerGutter(output, lineMarkers, localizer)
-		}
-		output.WriteString(`</span>`)
-		index++
-	}
-	output.WriteString(`</code></pre>`)
-}
-
-// writeMarkerGutter appends one fixed source-line annotation gutter.
-func writeMarkerGutter(output *strings.Builder, markers []int, localizer sdk.Localizer) {
-	output.WriteString(`<span class="external-file-gutter">`)
-	for _, marker := range markers {
-		fmt.Fprintf(output, `<span class="external-file-marker" title="%s">%d</span>`, html.EscapeString(localizer.Textf("external.annotation", marker)), marker)
-	}
-	output.WriteString(`</span>`)
-}
-
-// writeNotes appends the annotation legend below the source block.
-func writeNotes(output *strings.Builder, notes []annotation, localizer sdk.Localizer) {
-	if len(notes) == 0 {
-		return
-	}
-
-	output.WriteString(`<div class="external-file-notes"><ol class="external-file-note-list">`)
-	for index, note := range notes {
-		className := "external-file-note"
-		if index > 0 {
-			className += " external-file-note-following"
-		}
-		output.WriteString(`<li class="` + className + `"><span class="external-file-note-marker">`)
-		output.WriteString(strconv.Itoa(index + 1))
-		output.WriteString(`</span><span><strong>`)
-		if note.Start == note.End {
-			output.WriteString(localizer.Text("external.line") + " ")
-			output.WriteString(strconv.Itoa(note.Start))
-		} else {
-			output.WriteString(localizer.Text("external.lines") + " ")
-			output.WriteString(strconv.Itoa(note.Start))
-			output.WriteString("–")
-			output.WriteString(strconv.Itoa(note.End))
-		}
-		output.WriteString(`:</strong> `)
-		output.WriteString(html.EscapeString(note.Text))
-		output.WriteString(`</span></li>`)
-	}
-	output.WriteString(`</ol></div>`)
 }
 
 // providerLabel returns the display label for one validated repository provider.

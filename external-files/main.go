@@ -2,9 +2,9 @@
 package main
 
 import (
-	"strconv"
 	"strings"
 
+	"github.com/kumbuka-me/plugins/internal/codepresentation"
 	"github.com/kumbuka-me/plugins/internal/localize"
 	"github.com/kumbuka-me/plugins/internal/macroargs"
 
@@ -25,15 +25,8 @@ func init() {
 	})
 }
 
-// annotation describes one numbered note attached to an inclusive original source range.
-type annotation struct {
-	// Start is the first one-based original source line receiving the note.
-	Start int
-	// End is the final one-based original source line receiving the note.
-	End int
-	// Text is the plain-text annotation shown below the source block.
-	Text string
-}
+// annotation is shared by External Files and annotated fenced code blocks.
+type annotation = codepresentation.Note
 
 // optionalBool preserves whether a per-embed boolean override was supplied.
 type optionalBool struct {
@@ -180,34 +173,15 @@ func applyOption(result *options, name, argument string) bool {
 	return true
 }
 
-// parseLineRange parses one inclusive one-based line or line range.
+// parseLineRange parses an inclusive source-line selection.
 func parseLineRange(value string) (int, int, bool) {
-	start, finish, rangeFound := strings.Cut(value, "-")
-	if !rangeFound {
-		finish = start
-	}
-	first, err := strconv.Atoi(start)
-	if err != nil {
-		return 0, 0, false
-	}
-	last, err := strconv.Atoi(finish)
-	if err != nil || first < 1 || last < first || last > maxLines {
-		return 0, 0, false
-	}
-	return first, last, true
+	selected, ok := codepresentation.ParseRange(value, maxLines)
+	return selected.Start, selected.End, ok
 }
 
-// parseAnnotation parses one line-or-range:description note declaration.
+// parseAnnotation parses one shared code-presentation note declaration.
 func parseAnnotation(value string) (annotation, bool) {
-	selection, description, found := strings.Cut(value, ":")
-	if !found || strings.TrimSpace(description) == "" || len(description) > maxAnnotationBytes {
-		return annotation{}, false
-	}
-	start, end, ok := parseLineRange(selection)
-	if !ok {
-		return annotation{}, false
-	}
-	return annotation{Start: start, End: end, Text: description}, true
+	return codepresentation.ParseNote(value, maxLines, maxAnnotationBytes)
 }
 
 // parseOptionalBool parses one explicit boolean macro override.

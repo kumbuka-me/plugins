@@ -1,0 +1,35 @@
+api_version: 1
+provider: Kumbuka
+id: me.kumbuka.code-annotations
+name: Code Annotations
+icon: file-code-2-lucide
+version: 1.0.0
+description: Add opt-in line highlighting, line numbers, and annotations to fenced code.
+default_enabled: false
+modules:
+  - type: renderer-extension
+    id: code-annotations
+    stage: preprocess
+    usage:
+      - contains: "{code"
+  - type: macro
+    id: annotated-code
+    name: annotated-code
+    usage:
+      - macro: annotated-code
+  - type: content-style
+    id: style
+    css: plugin.css
+    usage:
+      - contains: "{code"
+      - macro: annotated-code
+  - type: editor-insert
+    id: insert-annotated-code
+    name: Annotated code
+    description: Insert a visually editable annotated code block.
+    icon: file-code-2-lucide
+    markdown: '{{annotated-code language="go" source="func main() {\n}" highlight="1"}}'
+    group: blocks
+    allowed_groups: [blocks, insert, plugins]
+    order: 35
+permissions: []
