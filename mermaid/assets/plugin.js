@@ -1,4 +1,5 @@
 const assetBase = document.currentScript.src;
+
 async function load() {
   if (globalThis.mermaid) return;
   await new Promise((resolve, reject) => {
@@ -10,14 +11,23 @@ async function load() {
   });
 }
 
-// All DOM work is confined to the opaque sandbox. The host supplies only this
-// diagram's text and presentation preferences, never page DOM or credentials.
-const alignmentDirective = /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/i;
+// Presentation directives are Mermaid comments, so they are preserved in Markdown.
+const alignmentDirective = /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/im;
+const interactiveDirective = /^%%[ \t]+kumbuka-interactive:[ \t]*(true|false)[ \t]*(?:\r?\n|$)/im;
+
 function readAlignment(source) {
   return alignmentDirective.exec(source)?.[1].toLowerCase() || "center";
 }
 
-// The plugin owns both its presentation directive and its editor controls.
+function readInteractive(source) {
+  return interactiveDirective.exec(source)?.[1].toLowerCase() === "true";
+}
+
+function updateDirective(source, directive, replacement) {
+  const normalized = source.replace(directive, "");
+  return replacement ? `${replacement}\n${normalized}` : normalized;
+}
+
 function edit(root, context) {
   const label = document.createElement("label");
   label.textContent = "Diagram alignment";
@@ -30,24 +40,45 @@ function edit(root, context) {
   }
   alignment.value = readAlignment(context.source);
   label.append(alignment);
+
+  const interactiveLabel = document.createElement("label");
+  const interactive = document.createElement("input");
+  interactive.type = "checkbox";
+  interactive.checked = readInteractive(context.source);
+  interactiveLabel.append(interactive, " Interactive diagram");
+
   const sourceLabel = document.createElement("label");
   sourceLabel.textContent = "Mermaid source";
   const source = document.createElement("textarea");
   source.rows = 12;
   source.value = context.source;
   sourceLabel.append(source);
+
   const publish = () => context.onChange(source.value);
   alignment.addEventListener("change", () => {
-    const content = source.value.replace(alignmentDirective, "");
-    source.value = alignment.value === "center" ? content : `%% kumbuka-align: ${alignment.value}\n${content}`;
+    source.value = updateDirective(
+      source.value,
+      alignmentDirective,
+      alignment.value === "center" ? "" : `%% kumbuka-align: ${alignment.value}`,
+    );
+    publish();
+  });
+  interactive.addEventListener("change", () => {
+    source.value = updateDirective(
+      source.value,
+      interactiveDirective,
+      interactive.checked ? "%% kumbuka-interactive: true" : "",
+    );
     publish();
   });
   source.addEventListener("input", () => {
     alignment.value = readAlignment(source.value);
+    interactive.checked = readInteractive(source.value);
     publish();
   });
+
   root.classList.add("mermaid-editor");
-  root.replaceChildren(label, sourceLabel);
+  root.replaceChildren(label, interactiveLabel, sourceLabel);
   context.onValidity?.({ valid: true });
 }
 
