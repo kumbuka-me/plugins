@@ -2,7 +2,7 @@ api_version: 1
 provider: Kumbuka
 id: me.kumbuka.mermaid
 name: Mermaid
-version: 1.4.0
+version: 1.5.0
 description: Render Mermaid diagrams interactively or pre-render SVGs for static sites.
 default_enabled: true
 modules:
