@@ -20,6 +20,7 @@ var (
 	interactiveAfterFence = regexp.MustCompile(`(?is)^\s*<p>\s*\{mermaid\s+interactive=(?:"|&quot;|&#34;|&#x22;)(true|false)(?:"|&quot;|&#34;|&#x22;)\}\s*</p>`)
 	// interactiveInSource recognizes the equivalent Mermaid comment directive.
 	interactiveInSource = regexp.MustCompile(`(?mi)^%%[ \t]+kumbuka-interactive:[ \t]*true[ \t]*$`)
+	widthInSource       = regexp.MustCompile(`(?mi)^%%[ \t]+kumbuka-width:[ \t]*([1-9][0-9]{0,3})[ \t]*\r?(?:\n|$)`)
 	// alignInSource selects a purely presentational alignment for SVGs and browser diagrams.
 	alignInSource = regexp.MustCompile(`(?mi)^%%[ \t]+kumbuka-align:[ \t]*(left|right|center)[ \t]*$`)
 )
@@ -81,6 +82,11 @@ func transformWith(source string, publish func(sdk.RenderedArtifactRender) (sdk.
 
 // renderStatic asks the generic host engine to execute this plugin's packaged SVG renderer.
 func renderStatic(source string, publish func(sdk.RenderedArtifactRender) (sdk.RenderedArtifactRef, error)) (string, error) {
+	widthAttribute := ""
+	if match := widthInSource.FindStringSubmatch(source); match != nil {
+		widthAttribute = ` style="width:` + match[1] + `px"`
+		source = widthInSource.ReplaceAllString(source, "")
+	}
 	lightRef, err := publish(sdk.RenderedArtifactRender{Script: "headless.js", Source: source, Theme: "default"})
 	if err != nil {
 		return "", err
@@ -95,6 +101,6 @@ func renderStatic(source string, publish func(sdk.RenderedArtifactRender) (sdk.R
 		alignment = strings.ToLower(match[1])
 	}
 	return `<span class="kumbuka-rendered-artifact kumbuka-artifact-align-` + alignment + `">` +
-		`<img class="kumbuka-artifact-light" alt="Mermaid diagram" src="` + html.EscapeString(lightRef.URL) + `">` +
-		`<img class="kumbuka-artifact-dark" alt="Mermaid diagram" src="` + html.EscapeString(darkRef.URL) + `"></span>`, nil
+		`<img class="kumbuka-artifact-light"` + widthAttribute + ` alt="Mermaid diagram" src="` + html.EscapeString(lightRef.URL) + `">` +
+		`<img class="kumbuka-artifact-dark"` + widthAttribute + ` alt="Mermaid diagram" src="` + html.EscapeString(darkRef.URL) + `"></span>`, nil
 }

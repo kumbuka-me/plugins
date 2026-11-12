@@ -25,6 +25,8 @@ The adjacent `{mermaid interactive="true"}` directive is also accepted for compa
 
 The visual editor supports Mermaid source, an **Interactive diagram** checkbox, and alignment to the left, center, or right. Alignment is stored as `%% kumbuka-align: left` (or `right`), and is respected by both SVGs and interactive diagrams.
 
+Set **Diagram width (px)** in the visual editor or add a comment such as `%% kumbuka-width: 320` on its own line inside the fence. Both static and interactive diagrams accept whole pixels from 1 to 9999 and shrink to fit narrower pages. Clear the field to restore automatic sizing.
+
 ## Rendering and compatibility
 
 The plugin package contains two independently bundled assets: `assets/headless.js`, evaluated by Kumbuka’s generic browser-free JavaScript engine during rendering, and `assets/plugin.js`, used only for interactive diagrams. They are generated from `headless.ts` and `browser.ts` during plugin development. End users need only Kumbuka or `kumbuka-cli`; they do not install Node.js, npm, Playwright, Chrome, or Mermaid CLI.

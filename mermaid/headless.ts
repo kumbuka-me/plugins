@@ -15,5 +15,10 @@ host.kumbukaRenderArtifact = async (source: string, theme: string) => {
     deterministicIDSeed: source,
   });
   const { svg } = await mermaid.render("kumbuka-diagram", source);
-  return svg;
+  // External images need an intrinsic width. Mermaid's inline max-width is
+  // inside the SVG document and cannot constrain the enclosing HTML image.
+  return svg.replace(/^(<svg\b[^>]*>)/, (root) => {
+    const width = /\sviewBox="[^"]*?\s([\d.]+)\s[\d.]+"/.exec(root)?.[1];
+    return width ? root.replace(' width="100%"', ` width="${width}"`) : root;
+  });
 };

@@ -49,10 +49,16 @@ test('Mermaid owns alignment editing and rendering of saved directives', async()
     assert.equal(await page.evaluate(()=>globalThis.draft),'%% kumbuka-align: right\nflowchart LR\nA --> B');
     await alignment.selectOption('center');
     assert.equal(await page.evaluate(()=>globalThis.draft),'flowchart LR\nA --> B');
+    const width = page.getByLabel('Diagram width (px)');
+    await width.fill('320');
+    assert.match(await page.evaluate(()=>globalThis.draft), /^%% kumbuka-width: 320\n/);
+    await width.fill('');
+    assert.equal(await page.evaluate(()=>globalThis.draft),'flowchart LR\nA --> B');
     await page.evaluate(async()=>{
-      await globalThis.kumbukaPlugin.render(document.querySelector('main'),{source:'%% kumbuka-align: right\nflowchart LR',theme:'light'});
+      await globalThis.kumbukaPlugin.render(document.querySelector('main'),{source:'%% kumbuka-align: right\n%% kumbuka-width: 320\nflowchart LR',theme:'light'});
     });
     assert.equal(await page.locator('div.mermaid').evaluate(el=>el.style.textAlign),'right');
+    assert.equal(await page.locator('div.mermaid svg').evaluate(el=>el.getBoundingClientRect().width),320);
   });
 });
 

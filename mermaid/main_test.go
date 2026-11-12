@@ -37,6 +37,16 @@ func TestTransform(t *testing.T) {
 		assert.NotContains(t, output, `data-kumbuka-plugin=`)
 	})
 
+	t.Run("sizes both images while reusing the same artifact source", func(t *testing.T) {
+		source := "<pre><code class=\"language-mermaid\">%% kumbuka-width: 320\r\nflowchart LR\nA --&gt; B</code></pre>"
+		output, err := transformWith(source, func(request sdk.RenderedArtifactRender) (sdk.RenderedArtifactRef, error) {
+			require.Equal(t, "flowchart LR\nA --> B", request.Source)
+			return testPublisher(request)
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 2, strings.Count(output, `style="width:320px"`))
+	})
+
 	t.Run("interactive comment keeps the isolated browser module", func(t *testing.T) {
 		t.Parallel()
 		source := `<pre><code class="language-mermaid">%% kumbuka-interactive: true

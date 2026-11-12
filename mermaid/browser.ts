@@ -60,6 +60,9 @@ function loadMermaid(): Promise<MermaidRuntime> {
 const interactiveDirective =
   /^%%[ \t]+kumbuka-interactive:[ \t]*true[ \t]*(?:\r?\n|$)/im;
 
+const widthDirective =
+  /^%%[ \t]+kumbuka-width:[ \t]*([1-9][0-9]{0,3})[ \t]*(?:\r?\n|$)/im;
+
 const alignmentDirective =
   /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/im;
 
@@ -82,6 +85,16 @@ function edit(root: HTMLElement, context: EditorContext): void {
   alignment.value = readAlignment(context.source);
   label.append(alignment);
 
+  const widthLabel = document.createElement("label");
+  widthLabel.textContent = "Diagram width (px)";
+  const width = document.createElement("input");
+  width.type = "number";
+  width.min = "1";
+  width.max = "9999";
+  width.placeholder = "Automatic";
+  width.value = widthDirective.exec(context.source)?.[1] || "";
+  widthLabel.append(width);
+
   const interactiveLabel = document.createElement("label");
   const interactive = document.createElement("input");
   interactive.type = "checkbox";
@@ -99,6 +112,13 @@ function edit(root: HTMLElement, context: EditorContext): void {
   sourceLabel.append(source);
 
   const publish = () => context.onChange(source.value);
+  width.addEventListener("input", () => {
+    context.onValidity?.({ valid: width.validity.valid });
+    if (!width.validity.valid) return;
+    const body = source.value.replace(widthDirective, "");
+    source.value = width.value ? `%% kumbuka-width: ${width.valueAsNumber}\n${body}` : body;
+    publish();
+  });
   alignment.addEventListener("change", () => {
     const body = source.value.replace(alignmentDirective, "");
     source.value =
@@ -115,13 +135,15 @@ function edit(root: HTMLElement, context: EditorContext): void {
     publish();
   });
   source.addEventListener("input", () => {
+    width.value = widthDirective.exec(source.value)?.[1] || "";
+    context.onValidity?.({ valid: true });
     alignment.value = readAlignment(source.value);
     interactive.checked = interactiveDirective.test(source.value);
     publish();
   });
 
   root.classList.add("mermaid-editor");
-  root.replaceChildren(label, interactiveLabel, sourceLabel);
+  root.replaceChildren(label, widthLabel, interactiveLabel, sourceLabel);
   context.onValidity?.({ valid: true });
 }
 
@@ -143,6 +165,13 @@ async function render(
     securityLevel: "strict",
   });
   await mermaid.run({ nodes: [diagram] });
+  const width = widthDirective.exec(context.source)?.[1];
+  const svg = diagram.querySelector("svg");
+  if (width && svg) {
+    svg.style.width = `${width}px`;
+    svg.style.maxWidth = "100%";
+    svg.style.height = "auto";
+  }
 }
 
 host.kumbukaPlugin = { edit, render };

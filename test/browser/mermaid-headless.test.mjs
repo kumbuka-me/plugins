@@ -18,7 +18,11 @@ test('Mermaid v13 renders passive SVG with no DOM and deterministic IDs', async 
   const again = await globalThis.kumbukaRenderArtifact(diagram, 'default');
   const dark = await globalThis.kumbukaRenderArtifact(diagram, 'dark');
 
-  assert.match(first, /<svg\b/);
+  for (const svg of [first, dark]) {
+    const root = svg.match(/^<svg[^>]+>/)[0];
+    const naturalWidth = root.match(/viewBox="0 0 ([\d.]+) [\d.]+"/)[1];
+    assert.equal(root.match(/ width="([^"]+)"/)[1], naturalWidth);
+  }
   assert.match(dark, /<svg\b/);
   assert.equal(first, again);
   assert.notEqual(first, dark);
