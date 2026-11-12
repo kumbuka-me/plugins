@@ -38,9 +38,21 @@ Both forms are supported. The in-fence comment is the canonical editable form. T
 
 ## Static site builds
 
-Install `@mermaid-js/mermaid-cli@12.0.0` so the `mmdc` executable is on your `PATH`, or set `MERMAID_CLI` to its executable path. Builds containing non-interactive Mermaid diagrams require this command; builds without them do not.
+This plugin advertises its browser-based SVG export through
+`assets/static-exports.json`. The CLI invokes the existing bundled Mermaid.js
+browser module locally with Playwright/Chromium; it does not call `mmdc`.
 
-The CLI renders both color schemes and writes content-addressed SVG files into `assets/diagrams/`. Changes to diagram source or the configured renderer version produce different assets. It rejects unsafe generated SVGs and reports failures against the source Markdown file.
+For static-site builds that contain passive Mermaid diagrams, install Node.js,
+Playwright, and Chromium in the static-site project:
+
+```sh
+npm install --save-dev playwright@1.65.0
+npx playwright install chromium
+```
+
+The CLI generates passive light/dark SVG files below `assets/generated/`,
+validates them, and reuses identical diagrams within a build. Interactive
+fences remain browser-rendered. Normal Kumbuka page rendering is unchanged.
 
 ## Permissions
 
