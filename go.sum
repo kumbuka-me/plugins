@@ -10,8 +10,8 @@ github.com/go-icons/simple-icons v0.2.0 h1:4+McseN5rrw9Kjhkmy6KWJxh5FdktZSm6Gd0O
 github.com/go-icons/simple-icons v0.2.0/go.mod h1:4NtGoIqbcKc9z9KcMFKm+TMMJSpPPGGeCpsQG/giAdA=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
-github.com/kumbuka-me/sdk v0.31.0 h1:gQ+qwgr3RuBVVoIag4VSWEkKV61SlQh2UMC/VGf4Ndo=
-github.com/kumbuka-me/sdk v0.31.0/go.mod h1:tWUpyhjG8ms3sOi/wN+J9zM6Hhk4txRY9uqLHaaTXaE=
+github.com/kumbuka-me/sdk v0.32.0 h1:F+jgWZswlt9ZI0LjvKTi2IkIZtCUm9qapqWh9lt5/Ao=
+github.com/kumbuka-me/sdk v0.32.0/go.mod h1:tWUpyhjG8ms3sOi/wN+J9zM6Hhk4txRY9uqLHaaTXaE=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 go.yaml.in/yaml/v3 v3.0.6 h1:zcDfvjXEqTQmpjniUBLc91xYJMB2c4QOFxEF/LCEckM=
