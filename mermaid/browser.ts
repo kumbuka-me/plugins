@@ -57,6 +57,8 @@ function loadMermaid(): Promise<MermaidRuntime> {
   return loading;
 }
 
+const interactiveDirective = /^%%[ \t]+kumbuka-interactive:[ \t]*true[ \t]*(?:\r?\n|$)/im;
+
 const alignmentDirective =
   /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/im;
 
@@ -79,6 +81,12 @@ function edit(root: HTMLElement, context: EditorContext): void {
   alignment.value = readAlignment(context.source);
   label.append(alignment);
 
+  const interactiveLabel = document.createElement("label");
+  const interactive = document.createElement("input");
+  interactive.type = "checkbox";
+  interactive.checked = interactiveDirective.test(context.source);
+  interactiveLabel.append(interactive, document.createTextNode(" Interactive diagram"));
+
   const sourceLabel = document.createElement("label");
   sourceLabel.textContent = "Mermaid source";
   const source = document.createElement("textarea");
@@ -95,13 +103,21 @@ function edit(root: HTMLElement, context: EditorContext): void {
         : `%% kumbuka-align: ${alignment.value}\n${body}`;
     publish();
   });
+  interactive.addEventListener("change", () => {
+    const body = source.value.replace(interactiveDirective, "");
+    source.value = interactive.checked
+      ? `%% kumbuka-interactive: true\n${body}`
+      : body;
+    publish();
+  });
   source.addEventListener("input", () => {
     alignment.value = readAlignment(source.value);
+    interactive.checked = interactiveDirective.test(source.value);
     publish();
   });
 
   root.classList.add("mermaid-editor");
-  root.replaceChildren(label, sourceLabel);
+  root.replaceChildren(label, interactiveLabel, sourceLabel);
   context.onValidity?.({ valid: true });
 }
 

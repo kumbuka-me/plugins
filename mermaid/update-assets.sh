@@ -34,6 +34,24 @@ mkdir -p "$MERMAID_OUTPUT_DIR"
   --legal-comments=eof \
   --outfile="$MERMAID_OUTPUT_DIR/plugin.js.tmp"
 
+# Bundle the same Mermaid engine for the Go/WASM plugin's embedded JS runtime.
+# It has no DOM dependency, and must not import Node or fetch at render time.
+cp "$SCRIPT_DIR/headless.ts" "$workdir/headless.ts"
+"$workdir/node_modules/.bin/esbuild" "$workdir/headless.ts" \
+  --bundle \
+  --platform=neutral \
+  --format=iife \
+  --target=es2022 \
+  --minify \
+  --legal-comments=eof \
+  --outfile="$MERMAID_OUTPUT_DIR/headless.js.tmp"
+{
+  printf '// Kumbuka Mermaid headless bundle: %s\n' "$MERMAID_VERSION"
+  cat "$MERMAID_OUTPUT_DIR/headless.js.tmp"
+} > "$MERMAID_OUTPUT_DIR/headless.js.new"
+mv "$MERMAID_OUTPUT_DIR/headless.js.new" "$MERMAID_OUTPUT_DIR/headless.js"
+rm "$MERMAID_OUTPUT_DIR/headless.js.tmp"
+
 # Mark the output so an old independent renderer cannot be reused accidentally.
 {
   printf '// Kumbuka Mermaid browser bundle: %s\n' "$MERMAID_VERSION"

@@ -8,6 +8,7 @@ coverage.out
 
 # Generated browser-module bundles
 /*/assets/plugin.js
+/*/assets/headless.js
 
 /docs/site/
 

@@ -18,7 +18,7 @@ GOLANGCI_LINT_VERSION ?= v2.15.0
 DEV_TOOLS_VERSION ?= v0.9.0
 
 # renovate: datasource=github-releases depName=kumbuka-me/cli
-KUMBUKA_CLI_VERSION ?= v0.16.0
+KUMBUKA_CLI_VERSION ?= v0.17.0
 
 ## Shared development tools
 include bin/dev-tools.mk
@@ -121,15 +121,15 @@ vet: ## Run Go static analysis.
 	go vet ./...
 
 .PHONY: test
-test: check-plugins vet ## Run executable plugin tests.
+test: browser check-plugins vet ## Run executable plugin tests.
 	go test -covermode=set -timeout=3m ./...
 
 .PHONY: test-fresh
-test-fresh: check-plugins vet ## Run executable plugin tests without the Go test cache.
+test-fresh: browser check-plugins vet ## Run executable plugin tests without the Go test cache.
 	go test -covermode=set -count=1 -timeout=3m ./...
 
 .PHONY: test-race
-test-race: check-plugins vet ## Run executable plugin tests with the race detector.
+test-race: browser check-plugins vet ## Run executable plugin tests with the race detector.
 	go test -race -count=1 -timeout=3m ./...
 
 .PHONY: test-browser
@@ -152,7 +152,7 @@ cover: ## Display Go test coverage.
 clean: ## Remove generated plugin packages and local binaries.
 	rm -rf "$(DIST)"
 	rm -rf */dist
-	rm -f */assets/plugin.js
+	rm -f */assets/plugin.js */assets/headless.js
 	rm -f simple-icons/assets/icons.json
 	rm -f coverage.out coverage.html
 
