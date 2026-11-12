@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-# Mermaid v13 is ESM-only. Build an isolated browser bundle during plugin packaging.
+# Mermaid v13 is ESM-only. Bundle its lazy imports into one classic plugin script.
+# A single script works in Kumbuka's opaque sandbox and on static hosts without CORS.
 MERMAID_VERSION=13.0.0-alpha.3
 ESBUILD_VERSION=0.28.2
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -22,21 +23,22 @@ trap 'rm -rf "$workdir"' EXIT INT TERM
   "mermaid@$MERMAID_VERSION" "esbuild@$ESBUILD_VERSION"
 
 # Resolve mermaid from the temporary node_modules, not from a site's dependencies.
-cp "$SCRIPT_DIR/entry.mjs" "$workdir/entry.mjs"
+cp "$SCRIPT_DIR/browser.ts" "$workdir/browser.ts"
 mkdir -p "$MERMAID_OUTPUT_DIR"
-"$workdir/node_modules/.bin/esbuild" "$workdir/entry.mjs" \
+"$workdir/node_modules/.bin/esbuild" "$workdir/browser.ts" \
   --bundle \
   --platform=browser \
   --format=iife \
   --target=es2022 \
   --minify \
   --legal-comments=eof \
-  --outfile="$MERMAID_OUTPUT_DIR/mermaid.min.js.tmp"
+  --outfile="$MERMAID_OUTPUT_DIR/plugin.js.tmp"
 
-# Mark the output to distinguish it from a stale v12 bundle.
+# Mark the output so an old independent renderer cannot be reused accidentally.
 {
-  printf '// Kumbuka Mermaid bundle: %s\n' "$MERMAID_VERSION"
-  cat "$MERMAID_OUTPUT_DIR/mermaid.min.js.tmp"
-} > "$MERMAID_OUTPUT_DIR/mermaid.min.js"
-rm "$MERMAID_OUTPUT_DIR/mermaid.min.js.tmp"
+  printf '// Kumbuka Mermaid browser bundle: %s\n' "$MERMAID_VERSION"
+  cat "$MERMAID_OUTPUT_DIR/plugin.js.tmp"
+} > "$MERMAID_OUTPUT_DIR/plugin.js.new"
+mv "$MERMAID_OUTPUT_DIR/plugin.js.new" "$MERMAID_OUTPUT_DIR/plugin.js"
+rm "$MERMAID_OUTPUT_DIR/plugin.js.tmp"
 cp "$workdir/node_modules/mermaid/LICENSE" "$MERMAID_OUTPUT_DIR/LICENSE"

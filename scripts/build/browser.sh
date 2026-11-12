@@ -13,6 +13,12 @@ if [ ! -f "$source" ]; then
   exit 0
 fi
 
+# Plugins with their own bundler may package ESM dependencies in a classic script.
+if [ -x "$plugin/browser-build.sh" ]; then
+  "$plugin/browser-build.sh"
+  exit 0
+fi
+
 tsc="$root/node_modules/.bin/tsc"
 if [ ! -x "$tsc" ]; then
   echo "TypeScript is not installed; run npm ci" >&2

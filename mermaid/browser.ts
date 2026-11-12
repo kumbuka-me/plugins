@@ -20,41 +20,40 @@ interface RenderContext {
 }
 
 const host = globalThis as typeof globalThis & {
-  mermaid?: MermaidRuntime;
   kumbukaPlugin?: {
     edit(root: HTMLElement, context: EditorContext): void;
     render(root: HTMLElement, context: RenderContext): Promise<void>;
   };
 };
 
-const assetBase =
-  document.currentScript instanceof HTMLScriptElement
-    ? document.currentScript.src
-    : undefined;
 let loading: Promise<MermaidRuntime> | undefined;
 
-// loadMermaid shares the one packaged renderer across subsequent frames in this document.
+// loadMermaid lazily initializes the renderer compiled into this script.
+// Its static import specifier is resolved by esbuild at package build time.
 function loadMermaid(): Promise<MermaidRuntime> {
-  if (host.mermaid) return Promise.resolve(host.mermaid);
   if (loading) return loading;
-  loading = new Promise<MermaidRuntime>((resolve, reject) => {
-    if (!assetBase) {
-      reject(new Error("Mermaid plugin script URL is unavailable"));
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = new URL("./mermaid.min.js", assetBase).href;
-    script.onload = () => {
-      if (host.mermaid) resolve(host.mermaid);
-      else reject(new Error("Mermaid bundle did not register its runtime"));
-    };
-    script.onerror = () =>
-      reject(new Error("Mermaid bundle could not be loaded"));
-    document.head.append(script);
-  }).catch((error: unknown) => {
-    loading = undefined;
-    throw error;
-  });
+
+  loading = import("mermaid")
+    .then((module) => {
+      const runtime = module.default;
+      if (
+        typeof runtime?.initialize !== "function" ||
+        typeof runtime.run !== "function"
+      ) {
+        throw new Error(
+          "Mermaid bundle does not contain a compatible renderer",
+        );
+      }
+      return runtime;
+    })
+    .catch((error: unknown) => {
+      loading = undefined;
+      throw new Error(
+        `could not initialize Mermaid renderer: ${String(error)}`,
+        { cause: error },
+      );
+    });
+
   return loading;
 }
 

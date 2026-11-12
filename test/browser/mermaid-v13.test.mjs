@@ -3,37 +3,34 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 
-// servePlugin supplies only the two JavaScript assets included in the released plugin.
-async function servePlugin(page) {
-  await page.route('http://mermaid-plugin.test/**', async route => {
-    const pathname = new URL(route.request().url()).pathname;
-    if (pathname === '/') {
-      await route.fulfill({contentType: 'text/html', body: '<main></main>'});
-      return;
-    }
+// loadPlugin injects the packaged classic script as a blob URL, without
+// relying on network routing or a separately hosted Mermaid runtime.
+async function loadPlugin(page) {
+  const script = await readFile(new URL('../../mermaid/assets/plugin.js', import.meta.url), 'utf8');
+  await page.setContent('<main></main>');
 
-    const filename = pathname === '/assets/plugin.js'
-      ? '../../mermaid/assets/plugin.js'
-      : pathname === '/assets/mermaid.min.js'
-        ? '../../mermaid/assets/mermaid.min.js'
-        : null;
-    if (!filename) {
-      await route.fulfill({status: 404});
-      return;
+  await page.evaluate(async source => {
+    const url = URL.createObjectURL(new Blob([source], {type: 'text/javascript'}));
+    try {
+      await new Promise((resolve, reject) => {
+        const element = document.createElement('script');
+        element.src = url;
+        element.onload = resolve;
+        element.onerror = () => reject(new Error('packaged Mermaid script failed to load'));
+        document.head.append(element);
+      });
+    } finally {
+      URL.revokeObjectURL(url);
     }
-    await route.fulfill({
-      contentType: 'text/javascript',
-      body: await readFile(new URL(filename, import.meta.url)),
-    });
-  });
+  }, script);
 
-  await page.goto('http://mermaid-plugin.test/');
-  await page.addScriptTag({url: 'http://mermaid-plugin.test/assets/plugin.js'});
+  assert.equal(await page.evaluate(() => typeof globalThis.kumbukaPlugin?.render), 'function',
+    'packaged Mermaid script did not register its browser renderer');
 }
 
 test('Mermaid v13 alpha renders flowchart SVG using packaged JavaScript', async () => {
-  const bundle = await readFile(new URL('../../mermaid/assets/mermaid.min.js', import.meta.url), 'utf8');
-  assert.ok(bundle.startsWith('// Kumbuka Mermaid bundle: 13.0.0-alpha.3\n'));
+  const bundle = await readFile(new URL('../../mermaid/assets/plugin.js', import.meta.url), 'utf8');
+  assert.ok(bundle.startsWith('// Kumbuka Mermaid browser bundle: 13.0.0-alpha.3\n'));
 
   const browser = await chromium.launch({
     channel: process.env.BROWSER_CHANNEL || undefined,
@@ -41,7 +38,13 @@ test('Mermaid v13 alpha renders flowchart SVG using packaged JavaScript', async 
   });
   try {
     const page = await browser.newPage();
-    await servePlugin(page);
+    const pageErrors = [];
+    const unexpectedRequests = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+    page.on('request', request => {
+      if (request.url().endsWith('/mermaid.min.js')) unexpectedRequests.push(request.url());
+    });
+    await loadPlugin(page);
 
     await page.evaluate(async () => {
       await globalThis.kumbukaPlugin.render(document.querySelector('main'), {
@@ -50,8 +53,10 @@ test('Mermaid v13 alpha renders flowchart SVG using packaged JavaScript', async 
       });
     });
 
-    assert.equal(await page.locator('.mermaid svg').count(), 1);
-    assert.equal(await page.locator('.mermaid').evaluate(el => el.classList.contains('mermaid')), true);
+    assert.deepEqual(pageErrors, []);
+    assert.deepEqual(unexpectedRequests, []);
+    assert.equal(await page.locator('div.mermaid svg').count(), 1);
+    assert.equal(await page.locator('div.mermaid').evaluate(el => el.style.textAlign), 'center');
   } finally {
     await browser.close();
   }
@@ -64,7 +69,7 @@ test('Mermaid visual editor keeps alignment and removes static-only controls', a
   });
   try {
     const page = await browser.newPage();
-    await servePlugin(page);
+    await loadPlugin(page);
 
     await page.evaluate(() => {
       globalThis.kumbukaPlugin.edit(document.querySelector('main'), {

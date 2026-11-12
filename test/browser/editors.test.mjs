@@ -50,9 +50,9 @@ test('Mermaid owns alignment editing and rendering of saved directives', async()
     await alignment.selectOption('center');
     assert.equal(await page.evaluate(()=>globalThis.draft),'flowchart LR\nA --> B');
     await page.evaluate(async()=>{
-      globalThis.mermaid={initialize(){},async run(){}};
       await globalThis.kumbukaPlugin.render(document.querySelector('main'),{source:'%% kumbuka-align: right\nflowchart LR',theme:'light'});
     });
-    assert.equal(await page.locator('.mermaid').evaluate(el=>el.style.textAlign),'right');
+    assert.equal(await page.locator('div.mermaid').evaluate(el=>el.style.textAlign),'right');
   });
 });
+

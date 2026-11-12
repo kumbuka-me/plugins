@@ -1,6 +1,6 @@
 # Mermaid
 
-Mermaid renders fenced `mermaid` code blocks inside Kumbuka's isolated browser module, both in Kumbuka and on generated static sites. The plugin bundles Mermaid **13.0.0-alpha.3**. Visitors and `kumbuka-cli` users do not need Node.js, npm, Playwright, Chromium, or `mmdc`.
+Mermaid renders fenced `mermaid` code blocks inside Kumbuka's isolated browser module, both in Kumbuka and on generated static sites. The plugin bundles Mermaid **13.0.0-alpha.3** in a single browser script. Visitors and `kumbuka-cli` users do not need Node.js, npm, Playwright, Chromium, or `mmdc`.
 
 ## Usage
 
