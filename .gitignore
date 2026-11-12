@@ -24,3 +24,6 @@ coverage.out
 __pycache__/
 
 .projectatlas
+
+# Mermaid v13 ESM bundle is generated from the pinned build script.
+/mermaid/assets/mermaid.min.js

@@ -5,5 +5,4 @@ body { font: 14px system-ui, sans-serif; }
 
 .mermaid-editor label { display: grid; gap: 6px; margin-bottom: 14px; }
 .mermaid-editor select, .mermaid-editor textarea { width: 100%; box-sizing: border-box; padding: 8px; font: inherit; color: CanvasText; background: Canvas; border: 1px solid GrayText; border-radius: 6px; }
-.mermaid-editor label:has(input[type="checkbox"]) { display: flex; align-items: center; }
 .mermaid-editor textarea { font-family: monospace; resize: vertical; }

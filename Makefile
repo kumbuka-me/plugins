@@ -81,6 +81,7 @@ check-plugins: ## Verify first-party plugin identity and version metadata.
 browser: $(NODE_MODULES) ## Build browser TypeScript assets.
 	@set -eu; \
 	for plugin in $(PLUGIN_DIRS); do \
+		if [ -f "$$plugin/browser.ts" ] && [ -x "$$plugin/generate.sh" ]; then "$$plugin/generate.sh"; fi; \
 		./scripts/build/browser.sh "$$plugin"; \
 	done
 

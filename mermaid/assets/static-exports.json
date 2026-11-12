@@ -1,9 +1,0 @@
-{
-  "version": 1,
-  "modules": [
-    {
-      "id": "diagrams",
-      "media_type": "image/svg+xml"
-    }
-  ]
-}

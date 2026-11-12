@@ -1,184 +1,129 @@
-(() => {
-  type Theme = "light" | "dark";
-  type Mermaid = {
-    initialize: (options: Record<string, unknown>) => void;
-    run: (options: { nodes: HTMLElement[] }) => Promise<void>;
+// The Mermaid runtime is generated from the pinned alpha and packaged with this plugin.
+interface MermaidRuntime {
+  initialize(options: {
+    startOnLoad: boolean;
+    theme: string;
+    securityLevel: string;
+  }): void;
+  run(options: { nodes: HTMLElement[] }): Promise<void>;
+}
+
+interface EditorContext {
+  source: string;
+  onChange(source: string): void;
+  onValidity?(state: { valid: boolean }): void;
+}
+
+interface RenderContext {
+  source: string;
+  theme: string;
+}
+
+const host = globalThis as typeof globalThis & {
+  mermaid?: MermaidRuntime;
+  kumbukaPlugin?: {
+    edit(root: HTMLElement, context: EditorContext): void;
+    render(root: HTMLElement, context: RenderContext): Promise<void>;
   };
-  type BrowserContext = {
-    source: string;
-    theme: Theme;
-    onChange: (source: string) => void;
-    onValidity?: (result: { valid: boolean }) => void;
-  };
-  type StaticContext = { theme: Theme };
-  type StaticResult = {
-    content: string;
-    alt: string;
-    alignment: string;
-  };
-  type PluginGlobals = typeof globalThis & {
-    mermaid?: Mermaid;
-    kumbukaPlugin?: {
-      edit: (root: HTMLElement, context: BrowserContext) => void;
-      render: (root: HTMLElement, context: BrowserContext) => Promise<void>;
-      exportStatic: (
-        root: HTMLElement,
-        context: StaticContext,
-      ) => Promise<StaticResult | null>;
+};
+
+const assetBase =
+  document.currentScript instanceof HTMLScriptElement
+    ? document.currentScript.src
+    : undefined;
+let loading: Promise<MermaidRuntime> | undefined;
+
+// loadMermaid shares the one packaged renderer across subsequent frames in this document.
+function loadMermaid(): Promise<MermaidRuntime> {
+  if (host.mermaid) return Promise.resolve(host.mermaid);
+  if (loading) return loading;
+  loading = new Promise<MermaidRuntime>((resolve, reject) => {
+    if (!assetBase) {
+      reject(new Error("Mermaid plugin script URL is unavailable"));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = new URL("./mermaid.min.js", assetBase).href;
+    script.onload = () => {
+      if (host.mermaid) resolve(host.mermaid);
+      else reject(new Error("Mermaid bundle did not register its runtime"));
     };
-  };
+    script.onerror = () =>
+      reject(new Error("Mermaid bundle could not be loaded"));
+    document.head.append(script);
+  }).catch((error: unknown) => {
+    loading = undefined;
+    throw error;
+  });
+  return loading;
+}
 
-  const globals = globalThis as PluginGlobals;
-  const assetBase =
-    (document.currentScript as HTMLScriptElement | null)?.src ?? "";
-  const alignmentDirective =
-    /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/im;
-  const interactiveDirective =
-    /^%%[ \t]+kumbuka-interactive:[ \t]*(true|false)[ \t]*(?:\r?\n|$)/im;
+const alignmentDirective =
+  /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/im;
 
-  // load imports the plugin-bundled Mermaid runtime only when a diagram is rendered.
-  async function load(): Promise<Mermaid> {
-    if (!globals.mermaid) {
-      await new Promise<void>((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = new URL("./mermaid.min.js", assetBase).href;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Mermaid could not be loaded"));
-        document.head.append(script);
-      });
-    }
-    if (!globals.mermaid) throw new Error("Mermaid runtime is unavailable");
-    return globals.mermaid;
+// readAlignment selects the requested presentation without exposing the host page.
+function readAlignment(source: string): string {
+  return alignmentDirective.exec(source)?.[1].toLowerCase() || "center";
+}
+
+// edit keeps the source and alignment inside the plugin-owned visual editor.
+function edit(root: HTMLElement, context: EditorContext): void {
+  const label = document.createElement("label");
+  label.textContent = "Diagram alignment";
+  const alignment = document.createElement("select");
+  for (const value of ["left", "center", "right"]) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value[0].toUpperCase() + value.slice(1);
+    alignment.append(option);
   }
+  alignment.value = readAlignment(context.source);
+  label.append(alignment);
 
-  // readAlignment returns the bounded presentation directive from an editable fence.
-  function readAlignment(source: string): string {
-    return alignmentDirective.exec(source)?.[1].toLowerCase() ?? "center";
-  }
+  const sourceLabel = document.createElement("label");
+  sourceLabel.textContent = "Mermaid source";
+  const source = document.createElement("textarea");
+  source.rows = 12;
+  source.value = context.source;
+  sourceLabel.append(source);
 
-  // readInteractive reports whether a fence must retain its live browser renderer.
-  function readInteractive(source: string): boolean {
-    return interactiveDirective.exec(source)?.[1].toLowerCase() === "true";
-  }
+  const publish = () => context.onChange(source.value);
+  alignment.addEventListener("change", () => {
+    const body = source.value.replace(alignmentDirective, "");
+    source.value =
+      alignment.value === "center"
+        ? body
+        : `%% kumbuka-align: ${alignment.value}\n${body}`;
+    publish();
+  });
+  source.addEventListener("input", () => {
+    alignment.value = readAlignment(source.value);
+    publish();
+  });
 
-  // updateDirective replaces or clears an editor-owned Mermaid comment.
-  function updateDirective(
-    source: string,
-    directive: RegExp,
-    replacement: string,
-  ): string {
-    const normalized = source.replace(directive, "");
-    return replacement ? `${replacement}\n${normalized}` : normalized;
-  }
+  root.classList.add("mermaid-editor");
+  root.replaceChildren(label, sourceLabel);
+  context.onValidity?.({ valid: true });
+}
 
-  // edit binds source changes to the standard isolated browser widget interface.
-  function edit(root: HTMLElement, context: BrowserContext): void {
-    const label = document.createElement("label");
-    label.textContent = "Diagram alignment";
-    const alignment = document.createElement("select");
-    for (const value of ["left", "center", "right"]) {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = value[0].toUpperCase() + value.slice(1);
-      alignment.append(option);
-    }
-    alignment.value = readAlignment(context.source);
-    label.append(alignment);
+// render runs the packaged browser renderer only in Kumbuka's isolated frame.
+async function render(
+  root: HTMLElement,
+  context: RenderContext,
+): Promise<void> {
+  const mermaid = await loadMermaid();
+  const diagram = document.createElement("div");
+  diagram.className = "mermaid";
+  diagram.textContent = context.source;
+  diagram.style.textAlign = readAlignment(context.source);
+  root.replaceChildren(diagram);
 
-    const interactiveLabel = document.createElement("label");
-    const interactive = document.createElement("input");
-    interactive.type = "checkbox";
-    interactive.checked = readInteractive(context.source);
-    interactiveLabel.append(interactive, " Interactive diagram");
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: context.theme === "dark" ? "dark" : "default",
+    securityLevel: "strict",
+  });
+  await mermaid.run({ nodes: [diagram] });
+}
 
-    const sourceLabel = document.createElement("label");
-    sourceLabel.textContent = "Mermaid source";
-    const source = document.createElement("textarea");
-    source.rows = 12;
-    source.value = context.source;
-    sourceLabel.append(source);
-
-    const publish = () => context.onChange(source.value);
-    alignment.addEventListener("change", () => {
-      source.value = updateDirective(
-        source.value,
-        alignmentDirective,
-        alignment.value === "center"
-          ? ""
-          : `%% kumbuka-align: ${alignment.value}`,
-      );
-      publish();
-    });
-    interactive.addEventListener("change", () => {
-      source.value = updateDirective(
-        source.value,
-        interactiveDirective,
-        interactive.checked ? "%% kumbuka-interactive: true" : "",
-      );
-      publish();
-    });
-    source.addEventListener("input", () => {
-      alignment.value = readAlignment(source.value);
-      interactive.checked = readInteractive(source.value);
-      publish();
-    });
-
-    root.classList.add("mermaid-editor");
-    root.replaceChildren(label, interactiveLabel, sourceLabel);
-    context.onValidity?.({ valid: true });
-  }
-
-  // renderSource shares the exact Mermaid engine and appearance between live and build views.
-  async function renderSource(
-    root: HTMLElement,
-    source: string,
-    theme: Theme,
-    stableIDs = false,
-  ): Promise<SVGSVGElement | null> {
-    const mermaid = await load();
-    const diagram = document.createElement("div");
-    diagram.className = "mermaid";
-    diagram.textContent = source;
-    diagram.style.textAlign = readAlignment(source);
-    root.replaceChildren(diagram);
-
-    const settings: Record<string, unknown> = {
-      startOnLoad: false,
-      theme: theme === "dark" ? "dark" : "default",
-      securityLevel: "strict",
-    };
-    if (stableIDs) {
-      settings.htmlLabels = false;
-      settings.deterministicIds = true;
-      settings.deterministicIDSeed = source;
-      settings.flowchart = { htmlLabels: false };
-    }
-    mermaid.initialize(settings);
-    await mermaid.run({ nodes: [diagram] });
-    return diagram.querySelector<SVGSVGElement>("svg");
-  }
-
-  globals.kumbukaPlugin = {
-    edit,
-    async render(root: HTMLElement, context: BrowserContext): Promise<void> {
-      await renderSource(root, context.source, context.theme);
-    },
-    // exportStatic returns null for interactive blocks and passive SVG for supported blocks.
-    async exportStatic(
-      root: HTMLElement,
-      context: StaticContext,
-    ): Promise<StaticResult | null> {
-      const code = root.querySelector<HTMLElement>("pre code.language-mermaid");
-      if (!code || readInteractive(code.textContent ?? "")) return null;
-
-      const source = code.textContent ?? "";
-      const svg = await renderSource(root, source, context.theme, true);
-      if (!svg) throw new Error("Mermaid did not produce an SVG");
-      return {
-        content: svg.outerHTML,
-        alt: "Mermaid diagram",
-        alignment: readAlignment(source),
-      };
-    },
-  };
-})();
+host.kumbukaPlugin = { edit, render };
