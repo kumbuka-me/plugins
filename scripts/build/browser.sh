@@ -13,9 +13,10 @@ if [ ! -f "$source" ]; then
   exit 0
 fi
 
-# Plugins with their own bundler may package ESM dependencies in a classic script.
-if [ -x "$plugin/browser-build.sh" ]; then
-  "$plugin/browser-build.sh"
+# Plugin-owned bundlers package dependencies without requiring a root npm dependency.
+# Run them through sh so archive extraction does not depend on executable file modes.
+if [ -f "$plugin/browser-build.sh" ]; then
+  sh "$plugin/browser-build.sh"
   exit 0
 fi
 

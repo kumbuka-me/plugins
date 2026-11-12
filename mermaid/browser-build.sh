@@ -19,4 +19,4 @@ if [ -s "$bundle" ] && [ -s "$headless" ] && \
   exit 0
 fi
 
-"$root/update-assets.sh"
+sh "$root/update-assets.sh"

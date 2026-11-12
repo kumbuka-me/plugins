@@ -62,7 +62,7 @@ test('Mermaid v13 alpha renders flowchart SVG using packaged JavaScript', async 
   }
 });
 
-test('Mermaid visual editor keeps alignment and removes static-only controls', async () => {
+test('Mermaid visual editor preserves alignment when interactivity is toggled', async () => {
   const browser = await chromium.launch({
     channel: process.env.BROWSER_CHANNEL || undefined,
     headless: true,
@@ -83,7 +83,45 @@ test('Mermaid visual editor keeps alignment and removes static-only controls', a
     await alignment.selectOption('right');
     assert.equal(await page.evaluate(() => globalThis.editedSource),
       '%% kumbuka-align: right\nflowchart LR\nA --> B');
-    assert.equal(await page.getByLabel('Interactive diagram').count(), 0);
+    const interactive = page.getByLabel('Interactive diagram');
+    assert.equal(await interactive.count(), 1);
+    assert.equal(await interactive.isChecked(), false);
+
+    await interactive.check();
+    assert.equal(await page.evaluate(() => globalThis.editedSource),
+      '%% kumbuka-interactive: true\n%% kumbuka-align: right\nflowchart LR\nA --> B');
+
+    await interactive.uncheck();
+    assert.equal(await page.evaluate(() => globalThis.editedSource),
+      '%% kumbuka-align: right\nflowchart LR\nA --> B');
+  } finally {
+    await browser.close();
+  }
+});
+
+test('Mermaid visual editor recognizes saved interactive diagrams', async () => {
+  const browser = await chromium.launch({
+    channel: process.env.BROWSER_CHANNEL || undefined,
+    headless: true,
+  });
+  try {
+    const page = await browser.newPage();
+    await loadPlugin(page);
+
+    await page.evaluate(() => {
+      globalThis.kumbukaPlugin.edit(document.querySelector('main'), {
+        source: '%% kumbuka-interactive: true\n%% kumbuka-align: left\nflowchart LR\nA --> B',
+        onChange(value) {globalThis.editedSource = value;},
+      });
+    });
+
+    const interactive = page.getByLabel('Interactive diagram');
+    assert.equal(await interactive.isChecked(), true);
+    assert.equal(await page.getByLabel('Diagram alignment').inputValue(), 'left');
+
+    await interactive.uncheck();
+    assert.equal(await page.evaluate(() => globalThis.editedSource),
+      '%% kumbuka-align: left\nflowchart LR\nA --> B');
   } finally {
     await browser.close();
   }

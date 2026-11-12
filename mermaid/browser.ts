@@ -57,7 +57,8 @@ function loadMermaid(): Promise<MermaidRuntime> {
   return loading;
 }
 
-const interactiveDirective = /^%%[ \t]+kumbuka-interactive:[ \t]*true[ \t]*(?:\r?\n|$)/im;
+const interactiveDirective =
+  /^%%[ \t]+kumbuka-interactive:[ \t]*true[ \t]*(?:\r?\n|$)/im;
 
 const alignmentDirective =
   /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/im;
@@ -85,7 +86,10 @@ function edit(root: HTMLElement, context: EditorContext): void {
   const interactive = document.createElement("input");
   interactive.type = "checkbox";
   interactive.checked = interactiveDirective.test(context.source);
-  interactiveLabel.append(interactive, document.createTextNode(" Interactive diagram"));
+  interactiveLabel.append(
+    interactive,
+    document.createTextNode(" Interactive diagram"),
+  );
 
   const sourceLabel = document.createElement("label");
   sourceLabel.textContent = "Mermaid source";
