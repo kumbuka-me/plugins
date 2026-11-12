@@ -21,14 +21,20 @@
     kumbukaPlugin?: {
       edit: (root: HTMLElement, context: BrowserContext) => void;
       render: (root: HTMLElement, context: BrowserContext) => Promise<void>;
-      exportStatic: (root: HTMLElement, context: StaticContext) => Promise<StaticResult | null>;
+      exportStatic: (
+        root: HTMLElement,
+        context: StaticContext,
+      ) => Promise<StaticResult | null>;
     };
   };
 
   const globals = globalThis as PluginGlobals;
-  const assetBase = (document.currentScript as HTMLScriptElement | null)?.src ?? "";
-  const alignmentDirective = /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/im;
-  const interactiveDirective = /^%%[ \t]+kumbuka-interactive:[ \t]*(true|false)[ \t]*(?:\r?\n|$)/im;
+  const assetBase =
+    (document.currentScript as HTMLScriptElement | null)?.src ?? "";
+  const alignmentDirective =
+    /^%%[ \t]+kumbuka-align:[ \t]*(left|center|right)[ \t]*(?:\r?\n|$)/im;
+  const interactiveDirective =
+    /^%%[ \t]+kumbuka-interactive:[ \t]*(true|false)[ \t]*(?:\r?\n|$)/im;
 
   // load imports the plugin-bundled Mermaid runtime only when a diagram is rendered.
   async function load(): Promise<Mermaid> {
@@ -56,7 +62,11 @@
   }
 
   // updateDirective replaces or clears an editor-owned Mermaid comment.
-  function updateDirective(source: string, directive: RegExp, replacement: string): string {
+  function updateDirective(
+    source: string,
+    directive: RegExp,
+    replacement: string,
+  ): string {
     const normalized = source.replace(directive, "");
     return replacement ? `${replacement}\n${normalized}` : normalized;
   }
@@ -93,7 +103,9 @@
       source.value = updateDirective(
         source.value,
         alignmentDirective,
-        alignment.value === "center" ? "" : `%% kumbuka-align: ${alignment.value}`,
+        alignment.value === "center"
+          ? ""
+          : `%% kumbuka-align: ${alignment.value}`,
       );
       publish();
     });
@@ -117,7 +129,12 @@
   }
 
   // renderSource shares the exact Mermaid engine and appearance between live and build views.
-  async function renderSource(root: HTMLElement, source: string, theme: Theme, stableIDs = false): Promise<SVGSVGElement | null> {
+  async function renderSource(
+    root: HTMLElement,
+    source: string,
+    theme: Theme,
+    stableIDs = false,
+  ): Promise<SVGSVGElement | null> {
     const mermaid = await load();
     const diagram = document.createElement("div");
     diagram.className = "mermaid";
@@ -147,7 +164,10 @@
       await renderSource(root, context.source, context.theme);
     },
     // exportStatic returns null for interactive blocks and passive SVG for supported blocks.
-    async exportStatic(root: HTMLElement, context: StaticContext): Promise<StaticResult | null> {
+    async exportStatic(
+      root: HTMLElement,
+      context: StaticContext,
+    ): Promise<StaticResult | null> {
       const code = root.querySelector<HTMLElement>("pre code.language-mermaid");
       if (!code || readInteractive(code.textContent ?? "")) return null;
 
