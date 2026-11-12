@@ -116,7 +116,9 @@ function edit(root: HTMLElement, context: EditorContext): void {
     context.onValidity?.({ valid: width.validity.valid });
     if (!width.validity.valid) return;
     const body = source.value.replace(widthDirective, "");
-    source.value = width.value ? `%% kumbuka-width: ${width.valueAsNumber}\n${body}` : body;
+    source.value = width.value
+      ? `%% kumbuka-width: ${width.valueAsNumber}\n${body}`
+      : body;
     publish();
   });
   alignment.addEventListener("change", () => {
