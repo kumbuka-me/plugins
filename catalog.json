@@ -868,6 +868,13 @@
       "provider": "Kumbuka",
       "versions": [
         {
+          "version": "1.10.0",
+          "api_version": 1,
+          "released_at": "2026-11-12T15:27:25Z",
+          "package_url": "https://github.com/kumbuka-me/plugins/releases/download/mermaid/v1.10.0/mermaid-1.10.0.kumbukaplugin",
+          "sha256": "591faf2e5ad02c630e88b6f47e6deb59b42a30776591df07608f9214d80c1ec6"
+        },
+        {
           "version": "1.8.0",
           "api_version": 1,
           "released_at": "2026-11-12T08:55:03Z",
