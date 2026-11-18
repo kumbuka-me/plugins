@@ -7,7 +7,7 @@ require (
 	github.com/go-icons/simple-icons v0.2.0
 	github.com/kumbuka-me/sdk v0.32.0
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/net v0.62.0
+	golang.org/x/net v0.63.0
 )
 
 require (
